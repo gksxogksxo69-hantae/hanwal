@@ -4,7 +4,7 @@ WORKDIR /app
 
 # 소스 코드 복사 및 빌드
 COPY . .
-RUN ./gradlew bootJar --no-daemon
+RUN ./gradlew bootJar -x test --no-daemon
 
 # 2단계: 실행 스테이지
 FROM eclipse-temurin:17-jre-jammy

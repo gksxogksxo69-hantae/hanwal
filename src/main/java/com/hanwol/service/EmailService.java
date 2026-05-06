@@ -2,6 +2,7 @@ package com.hanwol.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,9 +30,9 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(fromEmail);
-            helper.setTo(to);
-            helper.setSubject("[한월] 무림 출사(회원가입) 인증 번호 안내");
+            helper.setFrom(Objects.requireNonNull(fromEmail));
+            helper.setTo(Objects.requireNonNull(to));
+            helper.setSubject(Objects.requireNonNull("[한월] 무림 출사(회원가입) 인증 번호 안내"));
 
             String htmlContent = buildHtmlContent(code);
             helper.setText(htmlContent, true);

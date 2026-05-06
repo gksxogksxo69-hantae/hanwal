@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -66,7 +67,7 @@ public class AuthService {
                 .nickname(request.getNickname())
                 .build();
                 
-        Long savedId = userRepository.save(user).getId();
+        Long savedId = Objects.requireNonNull(userRepository.save(user).getId());
         verifiedEmails.remove(request.getEmail()); // 회원가입 완료 후 인증기록 삭제
         return savedId;
     }
@@ -107,7 +108,7 @@ public class AuthService {
 
     @Transactional
     public void selectGender(Long userId, com.hanwol.domain.user.Gender gender) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(Objects.requireNonNull(userId))
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
         user.selectGender(gender);
     }

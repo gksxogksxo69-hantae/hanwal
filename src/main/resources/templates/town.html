@@ -67,20 +67,32 @@
                 <i data-lucide="user" class="text-slate-400"></i>
             </div>
             <div>
-                <h2 class="text-white font-bold gowun-batang text-xl tracking-wider">이한월</h2>
-                <div class="text-amber-400 text-xs font-semibold">Lv.1 모험가</div>
+                <h2 class="text-white font-bold gowun-batang text-xl tracking-wider" x-text="playerNickname">모험가</h2>
+                <div class="text-amber-400 text-xs font-semibold">Lv.<span x-text="playerLevel">1</span> 모험가</div>
             </div>
         </div>
 
-        <!-- 재화 정보 -->
-        <div class="interactive-ui flex gap-2">
-            <div class="bg-slate-900/80 px-4 py-2 rounded-lg border border-slate-700 backdrop-blur-sm flex items-center gap-2">
-                <i data-lucide="coins" class="text-yellow-500 w-4 h-4"></i>
-                <span class="text-white font-mono font-medium">1,500</span>
+        <!-- 우측: 미니맵 + 재화 -->
+        <div class="interactive-ui flex flex-col items-end gap-2">
+            <!-- 미니맵 -->
+            <div class="relative">
+                <div class="bg-slate-900/90 p-1.5 rounded-lg border-2 border-amber-600/70 shadow-[0_0_12px_rgba(245,158,11,0.3)]">
+                    <canvas id="minimapCanvas" width="160" height="160" class="rounded block" style="image-rendering: pixelated;"></canvas>
+                </div>
+                <div class="absolute -top-2 left-1/2 -translate-x-1/2 bg-slate-900 border border-amber-600 px-2 py-0.5 rounded text-[10px] text-amber-400 font-bold gowun-batang tracking-widest">
+                    무림본산
+                </div>
             </div>
-            <div class="bg-slate-900/80 px-4 py-2 rounded-lg border border-slate-700 backdrop-blur-sm flex items-center gap-2">
-                <i data-lucide="gem" class="text-cyan-400 w-4 h-4"></i>
-                <span class="text-white font-mono font-medium">30</span>
+            <!-- 재화 정보 -->
+            <div class="flex gap-2">
+                <div class="bg-slate-900/80 px-4 py-2 rounded-lg border border-slate-700 backdrop-blur-sm flex items-center gap-2">
+                    <i data-lucide="coins" class="text-yellow-500 w-4 h-4"></i>
+                    <span class="text-white font-mono font-medium" x-text="playerGold.toLocaleString()">0</span>
+                </div>
+                <div class="bg-slate-900/80 px-4 py-2 rounded-lg border border-slate-700 backdrop-blur-sm flex items-center gap-2">
+                    <i data-lucide="gem" class="text-cyan-400 w-4 h-4"></i>
+                    <span class="text-white font-mono font-medium" x-text="playerGems.toLocaleString()">0</span>
+                </div>
             </div>
         </div>
     </div>

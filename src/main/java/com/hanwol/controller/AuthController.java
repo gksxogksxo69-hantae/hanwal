@@ -68,6 +68,18 @@ public class AuthController {
             HttpSession session = httpRequest.getSession();
             session.setAttribute("LOGIN_USER", user.getId());
             
+            // 스프링 시큐리티 컨텍스트에 인증 정보 수동 설정 (이것이 없으면 403 에러 발생)
+            org.springframework.security.core.userdetails.UserDetails userDetails = 
+                org.springframework.security.core.userdetails.User.withUsername(user.getEmail())
+                .password("")
+                .roles("USER")
+                .build();
+            org.springframework.security.authentication.UsernamePasswordAuthenticationToken authentication = 
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(authentication);
+            session.setAttribute(org.springframework.security.web.context.HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, 
+                org.springframework.security.core.context.SecurityContextHolder.getContext());
+            
             // 성별이 아직 NULL 이면 캐릭터 선택 필요 상태로 응답
             boolean needsCharacterSetup = (user.getGender() == null);
             

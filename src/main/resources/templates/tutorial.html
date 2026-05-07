@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한월(韓月) - 프롤로그</title>
+    <meta name="description" content="한월 RPG 튜토리얼 프롤로그 - 남궁세가의 이야기">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- 커스텀 CSS -->
+    <link rel="stylesheet" href="../static/css/tutorial.css" th:href="@{/css/tutorial.css}">
+    <!-- Alpine.js 로직 -->
+    <script defer src="../static/js/tutorial.js" th:src="@{/js/tutorial.js}"></script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- 구글 폰트 (나눔명조 - 무협 분위기) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', sans-serif;
+            overflow: hidden;
+        }
+        .font-myeongjo { font-family: 'Nanum Myeongjo', serif; }
+    </style>
+</head>
+<body>
+
+<div x-data="tutorialApp()" 
+     @click="handleClick" 
+     @keydown.window="handleKeydown($event)"
+     class="tutorial-container">
+
+    <!-- ===== 프로그레스 바 ===== -->
+    <div class="progress-bar-container">
+        <div class="progress-bar-fill" :style="'width: ' + progress + '%'"></div>
+    </div>
+
+    <!-- ===== 스킵 버튼 ===== -->
+    <button @click.stop="openSkipModal" class="skip-btn" id="skip-btn">
+        SKIP ▸
+    </button>
+
+    <!-- ===== 배경 레이어들 ===== -->
+    <div class="bg-layer ken-burns"
+         :class="{ 'active': currentBg === '/images/bg_estate_peace.png' }"
+         style="background-image: url('/images/bg_estate_peace.png')"></div>
+    <div class="bg-layer ken-burns"
+         :class="{ 'active': currentBg === '/images/bg_estate_fire.png' }"
+         style="background-image: url('/images/bg_estate_fire.png')"></div>
+    <div class="bg-layer ken-burns"
+         :class="{ 'active': currentBg === '/images/bg_cliff.png' }"
+         style="background-image: url('/images/bg_cliff.png')"></div>
+
+    <!-- ===== 비네팅 오버레이 ===== -->
+    <div class="screen-overlay vignette"></div>
+
+    <!-- ===== 화면 효과 오버레이 ===== -->
+    <div class="screen-overlay"
+         :class="screenEffect"
+         x-show="screenEffect"
+         x-transition></div>
+
+    <!-- ===== 불꽃 파티클 (습격 씬) ===== -->
+    <template x-if="showFireEmbers">
+        <div>
+            <div class="fire-ember"></div>
+            <div class="fire-ember"></div>
+            <div class="fire-ember"></div>
+            <div class="fire-ember"></div>
+            <div class="fire-ember"></div>
+            <div class="fire-ember"></div>
+        </div>
+    </template>
+
+    <!-- ===== 기(氣) 파티클 (기연 씬) ===== -->
+    <template x-if="showQiParticles">
+        <div>
+            <div class="qi-particle"></div>
+            <div class="qi-particle"></div>
+            <div class="qi-particle"></div>
+            <div class="qi-particle"></div>
+            <div class="qi-particle"></div>
+            <div class="qi-particle"></div>
+            <div class="qi-particle"></div>
+            <div class="qi-particle"></div>
+        </div>
+    </template>
+
+    <!-- ===== 씬 전환 오버레이 ===== -->
+    <div class="scene-transition"
+         :class="{ 'hidden': !isTransitioning }"
+         x-show="isTransitioning"
+         x-transition.opacity.duration.1000ms>
+        <p class="transition-text font-myeongjo" x-text="transitionText"></p>
+    </div>
+
+    <!-- ===== 캐릭터 초상화 ===== -->
+    <template x-if="!isTransitioning && currentScene.portraits && currentScene.portraits.length > 0">
+        <div>
+            <template x-for="(portrait, idx) in currentScene.portraits" :key="idx">
+                <div class="portrait-container"
+                     :class="[
+                         portrait.position,
+                         portrait.state === 'speaking' ? 'speaking' : '',
+                         portrait.state === 'dimmed' ? 'dimmed' : '',
+                         portrait.position === 'left' ? 'enter-left' : (portrait.position === 'right' ? 'enter-right' : '')
+                     ]">
+                    <img :src="portrait.src" :alt="'캐릭터'" class="portrait-img">
+                </div>
+            </template>
+        </div>
+    </template>
+
+    <!-- ===== 텍스트 박스 ===== -->
+    <div class="text-box" 
+         x-show="!isTransitioning && !isCompleted && currentScene.text" 
+         x-transition.opacity.duration.500ms>
+        <div class="text-box-inner">
+            <!-- 화자 이름 -->
+            <div x-show="currentScene.speaker" class="mb-2">
+                <span class="speaker-name font-myeongjo"
+                      :class="{ 'narrator': currentScene.speaker === '나레이션' }"
+                      x-text="currentScene.speaker"></span>
+            </div>
+
+            <!-- 대사 텍스트 -->
+            <p class="dialogue-text font-myeongjo">
+                <span x-text="displayedText"></span>
+                <span class="typing-cursor" x-show="isTyping"></span>
+            </p>
+
+            <!-- 다음 클릭 유도 -->
+            <div class="next-indicator" x-show="!isTyping">
+                <span>클릭하여 계속</span>
+                <i data-lucide="chevron-down" style="width:14px; height:14px; display:inline-block;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 튜토리얼 완료 오버레이 ===== -->
+    <div x-show="isCompleted" 
+         x-transition.opacity.duration.2000ms
+         class="absolute inset-0 z-40 flex items-center justify-center bg-black/80">
+        <div class="text-center">
+            <p class="font-myeongjo text-2xl text-amber-400 mb-4 tracking-widest" 
+               style="text-shadow: 0 0 20px rgba(245,158,11,0.5)">
+                무림맹 본산으로 향합니다...
+            </p>
+            <div class="w-16 h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent mx-auto"></div>
+        </div>
+    </div>
+
+    <!-- ===== 스킵 확인 모달 ===== -->
+    <div x-show="showSkipModal" x-transition.opacity x-cloak
+         class="skip-modal-overlay" @click.stop>
+        <div class="skip-modal" @click.stop>
+            <h3 class="font-myeongjo">이야기를 건너뛰시겠습니까?</h3>
+            <p>프롤로그 컷신을 스킵하고 바로 마을로 이동합니다.<br>
+               나중에 다시 볼 수 없습니다.</p>
+            <div class="skip-modal-actions">
+                <button @click="confirmSkip" class="btn-skip-confirm">건너뛰기</button>
+                <button @click="closeSkipModal" class="btn-skip-cancel">계속 보기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lucide 아이콘 초기화 -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
+</script>
+
+</body>
+</html>

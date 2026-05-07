@@ -1,0 +1,528 @@
+/* ============================================
+   한월(韓月) - 튜토리얼 프롤로그 컷신 스타일
+   ============================================ */
+
+/* ── 기본 레이아웃 ── */
+.tutorial-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #000;
+    user-select: none;
+    cursor: pointer;
+}
+
+/* ── 배경 이미지 레이어 ── */
+.bg-layer {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: opacity 1.2s ease-in-out;
+    opacity: 0;
+    z-index: 1;
+}
+
+.bg-layer.active {
+    opacity: 1;
+}
+
+/* 배경 느린 줌 효과 (켄 번즈) */
+.bg-layer.ken-burns {
+    animation: kenBurns 20s ease-in-out infinite alternate;
+}
+
+@keyframes kenBurns {
+    0% { transform: scale(1) translate(0, 0); }
+    100% { transform: scale(1.08) translate(-1%, -1%); }
+}
+
+/* ── 화면 오버레이 효과 ── */
+.screen-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    transition: all 0.8s ease;
+}
+
+/* 어두운 비네팅 */
+.vignette {
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%);
+}
+
+/* 빨간 플래시 (습격 씬) */
+.flash-red {
+    animation: flashRed 0.6s ease-out;
+}
+@keyframes flashRed {
+    0% { background: rgba(200, 20, 20, 0.6); }
+    100% { background: transparent; }
+}
+
+/* 화면 흔들림 */
+.shake {
+    animation: shake 0.5s ease-in-out;
+}
+@keyframes shake {
+    0%, 100% { transform: translate(0); }
+    10% { transform: translate(-8px, -4px); }
+    20% { transform: translate(6px, 5px); }
+    30% { transform: translate(-5px, 2px); }
+    40% { transform: translate(7px, -3px); }
+    50% { transform: translate(-3px, 6px); }
+    60% { transform: translate(4px, -2px); }
+    70% { transform: translate(-6px, 3px); }
+    80% { transform: translate(3px, -5px); }
+    90% { transform: translate(-2px, 4px); }
+}
+
+/* 블랙아웃 (절벽 추락) */
+.blackout {
+    background: #000 !important;
+    opacity: 1;
+    transition: opacity 2s ease-in-out;
+}
+
+.blackout.fade-in {
+    opacity: 0;
+}
+
+/* 화이트 플래시 (기연 각성) */
+.flash-white {
+    animation: flashWhite 1.5s ease-out;
+}
+@keyframes flashWhite {
+    0% { background: rgba(255, 255, 255, 0.9); }
+    50% { background: rgba(255, 255, 255, 0.3); }
+    100% { background: transparent; }
+}
+
+/* ── 기(氣) 파티클 (기연 씬) ── */
+.qi-particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.8), transparent);
+    border-radius: 50%;
+    z-index: 4;
+    pointer-events: none;
+    animation: qiFloat 4s ease-in-out infinite;
+}
+
+.qi-particle:nth-child(1) { left: 20%; bottom: 30%; animation-delay: 0s; animation-duration: 3.5s; }
+.qi-particle:nth-child(2) { left: 40%; bottom: 25%; animation-delay: 0.8s; animation-duration: 4.2s; }
+.qi-particle:nth-child(3) { left: 60%; bottom: 35%; animation-delay: 1.5s; animation-duration: 3.8s; }
+.qi-particle:nth-child(4) { left: 75%; bottom: 20%; animation-delay: 2.2s; animation-duration: 4.5s; }
+.qi-particle:nth-child(5) { left: 35%; bottom: 40%; animation-delay: 0.5s; animation-duration: 3.2s; }
+.qi-particle:nth-child(6) { left: 55%; bottom: 28%; animation-delay: 1.8s; animation-duration: 4.0s; }
+.qi-particle:nth-child(7) { left: 80%; bottom: 32%; animation-delay: 2.5s; animation-duration: 3.6s; }
+.qi-particle:nth-child(8) { left: 15%; bottom: 22%; animation-delay: 3.0s; animation-duration: 4.8s; }
+
+@keyframes qiFloat {
+    0% { transform: translateY(0) scale(1); opacity: 0; }
+    20% { opacity: 0.8; }
+    50% { transform: translateY(-80px) scale(1.5); opacity: 1; }
+    80% { opacity: 0.6; }
+    100% { transform: translateY(-160px) scale(0.5); opacity: 0; }
+}
+
+/* ── 프로그레스 바 ── */
+.progress-bar-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 20;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    transition: width 0.4s ease;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+}
+
+/* ── 스킵 버튼 ── */
+.skip-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 25;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 8px 20px;
+    border-radius: 24px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 1px;
+}
+
+.skip-btn:hover {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    border-color: rgba(245, 158, 11, 0.6);
+}
+
+/* ── 캐릭터 초상화 ── */
+.portrait-container {
+    position: absolute;
+    bottom: 200px;
+    z-index: 10;
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.portrait-container.left {
+    left: 5%;
+}
+
+.portrait-container.right {
+    right: 5%;
+}
+
+.portrait-container.center {
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.portrait-img {
+    height: 320px;
+    width: auto;
+    filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.6));
+    transition: all 0.4s ease;
+    image-rendering: auto;
+}
+
+/* 말하고 있는 캐릭터 강조 */
+.portrait-container.speaking .portrait-img {
+    filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.6)) brightness(1.1);
+    transform: scale(1.02);
+}
+
+/* 말 안 하는 캐릭터 어둡게 */
+.portrait-container.dimmed .portrait-img {
+    filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.6)) brightness(0.5);
+    transform: scale(0.98);
+}
+
+/* 초상화 등장 애니메이션 */
+.portrait-container.enter-left {
+    animation: portraitEnterLeft 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes portraitEnterLeft {
+    from { transform: translateX(-100px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.portrait-container.enter-right {
+    animation: portraitEnterRight 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes portraitEnterRight {
+    from { transform: translateX(100px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* ── 텍스트 박스 ── */
+.text-box {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 15;
+    padding: 0 5% 40px;
+}
+
+.text-box-inner {
+    background: linear-gradient(
+        135deg,
+        rgba(10, 10, 15, 0.92),
+        rgba(20, 15, 10, 0.88)
+    );
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    border-top: 2px solid rgba(245, 158, 11, 0.4);
+    border-radius: 16px 16px 0 0;
+    padding: 24px 32px 28px;
+    position: relative;
+    box-shadow:
+        0 -4px 30px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(245, 158, 11, 0.1);
+}
+
+/* 좌우 장식 */
+.text-box-inner::before,
+.text-box-inner::after {
+    content: '';
+    position: absolute;
+    top: -1px;
+    width: 40px;
+    height: 2px;
+    background: linear-gradient(90deg, #f59e0b, transparent);
+}
+
+.text-box-inner::before { left: 20px; }
+.text-box-inner::after { right: 20px; background: linear-gradient(270deg, #f59e0b, transparent); }
+
+/* 화자 이름 */
+.speaker-name {
+    display: inline-block;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(180, 83, 9, 0.1));
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: 8px;
+    padding: 4px 16px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fbbf24;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+}
+
+.speaker-name.narrator {
+    background: linear-gradient(135deg, rgba(156, 163, 175, 0.1), rgba(107, 114, 128, 0.05));
+    border-color: rgba(156, 163, 175, 0.3);
+    color: #9ca3af;
+    font-style: italic;
+}
+
+/* 대사 텍스트 */
+.dialogue-text {
+    font-size: 16px;
+    line-height: 1.8;
+    color: #e5e7eb;
+    min-height: 56px;
+    letter-spacing: 0.5px;
+    word-break: keep-all;
+}
+
+/* 타이핑 커서 */
+.typing-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 18px;
+    background: #fbbf24;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: cursorBlink 0.8s step-end infinite;
+}
+
+@keyframes cursorBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* 다음 대사 표시 (클릭 유도) */
+.next-indicator {
+    position: absolute;
+    bottom: 12px;
+    right: 24px;
+    color: rgba(245, 158, 11, 0.6);
+    font-size: 12px;
+    letter-spacing: 1px;
+    animation: nextPulse 1.5s ease-in-out infinite;
+}
+
+.next-indicator i {
+    display: inline-block;
+    animation: nextBounce 1.5s ease-in-out infinite;
+}
+
+@keyframes nextPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+}
+
+@keyframes nextBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(3px); }
+}
+
+/* ── 씬 전환 오버레이 ── */
+.scene-transition {
+    position: absolute;
+    inset: 0;
+    background: #000;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 1s ease;
+}
+
+.scene-transition.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* 씬 전환 텍스트 */
+.transition-text {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 18px;
+    letter-spacing: 4px;
+    font-style: italic;
+    text-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+    animation: transitionFade 2s ease-in-out;
+}
+
+@keyframes transitionFade {
+    0% { opacity: 0; transform: translateY(10px); }
+    30% { opacity: 1; transform: translateY(0); }
+    70% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-10px); }
+}
+
+/* ── 스킵 확인 모달 ── */
+.skip-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.skip-modal {
+    background: linear-gradient(135deg, rgba(20, 20, 25, 0.95), rgba(30, 25, 20, 0.95));
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 380px;
+    text-align: center;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+}
+
+.skip-modal h3 {
+    color: #fbbf24;
+    font-size: 18px;
+    margin-bottom: 12px;
+    letter-spacing: 2px;
+}
+
+.skip-modal p {
+    color: #9ca3af;
+    font-size: 14px;
+    margin-bottom: 24px;
+    line-height: 1.6;
+}
+
+.skip-modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.skip-modal-actions button {
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 1px;
+}
+
+.btn-skip-confirm {
+    background: linear-gradient(135deg, #b45309, #92400e);
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    color: #fbbf24;
+}
+
+.btn-skip-confirm:hover {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+}
+
+.btn-skip-cancel {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #d1d5db;
+}
+
+.btn-skip-cancel:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* ── 나레이션 전용 (화면 중앙 텍스트) ── */
+.center-narration {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 15;
+    text-align: center;
+    max-width: 600px;
+    padding: 0 24px;
+}
+
+.center-narration-text {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 20px;
+    line-height: 2;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.8);
+    font-style: italic;
+}
+
+/* ── 불꽃 파티클 (습격 씬) ── */
+.fire-ember {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: #ef4444;
+    border-radius: 50%;
+    z-index: 4;
+    pointer-events: none;
+    animation: emberFloat 3s ease-in infinite;
+}
+
+.fire-ember:nth-child(1) { left: 10%; animation-delay: 0s; }
+.fire-ember:nth-child(2) { left: 25%; animation-delay: 0.5s; }
+.fire-ember:nth-child(3) { left: 45%; animation-delay: 1s; }
+.fire-ember:nth-child(4) { left: 65%; animation-delay: 1.5s; }
+.fire-ember:nth-child(5) { left: 80%; animation-delay: 0.3s; }
+.fire-ember:nth-child(6) { left: 90%; animation-delay: 0.8s; }
+
+@keyframes emberFloat {
+    0% { bottom: -10px; opacity: 1; transform: translateX(0) scale(1); }
+    50% { opacity: 0.8; transform: translateX(20px) scale(1.5); }
+    100% { bottom: 100vh; opacity: 0; transform: translateX(-10px) scale(0.5); }
+}
+
+/* ── 반응형 ── */
+@media (max-width: 768px) {
+    .portrait-img {
+        height: 200px;
+    }
+
+    .portrait-container {
+        bottom: 180px;
+    }
+
+    .text-box-inner {
+        padding: 16px 20px 20px;
+    }
+
+    .dialogue-text {
+        font-size: 14px;
+        min-height: 48px;
+    }
+
+    .speaker-name {
+        font-size: 12px;
+        padding: 3px 12px;
+    }
+
+    .center-narration-text {
+        font-size: 16px;
+    }
+}

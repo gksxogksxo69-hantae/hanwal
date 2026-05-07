@@ -22,7 +22,7 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable()) // JSON API 통신을 위해 임시 비활성화
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/css/**", "/images/**", "/js/**", "/api/auth/**").permitAll()
+                .requestMatchers("/", "/tutorial", "/css/**", "/images/**", "/js/**", "/api/auth/**", "/api/tutorial/**").permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form.disable()) // 기본 폼 로그인 비활성화 (커스텀 API로 로그인 처리)

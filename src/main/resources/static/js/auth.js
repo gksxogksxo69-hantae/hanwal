@@ -119,6 +119,9 @@ document.addEventListener('alpine:init', () => {
                 if (data.success) {
                     if (data.data.needsCharacterSetup) {
                         this.currentView = 'genderSelect';
+                    } else if (data.data.needsTutorial) {
+                        this.showAlert(`환영합니다, ${data.data.nickname}님! 이야기가 시작됩니다...`);
+                        setTimeout(() => { window.location.href = '/tutorial'; }, 1500);
                     } else {
                         this.showAlert(`환영합니다, ${data.data.nickname}님! 마을로 입장합니다.`);
                         setTimeout(() => { window.location.href = '/town'; }, 1500);
@@ -178,7 +181,7 @@ document.addEventListener('alpine:init', () => {
                 const data = await res.json();
                 if (data.success) {
                     this.showAlert(data.message);
-                    setTimeout(() => { window.location.href = '/town'; }, 1500);
+                    setTimeout(() => { window.location.href = '/tutorial'; }, 1500);
                 } else {
                     this.showAlert(data.message);
                 }

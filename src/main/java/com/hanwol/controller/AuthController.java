@@ -82,10 +82,13 @@ public class AuthController {
             
             // 성별이 아직 NULL 이면 캐릭터 선택 필요 상태로 응답
             boolean needsCharacterSetup = (user.getGender() == null);
+            // 성별은 선택했지만 튜토리얼 미완료 상태
+            boolean needsTutorial = !needsCharacterSetup && !user.isTutorialCompleted() && user.getTutorialStep() < 2;
             
             return ResponseEntity.ok(new AuthResponse(true, "로그인 성공", Map.of(
                     "nickname", user.getNickname(),
-                    "needsCharacterSetup", needsCharacterSetup
+                    "needsCharacterSetup", needsCharacterSetup,
+                    "needsTutorial", needsTutorial
             )));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(new AuthResponse(false, e.getMessage()));

@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -22,9 +21,8 @@ public class EmailService {
     private String fromEmail;
 
     /**
-     * 메일 전송 로직 (비동기로 실행되어 응답을 지연시키지 않음)
+     * 메일 전송 로직 (결과를 UI로 전달하기 위해 동기식으로 실행)
      */
-    @Async
     public void sendVerificationEmail(String to, String code) {
         try {
             MimeMessage message = mailSender.createMimeMessage();

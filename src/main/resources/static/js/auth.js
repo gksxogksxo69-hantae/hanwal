@@ -9,6 +9,21 @@ document.addEventListener('alpine:init', () => {
         findPwForm: { email: '', nickname: '' },
         selectedGender: null,
 
+        // 추가: 커스텀 모달 상태
+        globalAlert: {
+            show: false,
+            message: '',
+            title: ''
+        },
+        showAlert(msg, title = '무림 소식') {
+            this.globalAlert.message = msg;
+            this.globalAlert.title = title;
+            this.globalAlert.show = true;
+        },
+        hideAlert() {
+            this.globalAlert.show = false;
+        },
+
         init() {
             this.$watch('currentView', () => {
                 setTimeout(() => lucide.createIcons(), 50);
@@ -56,7 +71,7 @@ document.addEventListener('alpine:init', () => {
                 if (data.success) {
                     this.codeSent = true;
                     // TODO: 실제 이메일 발송되도록 백엔드가 연동되었으므로 Alert는 단순 안내용으로 변경
-                    alert(`인증번호가 발송되었습니다. 메일함을 확인해주세요!\n(스팸 메일함도 확인해주세요)`);
+                    this.showAlert(`인증번호가 발송되었습니다. 메일함을 확인해주세요!\n(스팸 메일함도 확인해주세요)`);
                 } else {
                     this.errorMessage = data.message;
                 }
@@ -105,7 +120,7 @@ document.addEventListener('alpine:init', () => {
                     if (data.data.needsCharacterSetup) {
                         this.currentView = 'genderSelect';
                     } else {
-                        alert(`환영합니다, ${data.data.nickname}님! 마을로 입장합니다.`);
+                        this.showAlert(`환영합니다, ${data.data.nickname}님! 마을로 입장합니다.`);
                         // TODO: window.location.href = '/town';
                     }
                 } else {
@@ -162,14 +177,14 @@ document.addEventListener('alpine:init', () => {
                 });
                 const data = await res.json();
                 if (data.success) {
-                    alert(data.message);
+                    this.showAlert(data.message);
                     // TODO: window.location.href = '/town';
                     this.currentView = 'login';
                 } else {
-                    alert(data.message);
+                    this.showAlert(data.message);
                 }
             } catch (e) {
-                alert("통신 오류가 발생했습니다.");
+                this.showAlert("통신 오류가 발생했습니다.");
             } finally {
                 this.isLoading = false;
             }
@@ -186,7 +201,7 @@ document.addEventListener('alpine:init', () => {
                 });
                 const data = await res.json();
                 if (data.success) {
-                    alert(`발급된 임시 비밀번호는 [ ${data.data} ] 입니다.\n로그인 후 즉시 변경해주세요!`);
+                    this.showAlert(`발급된 임시 비밀번호는 [ ${data.data} ] 입니다.\n로그인 후 즉시 변경해주세요!`);
                     this.currentView = 'login';
                 } else {
                     this.errorMessage = data.message;

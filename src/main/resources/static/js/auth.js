@@ -121,7 +121,7 @@ document.addEventListener('alpine:init', () => {
                         this.currentView = 'genderSelect';
                     } else {
                         this.showAlert(`환영합니다, ${data.data.nickname}님! 마을로 입장합니다.`);
-                        // TODO: window.location.href = '/town';
+                        setTimeout(() => { window.location.href = '/town'; }, 1500);
                     }
                 } else {
                     this.errorMessage = data.message;
@@ -178,8 +178,7 @@ document.addEventListener('alpine:init', () => {
                 const data = await res.json();
                 if (data.success) {
                     this.showAlert(data.message);
-                    // TODO: window.location.href = '/town';
-                    this.currentView = 'login';
+                    setTimeout(() => { window.location.href = '/town'; }, 1500);
                 } else {
                     this.showAlert(data.message);
                 }

@@ -10,4 +10,9 @@ public class IndexController {
     public String index() {
         return "index";
     }
+
+    @GetMapping("/town")
+    public String town() {
+        return "town";
+    }
 }

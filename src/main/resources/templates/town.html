@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한월(韓月) - 무림 본산</title>
+
+    <!-- Tailwind CSS (CDN for development) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts (Gowun Batang & Pretendard) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #0f172a; font-family: 'Pretendard', sans-serif; }
+        
+        .gowun-batang { font-family: 'Gowun Batang', serif; }
+        
+        /* 캔버스 화면 꽉 채우기 */
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 10;
+        }
+
+        /* 픽셀 아트 선명하게 유지 */
+        canvas {
+            image-rendering: -moz-crisp-edges;
+            image-rendering: -webkit-crisp-edges;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        /* UI 레이어는 캔버스 위로 */
+        .ui-layer {
+            position: relative;
+            z-index: 20;
+            pointer-events: none; /* 클릭을 캔버스로 통과시킴 */
+        }
+        
+        /* 버튼 등 클릭 가능한 UI는 명시적으로 활성화 */
+        .interactive-ui {
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body x-data="townApp()">
+
+    <!-- 게임 캔버스 -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- 상단 HUD 레이어 -->
+    <div class="ui-layer absolute top-0 left-0 w-full p-4 flex justify-between items-start">
+        
+        <!-- 미니맵(추후) & 기본 정보 -->
+        <div class="interactive-ui flex items-center gap-3 bg-slate-900/80 p-3 rounded-lg border border-slate-700 backdrop-blur-sm">
+            <div class="w-12 h-12 bg-slate-800 rounded-full border-2 border-amber-500 overflow-hidden flex items-center justify-center">
+                <i data-lucide="user" class="text-slate-400"></i>
+            </div>
+            <div>
+                <h2 class="text-white font-bold gowun-batang text-xl tracking-wider">이한월</h2>
+                <div class="text-amber-400 text-xs font-semibold">Lv.1 모험가</div>
+            </div>
+        </div>
+
+        <!-- 재화 정보 -->
+        <div class="interactive-ui flex gap-2">
+            <div class="bg-slate-900/80 px-4 py-2 rounded-lg border border-slate-700 backdrop-blur-sm flex items-center gap-2">
+                <i data-lucide="coins" class="text-yellow-500 w-4 h-4"></i>
+                <span class="text-white font-mono font-medium">1,500</span>
+            </div>
+            <div class="bg-slate-900/80 px-4 py-2 rounded-lg border border-slate-700 backdrop-blur-sm flex items-center gap-2">
+                <i data-lucide="gem" class="text-cyan-400 w-4 h-4"></i>
+                <span class="text-white font-mono font-medium">30</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 스페이스 상호작용 프롬프트 -->
+    <div x-show="showInteractPrompt" 
+         x-transition.opacity
+         class="ui-layer absolute inset-0 flex items-center justify-center pb-32">
+        <div class="bg-slate-900/90 border-2 border-amber-500 px-6 py-3 rounded-md animate-bounce shadow-[0_0_15px_rgba(245,158,11,0.5)]">
+            <span class="text-white text-lg"><strong class="text-amber-400 gowun-batang text-xl mr-2">SPACE</strong> 상호작용</span>
+        </div>
+    </div>
+
+    <!-- 하단 메뉴 -->
+    <div class="ui-layer absolute bottom-0 left-0 w-full p-4 flex justify-center pb-8">
+        <div class="interactive-ui flex gap-4 bg-slate-900/80 px-6 py-3 rounded-2xl border border-slate-700 backdrop-blur-sm shadow-xl">
+            <button class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition group">
+                <div class="p-2 rounded-lg group-hover:bg-slate-700">
+                    <i data-lucide="shield"></i>
+                </div>
+                <span class="text-xs font-medium">캐릭터</span>
+            </button>
+            <button class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition group">
+                <div class="p-2 rounded-lg group-hover:bg-slate-700">
+                    <i data-lucide="users"></i>
+                </div>
+                <span class="text-xs font-medium">파티</span>
+            </button>
+            <button class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition group">
+                <div class="p-2 rounded-lg group-hover:bg-slate-700">
+                    <i data-lucide="package"></i>
+                </div>
+                <span class="text-xs font-medium">인벤토리</span>
+            </button>
+            <button class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition group">
+                <div class="p-2 rounded-lg group-hover:bg-slate-700">
+                    <i data-lucide="settings"></i>
+                </div>
+                <span class="text-xs font-medium">설정</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 상호작용 모달 UI (예시) -->
+    <div x-show="currentModal !== null" 
+         style="display: none;"
+         class="interactive-ui absolute inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        
+        <!-- 상점 모달 -->
+        <div x-show="currentModal === 'STORE'" x-transition @click.away="closeModal()" class="bg-slate-800 border border-amber-600 rounded-xl max-w-2xl w-full text-white overflow-hidden shadow-2xl">
+            <div class="bg-slate-900 p-4 border-b border-amber-600/50 flex justify-between items-center">
+                <h3 class="text-2xl font-bold gowun-batang text-amber-500">객잔 (상점)</h3>
+                <button @click="closeModal()" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 h-64 flex items-center justify-center">
+                <p class="text-slate-400">상점 기능은 준비 중입니다.</p>
+            </div>
+        </div>
+        
+        <!-- 가챠 모달 -->
+        <div x-show="currentModal === 'GACHA'" x-transition @click.away="closeModal()" class="bg-slate-800 border border-amber-600 rounded-xl max-w-2xl w-full text-white overflow-hidden shadow-2xl">
+            <div class="bg-slate-900 p-4 border-b border-amber-600/50 flex justify-between items-center">
+                <h3 class="text-2xl font-bold gowun-batang text-amber-500">인연 맺기 (가챠)</h3>
+                <button @click="closeModal()" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 h-64 flex items-center justify-center">
+                <p class="text-slate-400">가챠 기능은 준비 중입니다.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- 타운 로직 분리 -->
+    <script src="/js/town.js"></script>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

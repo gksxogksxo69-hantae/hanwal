@@ -45,6 +45,15 @@ public class User {
     @Column(nullable = false)
     private long premiumCurrency = 0;
 
+    @Column(nullable = false)
+    private int locX = 400;
+
+    @Column(nullable = false)
+    private int locY = 300;
+
+    @Column
+    private LocalDateTime lastSyncTime;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -57,6 +66,15 @@ public class User {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
+        this.locX = 400; // 마을 중앙 스폰 X
+        this.locY = 300; // 마을 중앙 스폰 Y
+        this.lastSyncTime = LocalDateTime.now();
+    }
+
+    public void updateLocation(int x, int y, LocalDateTime syncTime) {
+        this.locX = x;
+        this.locY = y;
+        this.lastSyncTime = syncTime;
     }
 
     public void selectGender(Gender gender) {

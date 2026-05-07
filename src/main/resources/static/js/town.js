@@ -3,6 +3,7 @@ document.addEventListener('alpine:init', () => {
         showInteractPrompt: false,
         currentModal: null,
         activeTrigger: null, // "STORE", "GACHA" 
+        debugMode: false, // 충돌 박스 눈에 보이게 켜고 끌 수 있는 디버그 모드 (테스트 완료 시 false로 변경)
 
         // 캔버스 및 게임 상태 관련 변수들
         canvas: null,
@@ -36,10 +37,37 @@ document.addEventListener('alpine:init', () => {
             w: false, a: false, s: false, d: false, space: false
         },
 
-        // 장애물(충돌박스) 맵 (하드코딩) => 지도 이미지에 맞춰 나중에 수치 튜닝 필요
+        // 장애물(충돌박스) 맵 (2048x2048 스케일 기준 대략적 배치)
         collisions: [
-            { x: -500, y: -500, width: 2000, height: 500 }, // 위쪽 맵 경계선 등
-            // 필요에 따라 사각형 채워넣기 (x, y, w, h)
+            // 외곽 경계선 (절대 못 벗어나게)
+            { x: -100, y: -100, width: 2248, height: 100 }, // 북쪽 밖
+            { x: -100, y: 2048, width: 2248, height: 100 }, // 남쪽 밖
+            { x: -100, y: 0, width: 100, height: 2048 },    // 서쪽 밖
+            { x: 2048, y: 0, width: 100, height: 2048 },    // 동쪽 밖
+
+            // 상단 메인 전각 및 담장
+            { x: 0, y: 0, width: 2048, height: 420 },
+            
+            // 좌측 건물 및 복도 담장
+            { x: 0, y: 420, width: 330, height: 1628 },
+            
+            // 우측 상단/중단 건물 및 서고
+            { x: 1400, y: 420, width: 648, height: 750 },
+            
+            // 우측 하단 연못 및 정원 바위들
+            { x: 1250, y: 1170, width: 798, height: 450 },
+            
+            // 하단 담장 (좌측)
+            { x: 0, y: 1850, width: 850, height: 198 },
+            // 하단 담장 (우측)
+            { x: 1150, y: 1850, width: 898, height: 198 },
+            
+            // 중앙 파빌리온(정자)
+            { x: 860, y: 880, width: 250, height: 250 },
+            
+            // 중앙 대장간/수련장 목인장들 (대략적 바운딩)
+            { x: 420, y: 1150, width: 180, height: 120 },
+            { x: 450, y: 650, width: 180, height: 120 }
         ],
 
         // 상호작용 트리거 구역 (하드코딩)
@@ -229,11 +257,11 @@ document.addEventListener('alpine:init', () => {
             // 맵 경계 클램핑 (카메라가 맵 밖 검은 화면으로 나가지 않도록 고정)
             if (this.camera.x < 0) this.camera.x = 0;
             if (this.camera.y < 0) this.camera.y = 0;
-            
+
             // 화면이 맵 폭보다 넓은 모니터의 경우 예외 처리 포함
             const maxX = Math.max(0, mapDrawWidth - this.camera.width);
             const maxY = Math.max(0, mapDrawHeight - this.camera.height);
-            
+
             if (this.camera.x > maxX) this.camera.x = maxX;
             if (this.camera.y > maxY) this.camera.y = maxY;
 
@@ -246,13 +274,18 @@ document.addEventListener('alpine:init', () => {
             // 1. 맵 배경 그리기 (맵을 2048 사이즈로 키워 거대하게 표현)
             this.ctx.drawImage(this.mapImg, 0, 0, mapDrawWidth, mapDrawHeight);
 
-            // (디버그용) 트리거 박스 그리기
-            /*
-            this.ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
-            this.triggers.forEach(t => {
-                this.ctx.fillRect(t.x, t.y, t.width, t.height);
-            });
-            */
+            // (디버그용) 충돌 박스 및 트리거 구역 빨간색 투명 박스로 그리기
+            if (this.debugMode) {
+                this.ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
+                this.collisions.forEach(c => {
+                    this.ctx.fillRect(c.x, c.y, c.width, c.height);
+                });
+                
+                this.ctx.fillStyle = 'rgba(255, 255, 0, 0.4)';
+                this.triggers.forEach(t => {
+                    this.ctx.fillRect(t.x, t.y, t.width, t.height);
+                });
+            }
 
             // 2. 캐릭터 그리기
             // 스프라이트 원본이 어떻게 생겼는지 모르므로 임의 단위로 자름 (예: 64x64 사이즈 4열 4행 기준)

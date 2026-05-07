@@ -118,7 +118,7 @@ document.addEventListener('alpine:init', () => {
                     this.onResourceLoad();
                 }
             };
-            this.charImg.src = '/images/char_sprite_male.png';
+            this.charImg.src = '/images/char_sprite.png'; // 처음 뽑았던 4방향 시트를 다시 활용!
         },
 
         onResourceLoad() {
@@ -170,11 +170,11 @@ document.addEventListener('alpine:init', () => {
                 dx = (dx / length) * this.player.speed * dt;
                 dy = (dy / length) * this.player.speed * dt;
 
-                // 방향 설정 (간단히 0,1,2,3 맵핑)
+                // 방향 설정 (간단히 4방향 맵핑: 0=하, 1=상, 2=좌, 3=우 -> 스프라이트 시트 배열에 따라 조절 필요)
                 if (Math.abs(dx) > Math.abs(dy)) {
-                    this.player.frameY = dx > 0 ? 2 : 3; // 우, 좌
+                    this.player.frameY = dx > 0 ? 2 : 1; // 우, 좌
                 } else {
-                    this.player.frameY = dy > 0 ? 0 : 1; // 하, 상
+                    this.player.frameY = dy > 0 ? 0 : 3; // 하, 상
                 }
 
                 // 이동 예상 위치 (임시 계산)
@@ -279,26 +279,20 @@ document.addEventListener('alpine:init', () => {
             });
             */
 
-            // 2. 단일 캐릭터 그리기 (AI가 만든 한 장의 정면 캐릭터를 그대로 사용)
-            const spriteSizeX = this.charImg.width; 
-            const spriteSizeY = this.charImg.height;
+            // 2. 캐릭터 그리기 (정석 4x4 스프라이트 시트 로직)
+            // 가로 세로 4등분으로 프레임을 정확히 쪼갭니다.
+            const spriteSizeX = this.charImg.width / 4; 
+            const spriteSizeY = this.charImg.height / 4;
             
-            // 그릴 때 크기 조절 (화면에 맞게 스케일링, 캐릭터 고화질 유지)
+            // 그릴 때 크기 조절 (화면에 맞게 스케일링)
             const renderWidth = 80;
-            const renderHeight = 80 * (spriteSizeY / spriteSizeX); // 원본 비율 유지
-            
-            // 이동 중일 때만 위아래로 통통 튀는 애니메이션 (Wobble 효과)
-            let bounceY = 0;
-            if (this.player.isMoving) {
-                // animTimer에 따라 Y축을 3픽셀 정도 위아래로 부드럽게 튕김
-                bounceY = Math.abs(Math.sin(this.player.animTimer * 10)) * -6; 
-            }
+            const renderHeight = 80 * (spriteSizeY / spriteSizeX); 
             
             this.ctx.drawImage(
                 this.charImg,
-                0, 0, spriteSizeX, spriteSizeY, // 원본 전체 그리기
-                this.player.x - (renderWidth - this.player.width)/2, // 캐릭터 중심 맞춰서 X축 정렬
-                this.player.y - (renderHeight - this.player.height) + bounceY, // 발끝을 맞추고 통통 튀는 애니메이션 추가
+                this.player.frameX * spriteSizeX, this.player.frameY * spriteSizeY, spriteSizeX, spriteSizeY, // 원본 자르기 옵션 추가
+                this.player.x - (renderWidth - this.player.width)/2, 
+                this.player.y - (renderHeight - this.player.height), 
                 renderWidth, renderHeight
             );
 

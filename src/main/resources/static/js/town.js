@@ -279,20 +279,27 @@ document.addEventListener('alpine:init', () => {
             });
             */
 
-            // 2. 캐릭터 그리기
-            // 스프라이트 원본이 어떻게 생겼는지 모르므로 임의 단위로 자름 (예: 64x64 사이즈 4열 4행 기준)
-            const spriteSizeX = this.charImg.width / 4; 
-            const spriteSizeY = this.charImg.height / 4;
+            // 2. 단일 캐릭터 그리기 (AI가 만든 한 장의 정면 캐릭터를 그대로 사용)
+            const spriteSizeX = this.charImg.width; 
+            const spriteSizeY = this.charImg.height;
             
-            // 그릴 때 크기를 두 배로 키움 (픽셀 감성)
-            const renderSize = 64; 
+            // 그릴 때 크기 조절 (화면에 맞게 스케일링, 캐릭터 고화질 유지)
+            const renderWidth = 80;
+            const renderHeight = 80 * (spriteSizeY / spriteSizeX); // 원본 비율 유지
+            
+            // 이동 중일 때만 위아래로 통통 튀는 애니메이션 (Wobble 효과)
+            let bounceY = 0;
+            if (this.player.isMoving) {
+                // animTimer에 따라 Y축을 3픽셀 정도 위아래로 부드럽게 튕김
+                bounceY = Math.abs(Math.sin(this.player.animTimer * 10)) * -6; 
+            }
             
             this.ctx.drawImage(
                 this.charImg,
-                this.player.frameX * spriteSizeX, this.player.frameY * spriteSizeY, spriteSizeX, spriteSizeY,
-                this.player.x - (renderSize - this.player.width)/2, // 캐릭터 중심 맞춰서 그리기
-                this.player.y - (renderSize - this.player.height), 
-                renderSize, renderSize
+                0, 0, spriteSizeX, spriteSizeY, // 원본 전체 그리기
+                this.player.x - (renderWidth - this.player.width)/2, // 캐릭터 중심 맞춰서 X축 정렬
+                this.player.y - (renderHeight - this.player.height) + bounceY, // 발끝을 맞추고 통통 튀는 애니메이션 추가
+                renderWidth, renderHeight
             );
 
             this.ctx.restore();

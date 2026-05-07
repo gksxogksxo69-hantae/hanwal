@@ -25,21 +25,9 @@ spring:
     prefix: classpath:/templates/
     suffix: .html
 
-  # 메일 발송 (SMTP) 설정
+  # 메일 발송 (Google Apps Script API) 설정
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${SPRING_MAIL_USERNAME:your-email@gmail.com}
-    password: ${SPRING_MAIL_PASSWORD:your-app-password}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-          connectiontimeout: 5000
-          timeout: 5000
-          writetimeout: 5000
+    script-url: ${GOOGLE_SCRIPT_MAIL_URL:https://script.google.com/macros/s/AKfycbx-Ok16T8-heio4Vfwo-ioj_MRZyFduzbnIRkaYqT4KIOVX30WtqDsTImLCIuYgydsz/exec}
 
 server:
   port: ${PORT:8080}

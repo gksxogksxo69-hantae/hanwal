@@ -1,44 +1,53 @@
 package com.hanwol.service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
+import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    private final RestTemplate restTemplate = new RestTemplate();
 
-    @Value("${spring.mail.username:noreply@hanwol.com}")
-    private String fromEmail;
+    @Value("${spring.mail.script-url}")
+    private String scriptUrl;
 
     /**
-     * 메일 전송 로직 (결과를 UI로 전달하기 위해 동기식으로 실행)
+     * 메일 전송 로직 (구글 앱스 스크립트 API 사용)
      */
     public void sendVerificationEmail(String to, String code) {
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setFrom(Objects.requireNonNull(fromEmail));
-            helper.setTo(Objects.requireNonNull(to));
-            helper.setSubject(Objects.requireNonNull("[한월] 무림 출사(회원가입) 인증 번호 안내"));
-
             String htmlContent = buildHtmlContent(code);
-            helper.setText(htmlContent, true);
+            String subject = "[한월] 무림 출사(회원가입) 인증 번호 안내";
 
-            mailSender.send(message);
-            log.info("인증 이메일 발송 완료: {}", to);
-        } catch (MessagingException e) {
-            log.error("메일 발송 실패", e);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            Map<String, String> body = Map.of(
+                    "to", to,
+                    "subject", subject,
+                    "htmlContent", htmlContent
+            );
+
+            HttpEntity<Map<String, String>> request = new HttpEntity<>(body, headers);
+
+            String response = restTemplate.postForObject(Objects.requireNonNull(scriptUrl), request, String.class);
+            log.info("인증 이메일 발송 완료 (Google Script): {}. Response: {}", to, response);
+            
+            if (response != null && response.contains("\"success\":false")) {
+                throw new RuntimeException("구글 스크립트 내부 에러: " + response);
+            }
+        } catch (Exception e) {
+            log.error("구글 스크립트 API 메일 발송 실패", e);
             throw new RuntimeException("이메일 발송 중 오류가 발생했습니다.");
         }
     }

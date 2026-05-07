@@ -10,7 +10,7 @@ description = 'Turn-based RPG Web Game'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(17)
 	}
 }
 

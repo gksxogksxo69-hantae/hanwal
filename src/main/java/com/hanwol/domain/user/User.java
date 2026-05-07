@@ -54,6 +54,12 @@ public class User {
     @Column
     private LocalDateTime lastSyncTime;
 
+    @Column(nullable = false)
+    private int tutorialStep = 0;
+
+    @Column(nullable = false)
+    private boolean isTutorialCompleted = false;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -87,4 +93,13 @@ public class User {
     public void updatePassword(String newPassword) {
         this.password = newPassword;
     }
+
+    public void updateTutorialStep(int step) {
+        this.tutorialStep = step;
+    }
+
+    public void completeTutorial() {
+        this.isTutorialCompleted = true;
+    }
 }
+

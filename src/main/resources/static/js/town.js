@@ -80,8 +80,45 @@ document.addEventListener('alpine:init', () => {
             this.mapImg.onload = () => this.onResourceLoad();
             this.mapImg.src = '/images/map_bg.png';
 
-            this.charImg.onload = () => this.onResourceLoad();
-            this.charImg.src = '/images/char_sprite.png';
+            this.charImg.crossOrigin = "Anonymous";
+            this.charImg.onload = () => {
+                // 크로마키 (오프스크린 캔버스 이용해 흰색/밝은회색 배경 제거)
+                const offCanvas = document.createElement('canvas');
+                offCanvas.width = this.charImg.width;
+                offCanvas.height = this.charImg.height;
+                const offCtx = offCanvas.getContext('2d');
+                offCtx.drawImage(this.charImg, 0, 0);
+                
+                try {
+                    const imgData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
+                    const data = imgData.data;
+                    
+                    // 첫 픽셀의 색상을 배경색으로 가정 (AI 생성물의 특징)
+                    const bgR = data[0], bgG = data[1], bgB = data[2];
+                    
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i], g = data[i+1], b = data[i+2];
+                        // 만약 픽셀이 흰색 계열이거나 배경색과 유사하다면 투명화
+                        if ((r > 240 && g > 240 && b > 240) ||
+                            (Math.abs(r - bgR) < 15 && Math.abs(g - bgG) < 15 && Math.abs(b - bgB) < 15)) {
+                            data[i+3] = 0; // Alpha = 0 (투명)
+                        }
+                    }
+                    offCtx.putImageData(imgData, 0, 0);
+                    
+                    // 크로마키 처리된 캔버스를 이미지소스로 대체
+                    const cleanImg = new Image();
+                    cleanImg.onload = () => {
+                        this.charImg = cleanImg;
+                        this.onResourceLoad();
+                    };
+                    cleanImg.src = offCanvas.toDataURL();
+                } catch (e) {
+                    console.warn("로컬 환경이라 크로마키(Canvas getImageData) 차단됨. 원본 사용:", e);
+                    this.onResourceLoad();
+                }
+            };
+            this.charImg.src = '/images/char_sprite_male.png';
         },
 
         onResourceLoad() {

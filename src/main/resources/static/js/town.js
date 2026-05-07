@@ -9,7 +9,7 @@ document.addEventListener('alpine:init', () => {
         ctx: null,
         lastTime: 0,
         syncTimer: 0,
-        
+
         // 이미지 자산
         mapImg: new Image(),
         charImg: new Image(),
@@ -61,7 +61,7 @@ document.addEventListener('alpine:init', () => {
         setupCanvas() {
             this.canvas = document.getElementById('gameCanvas');
             this.ctx = this.canvas.getContext('2d');
-            
+
             this.resizeCanvas();
             window.addEventListener('resize', () => this.resizeCanvas());
         },
@@ -71,7 +71,7 @@ document.addEventListener('alpine:init', () => {
             this.canvas.height = window.innerHeight;
             this.camera.width = window.innerWidth;
             this.camera.height = window.innerHeight;
-            
+
             // 픽셀 아트 선명하게
             this.ctx.imageSmoothingEnabled = false;
         },
@@ -80,45 +80,8 @@ document.addEventListener('alpine:init', () => {
             this.mapImg.onload = () => this.onResourceLoad();
             this.mapImg.src = '/images/map_bg.png';
 
-            this.charImg.crossOrigin = "Anonymous";
-            this.charImg.onload = () => {
-                // 크로마키 (오프스크린 캔버스 이용해 흰색/밝은회색 배경 제거)
-                const offCanvas = document.createElement('canvas');
-                offCanvas.width = this.charImg.width;
-                offCanvas.height = this.charImg.height;
-                const offCtx = offCanvas.getContext('2d');
-                offCtx.drawImage(this.charImg, 0, 0);
-                
-                try {
-                    const imgData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
-                    const data = imgData.data;
-                    
-                    // 첫 픽셀의 색상을 배경색으로 가정 (AI 생성물의 특징)
-                    const bgR = data[0], bgG = data[1], bgB = data[2];
-                    
-                    for (let i = 0; i < data.length; i += 4) {
-                        const r = data[i], g = data[i+1], b = data[i+2];
-                        // 만약 픽셀이 흰색 계열이거나 배경색과 유사하다면 투명화
-                        if ((r > 240 && g > 240 && b > 240) ||
-                            (Math.abs(r - bgR) < 15 && Math.abs(g - bgG) < 15 && Math.abs(b - bgB) < 15)) {
-                            data[i+3] = 0; // Alpha = 0 (투명)
-                        }
-                    }
-                    offCtx.putImageData(imgData, 0, 0);
-                    
-                    // 크로마키 처리된 캔버스를 이미지소스로 대체
-                    const cleanImg = new Image();
-                    cleanImg.onload = () => {
-                        this.charImg = cleanImg;
-                        this.onResourceLoad();
-                    };
-                    cleanImg.src = offCanvas.toDataURL();
-                } catch (e) {
-                    console.warn("로컬 환경이라 크로마키(Canvas getImageData) 차단됨. 원본 사용:", e);
-                    this.onResourceLoad();
-                }
-            };
-            this.charImg.src = '/images/char_sprite.png'; // 처음 뽑았던 4방향 시트를 다시 활용!
+            this.charImg.onload = () => this.onResourceLoad();
+            this.charImg.src = '/images/char_sprite.png';
         },
 
         onResourceLoad() {
@@ -170,11 +133,11 @@ document.addEventListener('alpine:init', () => {
                 dx = (dx / length) * this.player.speed * dt;
                 dy = (dy / length) * this.player.speed * dt;
 
-                // 방향 설정 (간단히 4방향 맵핑: 0=하, 1=상, 2=좌, 3=우 -> 스프라이트 시트 배열에 따라 조절 필요)
+                // 방향 설정 (간단히 0,1,2,3 맵핑)
                 if (Math.abs(dx) > Math.abs(dy)) {
-                    this.player.frameY = dx > 0 ? 2 : 1; // 우, 좌
+                    this.player.frameY = dx > 0 ? 2 : 3; // 우, 좌
                 } else {
-                    this.player.frameY = dy > 0 ? 0 : 3; // 하, 상
+                    this.player.frameY = dy > 0 ? 0 : 1; // 하, 상
                 }
 
                 // 이동 예상 위치 (임시 계산)
@@ -210,7 +173,7 @@ document.addEventListener('alpine:init', () => {
         checkCollision(nx, ny) {
             // 캐릭터 바운딩 박스
             const pRect = { x: nx, y: ny, w: this.player.width, h: this.player.height };
-            
+
             for (let b of this.collisions) {
                 if (pRect.x < b.x + b.width &&
                     pRect.x + pRect.w > b.x &&
@@ -256,20 +219,32 @@ document.addEventListener('alpine:init', () => {
         },
 
         drawMap() {
+            const mapDrawWidth = 2048;
+            const mapDrawHeight = 2048;
+
             // 카메라를 캐릭터 중심에 위치
             this.camera.x = this.player.x - this.camera.width / 2;
             this.camera.y = this.player.y - this.camera.height / 2;
 
-            // 맵 경계 클램핑 방지 (카메라가 맵 밖으로 안나가게) 추가 가능하지만 일단 스킵
+            // 맵 경계 클램핑 (카메라가 맵 밖 검은 화면으로 나가지 않도록 고정)
+            if (this.camera.x < 0) this.camera.x = 0;
+            if (this.camera.y < 0) this.camera.y = 0;
             
+            // 화면이 맵 폭보다 넓은 모니터의 경우 예외 처리 포함
+            const maxX = Math.max(0, mapDrawWidth - this.camera.width);
+            const maxY = Math.max(0, mapDrawHeight - this.camera.height);
+            
+            if (this.camera.x > maxX) this.camera.x = maxX;
+            if (this.camera.y > maxY) this.camera.y = maxY;
+
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
             this.ctx.save();
             // 화면을 카메라 위치만큼 반대로 이동
             this.ctx.translate(-this.camera.x, -this.camera.y);
 
-            // 1. 맵 배경 그리기 (크기는 이미지 원본 크기에 맞춤, 혹은 픽셀 아트 배율 키움)
-            this.ctx.drawImage(this.mapImg, 0, 0, 1024, 1024); // 임시 1024 스케일
+            // 1. 맵 배경 그리기 (맵을 2048 사이즈로 키워 거대하게 표현)
+            this.ctx.drawImage(this.mapImg, 0, 0, mapDrawWidth, mapDrawHeight);
 
             // (디버그용) 트리거 박스 그리기
             /*
@@ -279,21 +254,20 @@ document.addEventListener('alpine:init', () => {
             });
             */
 
-            // 2. 캐릭터 그리기 (정석 4x4 스프라이트 시트 로직)
-            // 가로 세로 4등분으로 프레임을 정확히 쪼갭니다.
-            const spriteSizeX = this.charImg.width / 4; 
+            // 2. 캐릭터 그리기
+            // 스프라이트 원본이 어떻게 생겼는지 모르므로 임의 단위로 자름 (예: 64x64 사이즈 4열 4행 기준)
+            const spriteSizeX = this.charImg.width / 4;
             const spriteSizeY = this.charImg.height / 4;
-            
-            // 그릴 때 크기 조절 (화면에 맞게 스케일링)
-            const renderWidth = 80;
-            const renderHeight = 80 * (spriteSizeY / spriteSizeX); 
-            
+
+            // 그릴 때 크기를 두 배로 키움 (픽셀 감성)
+            const renderSize = 64;
+
             this.ctx.drawImage(
                 this.charImg,
-                this.player.frameX * spriteSizeX, this.player.frameY * spriteSizeY, spriteSizeX, spriteSizeY, // 원본 자르기 옵션 추가
-                this.player.x - (renderWidth - this.player.width)/2, 
-                this.player.y - (renderHeight - this.player.height), 
-                renderWidth, renderHeight
+                this.player.frameX * spriteSizeX, this.player.frameY * spriteSizeY, spriteSizeX, spriteSizeY,
+                this.player.x - (renderSize - this.player.width) / 2, // 캐릭터 중심 맞춰서 그리기
+                this.player.y - (renderSize - this.player.height),
+                renderSize, renderSize
             );
 
             this.ctx.restore();
@@ -306,7 +280,7 @@ document.addEventListener('alpine:init', () => {
 
             // 로직 업데이트
             this.updatePlayer(dt);
-            
+
             // 1초 단위 위치 동기화
             this.syncTimer += dt;
             if (this.syncTimer >= 1.0) {

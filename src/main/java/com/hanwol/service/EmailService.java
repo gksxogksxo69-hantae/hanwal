@@ -53,16 +53,15 @@ public class EmailService {
     }
 
     private String buildHtmlContent(String code) {
-        return "<div style=\"font-family: 'Malgun Gothic', sans-serif; max-w-md; margin: 0 auto; padding: 30px; border: 1px solid #d97706; border-radius: 10px; background-color: #0f172a; color: #f3f4f6; text-align: center;\">"
-                +
-                "<h1 style=\"color: #f59e0b; margin-bottom: 20px;\">한월(韓月)</h1>" +
-                "<p style=\"font-size: 16px; margin-bottom: 20px;\">강호에 입성할 준비가 되셨습니까?<br>아래 6자리 인증번호를 입력하여 출사를 완료해주세요.</p>"
-                +
-                "<div style=\"background-color: #1e293b; border: 2px dashed #fbbf24; padding: 20px; font-size: 28px; font-weight: bold; color: #fbbf24; letter-spacing: 5px; margin-bottom: 30px;\">"
-                +
-                code +
-                "</div>" +
-                "<p style=\"font-size: 12px; color: #9ca3af;\">본 메일은 한월 프로젝트 시스템에서 자동 발송되었습니다.</p>" +
-                "</div>";
+        return "<div style=\"max-width: 500px; margin: 0 auto; font-family: 'Gowun Batang', 'Batang', 'Gungsuh', serif; background-color: #111111; color: #e5e5e5; border: 2px solid #b45309; padding: 40px 30px; text-align: center; border-radius: 8px; box-shadow: inset 0 0 20px rgba(180, 83, 9, 0.2);\">"
+             + "    <div style=\"font-size: 32px; font-weight: bold; color: #f59e0b; margin-bottom: 5px; letter-spacing: 8px;\">韓月</div>"
+             + "    <div style=\"font-size: 14px; color: #d97706; margin-bottom: 30px; letter-spacing: 2px;\">- 한 월 -</div>"
+             + "    <div style=\"width: 50px; height: 2px; background-color: #b45309; margin: 0 auto 30px;\"></div>"
+             + "    <p style=\"font-size: 16px; line-height: 1.8; margin-bottom: 30px; color: #d1d5db;\">강호의 거친 바람을 헤치고 나아갈<br>새로운 모험가의 출사를 환영합니다.<br><br>아래의 <span style=\"color: #f59e0b; font-weight: bold;\">서신(인증번호)</span>을 확인하여<br>입성(가입)을 완료해 주십시오.</p>"
+             + "    <div style=\"background-color: #1e1e1e; border: 1px solid #78350f; padding: 25px; margin: 0 auto 30px; max-width: 250px; border-radius: 4px;\">"
+             + "        <span style=\"font-family: 'Courier New', monospace; font-size: 36px; font-weight: bold; color: #fbbf24; letter-spacing: 12px; margin-left: 12px;\">" + code + "</span>"
+             + "    </div>"
+             + "    <p style=\"font-size: 12px; color: #6b7280; border-top: 1px dashed #3f3f46; padding-top: 20px;\">무림 연맹 서신국 (시스템 자동 발송)</p>"
+             + "</div>";
     }
 }

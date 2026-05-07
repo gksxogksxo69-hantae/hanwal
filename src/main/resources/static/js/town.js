@@ -37,43 +37,61 @@ document.addEventListener('alpine:init', () => {
         playerGems: 0,
 
         // ── 성별별 스프라이트 설정 ──
-        // MALE 스프라이트: 4열4행 | row 순서: 하(0), 상(1), 좌(2), 우(3)
-        // FEMALE 스프라이트: 6열4행 | row 순서: 하(0), 상(1), 우(2), 좌(3)
+        // 남녀 모두 4열4행 | row 순서: 하(0), 상(1), 좌(2), 우(3)
         spriteConfigs: {
             MALE:   { src: '/images/char_sprite.png',        cols: 4, rows: 4, down: 0, up: 1, left: 2, right: 3 },
-            FEMALE: { src: '/images/char_sprite_female.png', cols: 6, rows: 4, down: 0, up: 1, right: 2, left: 3 }
+            FEMALE: { src: '/images/char_sprite_female.png', cols: 4, rows: 4, down: 0, up: 1, left: 2, right: 3 }
         },
         currentConfig: null,
 
         // ── 맵 스케일링 ──
-        // 충돌 박스는 2048 기준으로 설계되어 있고, 실제 맵 크기에 맞춰 런타임 스케일링
-        DESIGN_SIZE: 2048,
+        // 새 맵은 1024x1024 기준으로 설계
+        DESIGN_SIZE: 1024,
         mapScale: 1,
 
-        // ── 마을 센터 좌표 (2048 기준) ──
-        TOWN_CENTER: { x: 1000, y: 1300 },
+        // ── 마을 센터 좌표 (1024 기준) ──
+        // 중앙 돌길 중간 지점 (대문과 상단 전각 사이)
+        TOWN_CENTER: { x: 500, y: 580 },
 
-        // ── 충돌 박스 원본 (2048 기준 설계) ──
+        // ── 충돌 박스 (1024 기준 — 새 무협 마을 맵) ──
         designCollisions: [
-            { x: -100, y: -100, width: 2248, height: 100 },
-            { x: -100, y: 2048, width: 2248, height: 100 },
-            { x: -100, y: 0, width: 100, height: 2048 },
-            { x: 2048, y: 0, width: 100, height: 2048 },
-            { x: 0, y: 0, width: 2048, height: 420 },
-            { x: 0, y: 420, width: 330, height: 1628 },
-            { x: 1400, y: 420, width: 648, height: 750 },
-            { x: 1250, y: 1170, width: 798, height: 450 },
-            { x: 0, y: 1850, width: 850, height: 198 },
-            { x: 1150, y: 1850, width: 898, height: 198 },
-            { x: 860, y: 880, width: 250, height: 250 },
-            { x: 420, y: 1150, width: 180, height: 120 },
-            { x: 450, y: 650, width: 180, height: 120 }
+            // ─ 외곽 경계 ─
+            { x: -50, y: -50, width: 1124, height: 50 },   // 북
+            { x: -50, y: 1024, width: 1124, height: 50 },  // 남
+            { x: -50, y: 0, width: 50, height: 1024 },     // 서
+            { x: 1024, y: 0, width: 50, height: 1024 },    // 동
+
+            // ─ 상단 영역: 무공 전각 + 대나무숲 ─
+            { x: 0, y: 0, width: 200, height: 200 },       // 좌상 대나무숲
+            { x: 220, y: 0, width: 580, height: 240 },     // 상단 무공 전각 (큰 건물)
+            { x: 820, y: 0, width: 204, height: 220 },     // 우상 대나무/건물
+
+            // ─ 좌측 건물들 (객잔/상점 거리) ─
+            { x: 0, y: 220, width: 220, height: 200 },     // 좌측 상단 건물 (객잔)
+            { x: 0, y: 490, width: 230, height: 190 },     // 좌측 중단 건물 
+            { x: 0, y: 720, width: 200, height: 170 },     // 좌측 하단 건물
+
+            // ─ 우측 건물들 (대장간/서고) ─
+            { x: 740, y: 240, width: 284, height: 200 },   // 우측 상단 건물 (대장간)
+            { x: 780, y: 470, width: 244, height: 150 },   // 우측 정자/건물
+
+            // ─ 우측 하단 연못 ─
+            { x: 600, y: 650, width: 350, height: 230 },   // 연못 + 다리 영역
+
+            // ─ 하단 성벽 + 대문 (중앙에 입구 갭) ─
+            { x: 0, y: 900, width: 380, height: 124 },     // 좌측 성벽
+            { x: 640, y: 900, width: 384, height: 124 },   // 우측 성벽 
+            // 대문 통로: x 380~640 은 걸을 수 있는 입구
+
+            // ─ 좌하 대나무숲 ─
+            { x: 0, y: 870, width: 120, height: 30 },      // 좌하 대나무
         ],
         collisions: [],
 
+        // ── 상호작용 트리거 구역 (1024 기준) ──
         designTriggers: [
-            { id: 'STORE', x: 200, y: 200, width: 80, height: 80 },
-            { id: 'GACHA', x: 600, y: 300, width: 80, height: 80 }
+            { id: 'STORE', x: 50, y: 310, width: 120, height: 80 },   // 객잔 (좌측 상단 건물 앞)
+            { id: 'GACHA', x: 350, y: 250, width: 100, height: 60 },  // 무공 전수관 (상단 전각 앞)
         ],
         triggers: [],
 

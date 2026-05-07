@@ -3,7 +3,7 @@ document.addEventListener('alpine:init', () => {
         showInteractPrompt: false,
         currentModal: null,
         activeTrigger: null,
-        debugMode: false,
+        debugMode: true,
 
         canvas: null,
         ctx: null,
@@ -39,7 +39,7 @@ document.addEventListener('alpine:init', () => {
         // ── 성별별 스프라이트 설정 ──
         // 남녀 모두 4열4행 | row 순서: 하(0), 상(1), 좌(2), 우(3)
         spriteConfigs: {
-            MALE:   { src: '/images/char_sprite.png',        cols: 4, rows: 4, down: 0, up: 1, left: 2, right: 3 },
+            MALE: { src: '/images/char_sprite.png', cols: 4, rows: 4, down: 0, up: 1, left: 2, right: 3 },
             FEMALE: { src: '/images/char_sprite_female.png', cols: 4, rows: 4, down: 0, up: 1, left: 2, right: 3 }
         },
         currentConfig: null,
@@ -175,18 +175,23 @@ document.addEventListener('alpine:init', () => {
         },
 
         // ──────────── 입력 ────────────
+        lastPressedDir: null, // 마지막으로 누른 방향키 추적
+
         setupInput() {
             window.addEventListener('keydown', (e) => {
                 if (this.currentModal) return;
                 const key = e.key.toLowerCase();
-                if (['w','a','s','d'].includes(key)) this.keys[key] = true;
+                if (['w', 'a', 's', 'd'].includes(key)) {
+                    this.keys[key] = true;
+                    this.lastPressedDir = key; // 마지막 누른 방향 기억
+                }
                 if (e.code === 'Space' && this.activeTrigger && !this.currentModal) {
                     this.currentModal = this.activeTrigger;
                 }
             });
             window.addEventListener('keyup', (e) => {
                 const key = e.key.toLowerCase();
-                if (['w','a','s','d'].includes(key)) this.keys[key] = false;
+                if (['w', 'a', 's', 'd'].includes(key)) this.keys[key] = false;
             });
         },
 
@@ -203,20 +208,32 @@ document.addEventListener('alpine:init', () => {
             this.player.isMoving = (dx !== 0 || dy !== 0);
 
             if (this.player.isMoving) {
-                const len = Math.sqrt(dx * dx + dy * dy);
-                dx = (dx / len) * this.player.speed * dt;
-                dy = (dy / len) * this.player.speed * dt;
-
-                // 방향 설정 — 성별별 row 매핑 사용
+                // ★ 방향은 원시 키 입력(정수)으로 먼저 결정 — 부동소수점 와리가리 방지
                 const cfg = this.currentConfig;
-                if (Math.abs(dx) > Math.abs(dy)) {
-                    this.player.frameY = dx > 0 ? cfg.right : cfg.left;
-                } else {
-                    this.player.frameY = dy > 0 ? cfg.down : cfg.up;
+
+                if (dx !== 0 && dy !== 0) {
+                    // 대각선 이동: 마지막으로 누른 방향키 우선
+                    const dirMap = { d: cfg.right, a: cfg.left, s: cfg.down, w: cfg.up };
+                    if (this.lastPressedDir && dirMap[this.lastPressedDir] !== undefined) {
+                        this.player.frameY = dirMap[this.lastPressedDir];
+                    }
+                } else if (dx > 0) {
+                    this.player.frameY = cfg.right;
+                } else if (dx < 0) {
+                    this.player.frameY = cfg.left;
+                } else if (dy > 0) {
+                    this.player.frameY = cfg.down;
+                } else if (dy < 0) {
+                    this.player.frameY = cfg.up;
                 }
 
-                let nextX = this.player.x + dx;
-                let nextY = this.player.y + dy;
+                // 대각선 이동 시 속도 정규화
+                const len = Math.sqrt(dx * dx + dy * dy);
+                const moveX = (dx / len) * this.player.speed * dt;
+                const moveY = (dy / len) * this.player.speed * dt;
+
+                let nextX = this.player.x + moveX;
+                let nextY = this.player.y + moveY;
 
                 if (!this.checkCollision(nextX, nextY)) {
                     this.player.x = nextX;

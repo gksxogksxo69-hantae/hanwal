@@ -46,12 +46,12 @@ document.addEventListener('alpine:init', () => {
                     // ===== ACT 2: 습격과 탈출 (남자) =====
                     { bg: '/images/bg_estate_fire.png', speaker: null, text: '', isTransition: true, transitionText: '그리고 얼마 후... 재앙이 찾아왔다.', effect: 'flash-red', portraits: [] },
                     { bg: '/images/bg_estate_fire.png', speaker: '나레이션', text: '천마신교의 무리가 남궁세가를 습격했다. 가주를 잃은 세가는 제대로 된 저항조차 할 수 없었다.', isTransition: false, effect: 'shake', portraits: [], showEmbers: true },
-                    { bg: '/images/bg_estate_fire.png', speaker: '호위무사 강노', text: '소공자! 이쪽으로 오십시오! 후문으로 빠져나가야 합니다!', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'speaking' }, { src: pPortrait, position: 'right', state: 'dimmed' } ], showEmbers: true },
-                    { bg: '/images/bg_estate_fire.png', speaker: pName, text: '강노 아저씨! 세가 사람들은?! 다들 무사한 겁니까?!', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'dimmed' }, { src: pPortrait, position: 'right', state: 'speaking' } ], showEmbers: true },
-                    { bg: '/images/bg_estate_fire.png', speaker: '호위무사 강노', text: '... 이미 많은 이들이 쓰러졌습니다. 하지만 소공자만큼은 반드시 지킨다 맹세했으니, 여기서 잡담할 시간이 없습니다. 어서!', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'speaking' }, { src: pPortrait, position: 'right', state: 'dimmed' } ], showEmbers: true },
+                    { bg: '/images/bg_estate_fire.png', speaker: '호위무사 강노', text: '소공자! 이쪽으로 오십시오! 후문으로 빠져나가야 합니다!', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'speaking' } ], showEmbers: true },
+                    { bg: '/images/bg_estate_fire.png', speaker: pName, text: '강노 아저씨! 세가 사람들은?! 다들 무사한 겁니까?!', isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'right', state: 'speaking' } ], showEmbers: true },
+                    { bg: '/images/bg_estate_fire.png', speaker: '호위무사 강노', text: '... 이미 많은 이들이 쓰러졌습니다. 하지만 소공자만큼은 반드시 지킨다 맹세했으니, 여기서 잡담할 시간이 없습니다. 어서!', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'speaking' } ], showEmbers: true },
                     { bg: '/images/bg_estate_fire.png', speaker: '나레이션', text: '불타는 세가를 등지고 달렸다. 그러나 천마신교의 추격은 끈질겼다. 결국 후문 앞에서 적들에게 포위당하고 말았다.', isTransition: false, effect: 'shake', portraits: [], showEmbers: true },
-                    { bg: '/images/bg_estate_fire.png', speaker: '호위무사 강노', text: '소공자, 여기서 제가 막겠습니다. 뒤돌아보지 말고 절벽 아래 숲길로 내려가십시오.', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'speaking' }, { src: pPortrait, position: 'right', state: 'dimmed' } ], showEmbers: true },
-                    { bg: '/images/bg_estate_fire.png', speaker: pName, text: '안 됩니다! 아저씨 혼자 이 많은 적을...!', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'dimmed' }, { src: pPortrait, position: 'right', state: 'speaking' } ], showEmbers: true },
+                    { bg: '/images/bg_estate_fire.png', speaker: '호위무사 강노', text: '소공자, 여기서 제가 막겠습니다. 뒤돌아보지 말고 절벽 아래 숲길로 내려가십시오.', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'speaking' } ], showEmbers: true },
+                    { bg: '/images/bg_estate_fire.png', speaker: pName, text: '안 됩니다! 아저씨 혼자 이 많은 적을...!', isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'right', state: 'speaking' } ], showEmbers: true },
                     { bg: '/images/bg_estate_fire.png', speaker: '호위무사 강노', text: '남궁세가의 검은 여기서 끊어져선 안 됩니다. 부디... 살아남아 주십시오. 가주님의 뜻을 이어주시길.', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'speaking' } ], showEmbers: true },
                     { bg: '/images/bg_estate_fire.png', speaker: '나레이션', text: `강노는 마지막 미소를 지으며 적들을 향해 몸을 날렸다. 그의 희생 덕분에 ${pName}은 무사히 후문 밖으로 빠져나갈 수 있었다.`, isTransition: false, effect: 'shake', portraits: [], showEmbers: true },
 
@@ -97,12 +97,12 @@ document.addEventListener('alpine:init', () => {
                     // ===== ACT 2: 습격과 탈출 (여자) =====
                     { bg: '/images/bg_estate_fire.png', speaker: null, text: '', isTransition: true, transitionText: '그리고 얼마 후... 재앙이 찾아왔다.', effect: 'flash-red', portraits: [] },
                     { bg: '/images/bg_estate_fire.png', speaker: '나레이션', text: '천마신교의 무리가 남궁세가를 습격했다. 가주를 잃은 세가는 제대로 된 저항조차 할 수 없었다.', isTransition: false, effect: 'shake', portraits: [], showEmbers: true },
-                    { bg: '/images/bg_estate_fire.png', speaker: '호위무사 강노', text: '아가씨! 이쪽으로 오십시오! 후문으로 피하셔야 합니다!', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'speaking' }, { src: pPortrait, position: 'right', state: 'dimmed' } ], showEmbers: true },
-                    { bg: '/images/bg_estate_fire.png', speaker: pName, text: '강노 아저씨! 다른 식구들은요?! 다들 무사한 건가요?!', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'dimmed' }, { src: pPortrait, position: 'right', state: 'speaking' } ], showEmbers: true },
-                    { bg: '/images/bg_estate_fire.png', speaker: '호위무사 강노', text: '... 이미 많은 이들이 당했습니다. 하지만 아가씨만큼은 반드시 지킨다 약조했으니, 이송을 서둘러야 합니다!', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'speaking' }, { src: pPortrait, position: 'right', state: 'dimmed' } ], showEmbers: true },
+                    { bg: '/images/bg_estate_fire.png', speaker: '호위무사 강노', text: '아가씨! 이쪽으로 오십시오! 후문으로 피하셔야 합니다!', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'speaking' } ], showEmbers: true },
+                    { bg: '/images/bg_estate_fire.png', speaker: pName, text: '강노 아저씨! 다른 식구들은요?! 다들 무사한 건가요?!', isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'right', state: 'speaking' } ], showEmbers: true },
+                    { bg: '/images/bg_estate_fire.png', speaker: '호위무사 강노', text: '... 이미 많은 이들이 당했습니다. 하지만 아가씨만큼은 반드시 지킨다 약조했으니, 이송을 서둘러야 합니다!', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'speaking' } ], showEmbers: true },
                     { bg: '/images/bg_estate_fire.png', speaker: '나레이션', text: '불타는 세가를 등지고 달렸다. 그러나 천마신교의 추격은 끈질겼다. 결국 후문 앞에서 적들에게 포위당하고 말았다.', isTransition: false, effect: 'shake', portraits: [], showEmbers: true },
-                    { bg: '/images/bg_estate_fire.png', speaker: '호위무사 강노', text: '아가씨, 여기서 제가 막겠습니다. 뒤돌아보지 말고 절벽 아래 숲길로 뛰어내려가십시오.', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'speaking' }, { src: pPortrait, position: 'right', state: 'dimmed' } ], showEmbers: true },
-                    { bg: '/images/bg_estate_fire.png', speaker: pName, text: '안 돼요! 아저씨 혼자 놔두고 갈 순 없어요...!', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'dimmed' }, { src: pPortrait, position: 'right', state: 'speaking' } ], showEmbers: true },
+                    { bg: '/images/bg_estate_fire.png', speaker: '호위무사 강노', text: '아가씨, 여기서 제가 막겠습니다. 뒤돌아보지 말고 절벽 아래 숲길로 뛰어내려가십시오.', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'speaking' } ], showEmbers: true },
+                    { bg: '/images/bg_estate_fire.png', speaker: pName, text: '안 돼요! 아저씨 혼자 놔두고 갈 순 없어요...!', isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'right', state: 'speaking' } ], showEmbers: true },
                     { bg: '/images/bg_estate_fire.png', speaker: '호위무사 강노', text: '남궁세가의 핏줄은 여기서 끊어져선 안 됩니다. 부디... 살아남아 주십시오. 가주님의 뜻을 지켜주시길.', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'speaking' } ], showEmbers: true },
                     { bg: '/images/bg_estate_fire.png', speaker: '나레이션', text: `강노는 마지막 미소를 지으며 적들을 향해 몸을 날렸다. 그의 희생 덕분에 ${pName}는 후문 밖으로 무사히 빠져나갈 수 있었다.`, isTransition: false, effect: 'shake', portraits: [], showEmbers: true },
 
@@ -298,9 +298,9 @@ document.addEventListener('alpine:init', () => {
                 console.error('튜토리얼 완료 처리 실패:', e);
             }
 
-            // 페이드 아웃 후 마을로 이동
+            // 페이드 아웃 후 튜토리얼 동굴로 이동
             setTimeout(() => {
-                window.location.href = '/town';
+                window.location.href = '/tutorial-cave';
             }, 2000);
         },
 

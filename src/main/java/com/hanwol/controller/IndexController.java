@@ -15,4 +15,9 @@ public class IndexController {
     public String town() {
         return "town";
     }
+
+    @GetMapping("/tutorial-cave")
+    public String tutorialCave() {
+        return "tutorial_cave";
+    }
 }

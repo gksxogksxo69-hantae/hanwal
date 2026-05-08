@@ -18,11 +18,14 @@ document.addEventListener('alpine:init', () => {
         // 타겟팅 시스템 (기사 스킬 등)
         selectedTarget: null,
 
+        heroTemplate: null, // DB에서 받아온 캐릭터 템플릿
+
         gameState: 'START', // START, WAITING_INPUT, ANIMATING, WIN, LOSE
         isPlayerTurn: false,
 
         async init() {
             await this.loadPlayerInfo();
+            await this.loadHeroTemplate(); // DB에서 스킬 가져오기
             this.setupEntities();
             this.startBattle();
         },
@@ -40,25 +43,59 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        async loadHeroTemplate() {
+            const templateId = this.playerGender === 'MALE' ? 'CH_NAMGUNG_CHUN' : 'CH_NAMGUNG_SEOLHA';
+            try {
+                const res = await fetch('/api/battle/character/' + templateId);
+                if (res.ok) {
+                    this.heroTemplate = await res.json();
+                }
+            } catch (e) {
+                console.error("Failed to load hero template", e);
+            }
+        },
+
         setupEntities() {
+            // API를 못 불러왔을 때를 대비한 튜토리얼용 임시 에셋
+            if (!this.heroTemplate) {
+                this.heroTemplate = {
+                    name: this.playerNickname, role: 'WARRIOR', baseHp: 120, baseMp: 50, baseAtk: 30, baseDef: 15, baseSpd: 100,
+                    skills: [{ skillId: 'fallback', name: '기본 공격', description: '기본적인 공격입니다.', skillType: 'DAMAGE', targetType: 'SINGLE', isUltimate: false, damageMultiplier: 1.0, mpCost: 0 }]
+                };
+            }
+
+            // 스킬 4슬롯 고정 배치 알고리즘 (궁극기를 4번에) 배치
+            let preparedSkills = Array(4).fill(null).map(() => ({ id: 'locked', name: '잠긴 스킬', cost: 0, isLock: true }));
+            
+            let normalIdx = 0;
+            this.heroTemplate.skills.forEach(s => {
+                const sd = {
+                    id: s.skillId, name: s.name, description: s.description,
+                    type: s.skillType, target: s.targetType, isUltimate: s.isUltimate, 
+                    multiplier: s.damageMultiplier, cost: s.mpCost, isLock: false
+                };
+                if (s.isUltimate) {
+                    preparedSkills[3] = sd; // 궁극기는 무조건 슬롯 4
+                } else if (normalIdx < 3) {
+                    preparedSkills[normalIdx] = sd; // 일반 기는 슬롯 1~3 순서대로
+                    normalIdx++;
+                }
+            });
+
             // [1] 주인공(플레이어) 세팅
             const hero = {
                 id: 'party-1',
                 type: 'PARTY',
-                name: this.playerNickname,
-                hp: 1200, maxHp: 1200,
-                mp: 100, maxMp: 100,
-                speed: 120, // 선턴
-                isActive: false,
-                isDead: false,
+                name: this.playerNickname + `(${this.heroTemplate.name})`, // 이름 렌더링
+                hp: this.heroTemplate.baseHp * 10, maxHp: this.heroTemplate.baseHp * 10, // 체력 스케일 보정
+                mp: this.heroTemplate.baseMp * 2, maxMp: this.heroTemplate.baseMp * 2,
+                atk: this.heroTemplate.baseAtk * 5, // 공격력 스케일
+                def: this.heroTemplate.baseDef * 5,
+                speed: this.heroTemplate.baseSpd,
+                isActive: false,  isDead: false,
                 standing: this.playerGender === 'MALE' ? '/images/char_sprite.png' : '/images/char_sprite_female.png', // 추후 전신 일러스트로 교체 가능
                 portrait: this.playerGender === 'MALE' ? '/images/portrait_male.png' : '/images/portrait_female.png',
-                skills: [
-                    { id: 'attack', name: '기본 공격', cost: 0 },
-                    { id: 'defend', name: '방어', cost: 0 },
-                    { id: 'locked', name: '잠김', cost: 0 },
-                    { id: 'ult', name: this.playerGender === 'MALE' ? '제황검형 (궁극)' : '빙백신검 (궁극)', cost: 100 }
-                ]
+                skills: preparedSkills
             };
             this.party[0] = hero;
 
@@ -146,23 +183,42 @@ document.addEventListener('alpine:init', () => {
             this.isPlayerTurn = false;
             
             const actor = this.currentActor;
-            const target = this.enemies.find(e => e.id === this.selectedTarget) || this.enemies[0];
+            const skill = actor.skills[skillIndex];
+            
+            if(skill.isLock) {
+                this.gameState = 'WAITING_INPUT';
+                this.isPlayerTurn = true;
+                return;
+            }
 
-            if (skillIndex === 0) { // 기본 공격
-                this.addLog(`[${actor.name}] 의 기본 공격!`, 'player');
-                await this.playHitAnimation(target, 125, false);
-                this.endTurn();
-            } 
-            else if (skillIndex === 1) { // 방어
-                this.addLog(`[${actor.name}] 과(와) 방어 태세를 취했다.`, 'player');
+            // MP 소모
+            if (actor.mp < skill.cost) {
+                this.addLog(`내력(MP)이 부족합니다! [필요: ${skill.cost}]`, 'system');
+                this.gameState = 'WAITING_INPUT';
+                this.isPlayerTurn = true;
+                return;
+            }
+            actor.mp -= skill.cost;
+
+            const target = this.enemies.find(e => e.id === this.selectedTarget) || this.enemies[0];
+            const dmgAmt = Math.floor(actor.atk * skill.multiplier);
+
+            if (skill.type === 'BUFF') {
+                this.addLog(`[${actor.name}] 의 [${skill.name}]!`, 'player');
+                this.addLog(`🛡️ 기운을 끌어올립니다. [효과 발생!]`, 'skill');
                 await new Promise(r => setTimeout(r, 600));
                 this.endTurn();
-            }
-            else if (skillIndex === 3) { // 궁극기
-                this.addLog(`[${actor.name}] 이 궁극기 [${actor.skills[3].name}] 를 해방합니다!!`, 'skill');
-                
+            } 
+            else if (skill.isUltimate) {
+                this.addLog(`[${actor.name}] 이 궁극기 [${skill.name}] 를 해방합니다!!`, 'skill');
                 await this.playUltimateAnimation();
-                await this.playHitAnimation(target, 99999, true); 
+                await this.playHitAnimation(target, Math.max(9999, dmgAmt) , true);  // 튜토리얼 뽕맛
+                this.endTurn();
+            }
+            else {
+                // 일반 데미지 스킬
+                this.addLog(`[${actor.name}] 의 [${skill.name}]!`, 'player');
+                await this.playHitAnimation(target, dmgAmt, false);
                 this.endTurn();
             }
         },

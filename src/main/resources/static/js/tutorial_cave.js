@@ -46,18 +46,24 @@ document.addEventListener('alpine:init', () => {
             { x: 250, y: 550, width: 250, height: 60 },
         ],
 
-        // 튜토리얼 적 (천마신교 잡졸)
-        enemy: { x: 400, y: 200, width: 32, height: 32, label: '천마신교 추격자' },
+        // 상태 머신 (EXPLORE -> MURAL_FOUND -> ENEMY_SPAWNED)
+        gameState: 'EXPLORE',
+        promptText: '조사하기',
+
+        // 튜토리얼 기믹 (벽화)
+        mural: { x: 380, y: 120, width: 40, height: 40, label: '오래된 벽화' },
+        
+        // 튜토리얼 적 (처음엔 숨김)
+        enemy: { x: 400, y: 400, width: 32, height: 32, label: '천마신교 추격자', active: false },
 
         triggers: [
-            { id: 'BATTLE', x: 350, y: 150, width: 132, height: 132 } // 적 주변 넓은 범위
+            { id: 'MURAL', x: 360, y: 100, width: 80, height: 80 }
         ],
 
         // 대화창 로직
         currentDialog: false,
         dialogSpeaker: '',
         dialogText: '',
-        isBattling: false,
 
         async init() {
             await this.loadPlayerInfo();
@@ -118,7 +124,7 @@ document.addEventListener('alpine:init', () => {
                     this.lastPressedDir = key;
                 }
                 if (e.code === 'Space' && this.activeTrigger) {
-                    this.startTutorialBattleEvent();
+                    this.startInteraction();
                 }
             });
             window.addEventListener('keyup', (e) => {
@@ -130,39 +136,67 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
-        startTutorialBattleEvent() {
-            if(this.isBattling) return;
+        startInteraction() {
             this.keys = { w: false, a: false, s: false, d: false }; // 정지
-            
-            this.isBattling = true;
             this.showInteractPrompt = false;
-            
-            this.dialogSpeaker = '천마신교 추격자';
-            this.dialogText = '크흐흐... 남궁세가의 쥐새끼가 여기까지 도망쳤군. 여기서 죽어라!';
-            this.currentDialog = true;
+
+            if (this.activeTrigger === 'MURAL' && this.gameState === 'EXPLORE') {
+                this.dialogSpeaker = this.playerNickname;
+                this.dialogText = '이 벽화들은... 무공 비급? 절벽 아래 이런 기연이 숨겨져 있다니... 이걸 익히면 싸울 수 있어!';
+                this.currentDialog = true;
+                this.gameState = 'MURAL_FOUND';
+            } 
+            else if (this.activeTrigger === 'BATTLE' && this.gameState === 'ENEMY_SPAWNED') {
+                this.dialogSpeaker = '천마신교 추격자';
+                this.dialogText = '크흐흐... 남궁세가의 쥐새끼가 여기까지 도망쳤군. 여기서 죽어라!';
+                this.currentDialog = true;
+            }
         },
 
         nextDialog() {
-            if(!this.isBattling) return;
-
-            if (this.dialogSpeaker === '천마신교 추격자') {
-                this.dialogSpeaker = this.playerNickname;
-                this.dialogText = '...강노 아저씨의 희생을 헛되게 할 순 없어. 덤벼라!!';
-            } else {
-                // 전투 화면으로 진입 (플래시 효과 후 이동)
+            if (this.gameState === 'MURAL_FOUND') {
+                // 벽화 대화 종료 -> 적 등장
                 this.currentDialog = false;
-                const flash = document.getElementById('battleFlash');
-                flash.classList.add('active');
+                this.gameState = 'ENEMY_SPAWNED';
                 
+                // 적 활성화 및 트리거 교체
+                this.enemy.active = true;
+                this.triggers = [
+                    { id: 'BATTLE', x: this.enemy.x - 50, y: this.enemy.y - 50, width: 132, height: 132 }
+                ];
+                
+                // 적 스폰 알림 (간단 연출)
                 setTimeout(() => {
-                    // TODO: 실제 서버의 전투 API나 라우팅 주소로 변경
-                    window.location.href = '/battle/tutorial'; 
-                }, 600);
+                    this.dialogSpeaker = '시스템';
+                    this.dialogText = '등 뒤에서 불길한 살기가 느껴집니다...! (추격자 등장)';
+                    this.currentDialog = true;
+                    // gameState는 유지
+                }, 500);
+            } 
+            else if (this.gameState === 'ENEMY_SPAWNED') {
+                if (this.dialogSpeaker === '시스템') {
+                    this.currentDialog = false; // 시스템 메시지 닫기
+                    return;
+                }
+                
+                if (this.dialogSpeaker === '천마신교 추격자') {
+                    this.dialogSpeaker = this.playerNickname;
+                    this.dialogText = '...방금 얻은 이 힘을 시험해볼 차례군. 덤벼라!!';
+                } else if (this.dialogSpeaker === this.playerNickname) {
+                    // 전투 화면으로 진입 (플래시 효과 후 이동)
+                    this.currentDialog = false;
+                    const flash = document.getElementById('battleFlash');
+                    flash.classList.add('active');
+                    
+                    setTimeout(() => {
+                        window.location.href = '/battle/tutorial'; 
+                    }, 600);
+                }
             }
         },
 
         updatePlayer(dt) {
-            if (this.currentDialog || this.isBattling) { 
+            if (this.currentDialog) { 
                 this.player.isMoving = false; 
                 this.player.frameX = 0;
                 return; 
@@ -222,9 +256,11 @@ document.addEventListener('alpine:init', () => {
             for (let b of this.collisions) {
                 if (p.x < b.x + b.width && p.x + p.w > b.x && p.y < b.y + b.height && p.y + p.h > b.y) return true;
             }
-            // 적 객체도 통과 불가
-            const e = this.enemy;
-            if (p.x < e.x + e.width && p.x + p.w > e.x && p.y < e.y + e.height && p.y + p.h > e.y) return true;
+            // 적 객체도 통과 불가 (활성화 시에만)
+            if (this.enemy.active) {
+                const e = this.enemy;
+                if (p.x < e.x + e.width && p.x + p.w > e.x && p.y < e.y + e.height && p.y + p.h > e.y) return true;
+            }
 
             return false;
         },
@@ -238,6 +274,8 @@ document.addEventListener('alpine:init', () => {
             if (found !== this.activeTrigger) {
                 this.activeTrigger = found;
                 this.showInteractPrompt = (found !== null);
+                if (found === 'MURAL') this.promptText = '벽화 조사하기';
+                else if (found === 'BATTLE') this.promptText = '전투 돌입';
             }
         },
 
@@ -274,17 +312,33 @@ document.addEventListener('alpine:init', () => {
                 }
             });
 
-            // 2. 적 NPC 그리기 (붉은색 기운)
-            const ex = this.enemy.x, ey = this.enemy.y, ew = this.enemy.width, eh = this.enemy.height;
-            this.ctx.shadowColor = 'red';
-            this.ctx.shadowBlur = 15;
-            this.ctx.fillStyle = '#991b1b'; // 적색
-            this.ctx.fillRect(ex, ey, ew, eh);
-            this.ctx.shadowBlur = 0;
-            this.ctx.fillStyle = 'white';
-            this.ctx.font = '10px sans-serif';
-            this.ctx.textAlign = 'center';
-            this.ctx.fillText(this.enemy.label, ex + ew/2, ey - 10);
+            // 벽화 렌더링
+            const mx = this.mural.x, my = this.mural.y, mw = this.mural.width, mh = this.mural.height;
+            this.ctx.fillStyle = '#1e293b'; // 검푸른 석판
+            this.ctx.fillRect(mx, my, mw, mh);
+            this.ctx.strokeStyle = '#38bdf8'; // 빛나는 무공 기운
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeRect(mx+5, my+5, mw-10, mh-10);
+            if (this.gameState === 'EXPLORE') {
+                this.ctx.fillStyle = '#38bdf8';
+                this.ctx.font = '10px sans-serif';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText("✨", mx + mw/2, my - 5);
+            }
+
+            // 2. 적 NPC 그리기 (활성화 시에만)
+            if (this.enemy.active) {
+                const ex = this.enemy.x, ey = this.enemy.y, ew = this.enemy.width, eh = this.enemy.height;
+                this.ctx.shadowColor = 'red';
+                this.ctx.shadowBlur = 15;
+                this.ctx.fillStyle = '#991b1b'; // 적색
+                this.ctx.fillRect(ex, ey, ew, eh);
+                this.ctx.shadowBlur = 0;
+                this.ctx.fillStyle = 'white';
+                this.ctx.font = '10px sans-serif';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(this.enemy.label, ex + ew/2, ey - 10);
+            }
 
             // 3. 주인공 그리기
             const cfg = this.currentConfig;

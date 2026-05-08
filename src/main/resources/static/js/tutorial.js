@@ -55,28 +55,8 @@ document.addEventListener('alpine:init', () => {
                     { bg: '/images/bg_estate_fire.png', speaker: '호위무사 강노', text: '남궁세가의 검은 여기서 끊어져선 안 됩니다. 부디... 살아남아 주십시오. 가주님의 뜻을 이어주시길.', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'speaking' } ], showEmbers: true },
                     { bg: '/images/bg_estate_fire.png', speaker: '나레이션', text: `강노는 마지막 미소를 지으며 적들을 향해 몸을 날렸다. 그의 희생 덕분에 ${pName}은 무사히 후문 밖으로 빠져나갈 수 있었다.`, isTransition: false, effect: 'shake', portraits: [], showEmbers: true },
 
-                    // ===== ACT 3: 절벽과 기연 (남자) =====
-                    { bg: '/images/bg_cliff.png', speaker: null, text: '', isTransition: true, transitionText: '... 그리고 어둠 속에서 떨어졌다.', effect: 'blackout', portraits: [] },
-                    { bg: '/images/bg_cliff.png', speaker: '나레이션', text: `달빛이 비추는 절벽. ${pName}은 추격을 피하다 발을 헛디뎌 깊은 낭떠러지 아래로 굴러 떨어졌다.`, isTransition: false, effect: null, portraits: [] },
-                    { bg: '/images/bg_cliff.png', speaker: pName, text: '으윽... 여긴 어디지... 몸을 움직일 수가 없어...', isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'center', state: 'speaking' } ] },
-                    { bg: '/images/bg_cliff.png', speaker: '나레이션', text: '절벽 아래 동굴에서 희미한 빛이 새어 나왔다. 기어가듯 동굴 안으로 들어서자, 벽면에 새겨진 오래된 무공 비급이 눈에 들어왔다.', isTransition: false, effect: null, portraits: [], showQi: true },
-                    { bg: '/images/bg_cliff.png', speaker: pName, text: '이건... 무공 비급? 이런 곳에 이런 게 있다니... 하늘이 아직 남궁세가를 버리지 않은 건가.', isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'center', state: 'speaking' } ], showQi: true },
-                    { bg: '/images/bg_cliff.png', speaker: '나레이션', text: '비급에 손을 대는 순간, 강렬한 기운이 온몸으로 밀려들었다. 경맥이 뚫리고, 단전에 새로운 힘이 깃들기 시작했다.', isTransition: false, effect: 'flash-white', portraits: [], showQi: true },
-                    { bg: '/images/bg_cliff.png', speaker: pName, text: '이 힘... 놀랍다. 아직 미약하지만, 분명 이걸로 싸울 수 있다. 남궁세가의 검... 내가 반드시 되찾겠다!', isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'center', state: 'speaking' } ], showQi: true },
-
-                    // ===== ACT 4: 첫 전투 (남자) =====
-                    { bg: '/images/bg_cliff.png', speaker: null, text: '', isTransition: true, transitionText: '... 그때, 절벽 위에서 발소리가 들려왔다.', effect: null, portraits: [] },
-                    { bg: '/images/bg_cliff.png', speaker: '나레이션', text: '뒤늦게 추격해온 천마신교의 잡졸 세 명이 절벽 아래까지 내려왔다. 방금 얻은 무공으로 맞서 싸울 수밖에 없었다.', isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'center', state: 'speaking' } ] },
-                    { bg: '/images/bg_cliff.png', speaker: pName, text: '... 좋아. 방금 익힌 초식을 시험해볼 기회로군. 덤벼라!', isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'center', state: 'speaking' } ] },
-                    { bg: '/images/bg_cliff.png', speaker: '나레이션', text: `${pName}의 검에서 번개가 일었다. 비급에서 얻은 기본 초식이 적들을 정확히 꿰뚫었다!`, isTransition: false, effect: 'flash-white', portraits: [ { src: pPortrait, position: 'center', state: 'speaking' } ] },
-                    { bg: '/images/bg_cliff.png', speaker: '나레이션', text: `쓰러지는 적들. ${pName}은 태어나서 처음으로 실전에서 승리를 거두었다. 미약하지만, 이것이 전설의 시작이었다.`, isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'center', state: 'speaking' } ] },
-                    { bg: '/images/bg_cliff.png', speaker: '나레이션', text: '전투에서 얻은 경험으로 기본 전투 기술을 습득했다.\n\n⚔️ [기본 검술] 스킬 획득!\n⚡ [번개 베기] 스킬 획득!', isTransition: false, effect: 'flash-white', portraits: [], showQi: true },
-
-                    // ===== ACT 5: 에필로그 (남자) =====
-                    { bg: '/images/bg_cliff.png', speaker: null, text: '', isTransition: true, transitionText: '새벽이 밝아온다...', effect: null, portraits: [] },
-                    { bg: '/images/bg_cliff.png', speaker: pName, text: '... 아직 갈 길이 멀다. 무림맹이 있다는 곳으로 가야 해. 거기서 동료를 찾고, 더 강해져야 한다.', isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'center', state: 'speaking' } ] },
-                    { bg: '/images/bg_cliff.png', speaker: '나레이션', text: '남궁세가의 마지막 후계자는 칼을 쥐고 일어섰다. 폐허가 된 고향을 뒤로 한 채, 무림맹 본산을 향해 첫 걸음을 내딛었다.', isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'center', state: 'speaking' } ] },
-                    { bg: '/images/bg_cliff.png', speaker: null, text: '', isTransition: true, transitionText: '그리하여... 전설이 시작되었다.', effect: null, portraits: [], isFinal: true }
+                    // ===== ACT 3: 절벽 (남자) 끝 =====
+                    { bg: '/images/bg_cliff.png', speaker: null, text: '', isTransition: true, transitionText: '... 그리고 어둠 속에서 떨어졌다.', effect: 'blackout', portraits: [], isFinal: true }
                 ];
             } else {
                 const pName = '남궁설화';
@@ -106,28 +86,8 @@ document.addEventListener('alpine:init', () => {
                     { bg: '/images/bg_estate_fire.png', speaker: '호위무사 강노', text: '남궁세가의 핏줄은 여기서 끊어져선 안 됩니다. 부디... 살아남아 주십시오. 가주님의 뜻을 지켜주시길.', isTransition: false, effect: null, portraits: [ { src: '/images/portrait_guard.png', position: 'left', state: 'speaking' } ], showEmbers: true },
                     { bg: '/images/bg_estate_fire.png', speaker: '나레이션', text: `강노는 마지막 미소를 지으며 적들을 향해 몸을 날렸다. 그의 희생 덕분에 ${pName}는 후문 밖으로 무사히 빠져나갈 수 있었다.`, isTransition: false, effect: 'shake', portraits: [], showEmbers: true },
 
-                    // ===== ACT 3: 절벽과 기연 (여자) =====
-                    { bg: '/images/bg_cliff.png', speaker: null, text: '', isTransition: true, transitionText: '... 그리고 짙은 어둠 속으로 떨어졌다.', effect: 'blackout', portraits: [] },
-                    { bg: '/images/bg_cliff.png', speaker: '나레이션', text: `달빛이 비추는 절벽. ${pName}는 추격을 피하다 발을 헛디뎌 깊은 낭떠러지 아래로 굴러 떨어졌다.`, isTransition: false, effect: null, portraits: [] },
-                    { bg: '/images/bg_cliff.png', speaker: pName, text: '아윽... 여긴 대체... 온몸이 찢어질 것 같아...', isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'center', state: 'speaking' } ] },
-                    { bg: '/images/bg_cliff.png', speaker: '나레이션', text: '절벽 아래 동굴에서 기이한 빛이 새어 나왔다. 기어가듯 동굴 안으로 들어서자, 벽면에 새겨진 오래된 무공 비급이 눈에 들어왔다.', isTransition: false, effect: null, portraits: [], showQi: true },
-                    { bg: '/images/bg_cliff.png', speaker: pName, text: '이 벽화들은... 무공 비급? 낭떠러지 아래 이런 기연이 숨겨져 있다니... 하늘이 아직 남궁세가를 버리지 않은 걸까.', isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'center', state: 'speaking' } ], showQi: true },
-                    { bg: '/images/bg_cliff.png', speaker: '나레이션', text: '비급에 손을 대는 순간, 따스하면서도 강렬한 기운이 온몸으로 뻗어 나갔다. 닫혀 있던 경맥이 뚫리고 새로운 힘이 깃들기 시작했다.', isTransition: false, effect: 'flash-white', portraits: [], showQi: true },
-                    { bg: '/images/bg_cliff.png', speaker: pName, text: '이 기운... 놀라워. 이 힘이라면 분명 싸울 수 있어. 남궁세가의 긍지... 내가 기필코 되찾겠어!', isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'center', state: 'speaking' } ], showQi: true },
-
-                    // ===== ACT 4: 첫 전투 (여자) =====
-                    { bg: '/images/bg_cliff.png', speaker: null, text: '', isTransition: true, transitionText: '... 그때, 절벽 위에서 발소리가 들려왔다.', effect: null, portraits: [] },
-                    { bg: '/images/bg_cliff.png', speaker: '나레이션', text: '뒤늦게 추격해온 천마신교의 무리가 절벽 아래까지 내려왔다. 물러설 곳은 없었다.', isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'center', state: 'speaking' } ] },
-                    { bg: '/images/bg_cliff.png', speaker: pName, text: '... 좋아. 방금 단전에 깃든 이 기운을 시험할 때네. 모두 덤벼!', isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'center', state: 'speaking' } ] },
-                    { bg: '/images/bg_cliff.png', speaker: '나레이션', text: `${pName}의 검에서 번개가 일었다. 비급에서 얻은 초식이 적들의 급소를 피 한 방울 없이 베어냈다!`, isTransition: false, effect: 'flash-white', portraits: [ { src: pPortrait, position: 'center', state: 'speaking' } ] },
-                    { bg: '/images/bg_cliff.png', speaker: '나레이션', text: `쓰러지는 적들. ${pName}는 태어나서 처음으로 실전에서 스스로의 힘으로 승리를 거두었다. 이것이 전설의 시작이었다.`, isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'center', state: 'speaking' } ] },
-                    { bg: '/images/bg_cliff.png', speaker: '나레이션', text: '전투에서 얻은 경험으로 기본 전투 기술을 습득했다.\n\n⚔️ [기본 검술] 스킬 획득!\n⚡ [번개 베기] 스킬 획득!', isTransition: false, effect: 'flash-white', portraits: [], showQi: true },
-
-                    // ===== ACT 5: 에필로그 (여자) =====
-                    { bg: '/images/bg_cliff.png', speaker: null, text: '', isTransition: true, transitionText: '새벽이 밝아온다...', effect: null, portraits: [] },
-                    { bg: '/images/bg_cliff.png', speaker: pName, text: '... 여기가 끝이 아니야. 무림맹으로 가서 사태를 파악하고 세가를 재건할 힘을 보탤 동료를 찾아야 해.', isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'center', state: 'speaking' } ] },
-                    { bg: '/images/bg_cliff.png', speaker: '나레이션', text: '남궁세가의 마지막 여식은 칼을 쥐고 일어섰다. 폐허가 된 고향을 뒤로 한 채, 무림맹 본산을 향해 당찬 첫 걸음을 내딛었다.', isTransition: false, effect: null, portraits: [ { src: pPortrait, position: 'center', state: 'speaking' } ] },
-                    { bg: '/images/bg_cliff.png', speaker: null, text: '', isTransition: true, transitionText: '그리하여... 전설이 시작되었다.', effect: null, portraits: [], isFinal: true }
+                    // ===== ACT 3: 절벽 (여자) 끝 =====
+                    { bg: '/images/bg_cliff.png', speaker: null, text: '', isTransition: true, transitionText: '... 그리고 짙은 어둠 속으로 떨어졌다.', effect: 'blackout', portraits: [], isFinal: true }
                 ];
             }
         },

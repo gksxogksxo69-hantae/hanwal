@@ -46,7 +46,8 @@
     </div>
 
     <!-- ===== 스킵 버튼 ===== -->
-    <button @click.stop="openSkipModal" class="skip-btn" id="skip-btn">
+    <button @click.stop="openSkipModal" class="skip-btn" id="skip-btn"
+            x-show="!isTransitioning && currentSceneIndex > 0" x-cloak>
         SKIP ▸
     </button>
 
@@ -152,9 +153,9 @@
          x-transition.opacity.duration.2000ms
          class="absolute inset-0 z-40 flex items-center justify-center bg-black/80">
         <div class="text-center">
-            <p class="font-myeongjo text-2xl text-amber-400 mb-4 tracking-widest" 
+            <p class="font-myeongjo text-2xl text-amber-500 mb-4 tracking-widest" 
                style="text-shadow: 0 0 20px rgba(245,158,11,0.5)">
-                무림맹 본산으로 향합니다...
+                알 수 없는 비경으로 떨어집니다...
             </p>
             <div class="w-16 h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent mx-auto"></div>
         </div>

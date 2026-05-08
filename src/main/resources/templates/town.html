@@ -142,25 +142,14 @@
          style="display: none;"
          class="interactive-ui absolute inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
         
-        <!-- 상점 모달 -->
-        <div x-show="currentModal === 'STORE'" x-transition @click.away="closeModal()" class="bg-slate-800 border border-amber-600 rounded-xl max-w-2xl w-full text-white overflow-hidden shadow-2xl">
+        <!-- 통합 시스템 모달 -->
+        <div x-show="currentModal !== null" x-transition @click.away="closeModal()" class="bg-slate-800 border border-amber-600 rounded-xl max-w-2xl w-full text-white overflow-hidden shadow-2xl">
             <div class="bg-slate-900 p-4 border-b border-amber-600/50 flex justify-between items-center">
-                <h3 class="text-2xl font-bold gowun-batang text-amber-500">객잔 (상점)</h3>
+                <h3 class="text-2xl font-bold gowun-batang text-amber-500" x-text="modalTitles[currentModal] || '시스템'"></h3>
                 <button @click="closeModal()" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
             </div>
             <div class="p-6 h-64 flex items-center justify-center">
-                <p class="text-slate-400">상점 기능은 준비 중입니다.</p>
-            </div>
-        </div>
-        
-        <!-- 가챠 모달 -->
-        <div x-show="currentModal === 'GACHA'" x-transition @click.away="closeModal()" class="bg-slate-800 border border-amber-600 rounded-xl max-w-2xl w-full text-white overflow-hidden shadow-2xl">
-            <div class="bg-slate-900 p-4 border-b border-amber-600/50 flex justify-between items-center">
-                <h3 class="text-2xl font-bold gowun-batang text-amber-500">인연 맺기 (가챠)</h3>
-                <button @click="closeModal()" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
-            </div>
-            <div class="p-6 h-64 flex items-center justify-center">
-                <p class="text-slate-400">가챠 기능은 준비 중입니다.</p>
+                <p class="text-slate-400" x-text="`${modalTitles[currentModal] || '알 수 없는'} 기능은 아직 준비 중입니다.`"></p>
             </div>
         </div>
 

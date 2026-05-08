@@ -5,6 +5,16 @@ document.addEventListener('alpine:init', () => {
         activeTrigger: null,
         debugMode: true,
 
+        modalTitles: {
+            'STORE': '객잔 (상점)',
+            'GACHA': '인연 맺기 (가챠)',
+            'STORAGE': '표국 (창고)',
+            'UPGRADE': '대장간 (강화)',
+            'RANKING': '비무첩 (랭킹)',
+            'RAID': '토벌전 (레이드)',
+            'DUNGEON': '수련의 탑 (던전)'
+        },
+
         canvas: null,
         ctx: null,
         lastTime: 0,
@@ -53,45 +63,45 @@ document.addEventListener('alpine:init', () => {
         // 중앙 돌길 중간 지점 (대문과 상단 전각 사이)
         TOWN_CENTER: { x: 500, y: 580 },
 
-        // ── 충돌 박스 (1024 기준 — 새 무협 마을 맵) ──
+        // ── 충돌 박스 (1024 기준 — 유저가 스크린샷에 그려준 빨간색 영역) ──
         designCollisions: [
-            // ─ 외곽 경계 ─
+            // ─ 외곽 경계 (기본 방어선) ─
             { x: -50, y: -50, width: 1124, height: 50 },   // 북
             { x: -50, y: 1024, width: 1124, height: 50 },  // 남
             { x: -50, y: 0, width: 50, height: 1024 },     // 서
             { x: 1024, y: 0, width: 50, height: 1024 },    // 동
 
-            // ─ 상단 영역: 무공 전각 + 대나무숲 ─
-            { x: 0, y: 0, width: 200, height: 200 },       // 좌상 대나무숲
-            { x: 220, y: 0, width: 580, height: 240 },     // 상단 무공 전각 (큰 건물)
-            { x: 820, y: 0, width: 204, height: 220 },     // 우상 대나무/건물
+            // ─ 1. 상단 나무/지붕 영역 (가로 전체) ─
+            { x: 0, y: 0, width: 1024, height: 150 },
 
-            // ─ 좌측 건물들 (객잔/상점 거리) ─
-            { x: 0, y: 220, width: 220, height: 200 },     // 좌측 상단 건물 (객잔)
-            { x: 0, y: 490, width: 230, height: 190 },     // 좌측 중단 건물 
-            { x: 0, y: 720, width: 200, height: 170 },     // 좌측 하단 건물
+            // ─ 2. 좌측 상단~중단 구역 (상점 뒤쪽 빨간 영역) ─
+            { x: 0, y: 150, width: 280, height: 600 },
 
-            // ─ 우측 건물들 (대장간/서고) ─
-            { x: 740, y: 240, width: 284, height: 200 },   // 우측 상단 건물 (대장간)
-            { x: 780, y: 470, width: 244, height: 150 },   // 우측 정자/건물
+            // ─ 3. 우측 상단~중단 구역 (창고/강화 뒤쪽 빨간 영역) ─
+            { x: 740, y: 150, width: 284, height: 500 },
 
-            // ─ 우측 하단 연못 ─
-            { x: 600, y: 650, width: 350, height: 230 },   // 연못 + 다리 영역
+            // ─ 4. 중앙 거대 전각 영역 (가장 큰 빨간 뭉치) ─
+            { x: 320, y: 250, width: 380, height: 350 },
 
-            // ─ 하단 성벽 + 대문 (중앙에 입구 갭) ─
-            { x: 0, y: 900, width: 380, height: 124 },     // 좌측 성벽
-            { x: 640, y: 900, width: 384, height: 124 },   // 우측 성벽 
-            // 대문 통로: x 380~640 은 걸을 수 있는 입구
+            // ─ 5. 우측 하단 연못 영역 (레이드 주변) ─
+            { x: 580, y: 680, width: 444, height: 344 },
 
-            // ─ 좌하 대나무숲 ─
-            { x: 0, y: 870, width: 120, height: 30 },      // 좌하 대나무
+            // ─ 6. 좌측 하단 대나무 영역 (랭킹 아래쪽) ─
+            { x: 0, y: 780, width: 420, height: 244 },
+            
+            // * 6번과 5번 사이(x:420 ~ 580)는 하단 던전 입구(돌길)이므로 비워둡니다.
         ],
         collisions: [],
 
-        // ── 상호작용 트리거 구역 (1024 기준) ──
+        // ── 상호작용 트리거 구역 (1024 기준 — 노란색 박스들) ──
         designTriggers: [
-            { id: 'STORE', x: 50, y: 310, width: 120, height: 80 },   // 객잔 (좌측 상단 건물 앞)
-            { id: 'GACHA', x: 350, y: 250, width: 100, height: 60 },  // 무공 전수관 (상단 전각 앞)
+            { id: 'STORE',   x: 290, y: 200, width: 60, height: 80 },  // 상점 (좌측 상단 안쪽)
+            { id: 'GACHA',   x: 480, y: 160, width: 60, height: 60 },  // 가챠 (중앙 상단)
+            { id: 'STORAGE', x: 670, y: 200, width: 60, height: 60 },  // 창고 (우측 상단 1)
+            { id: 'UPGRADE', x: 670, y: 300, width: 60, height: 60 },  // 강화 (우측 상단 2)
+            { id: 'RANKING', x: 230, y: 650, width: 60, height: 60 },  // 랭킹 (좌측 중하단 연무장 근처)
+            { id: 'RAID',    x: 650, y: 650, width: 60, height: 60 },  // 레이드 (우측 중하단 연못 근처)
+            { id: 'DUNGEON', x: 460, y: 850, width: 80, height: 60 },  // 던전 (하단 정문 입구)
         ],
         triggers: [],
 

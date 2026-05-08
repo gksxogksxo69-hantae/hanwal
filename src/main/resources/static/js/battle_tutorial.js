@@ -179,6 +179,9 @@ document.addEventListener('alpine:init', () => {
         },
 
         async executeAction(skillIndex) {
+            // 빠른 더블 클릭 방어 (동시성 최적화)
+            if (this.gameState !== 'WAITING_INPUT') return;
+
             this.gameState = 'ANIMATING';
             this.isPlayerTurn = false;
             

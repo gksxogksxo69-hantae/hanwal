@@ -128,8 +128,10 @@
     <div x-show="currentDialog" class="ui-layer absolute bottom-10 left-1/2 -translate-x-1/2 w-[800px] max-w-[90vw]">
         <div class="bg-black/80 border border-slate-700 p-6 rounded-lg backdrop-blur-md">
             <h3 class="text-amber-400 font-bold gowun-batang text-xl mb-2" x-text="dialogSpeaker"></h3>
-            <p class="text-white text-lg leading-relaxed" x-text="dialogText"></p>
-            <p class="text-slate-500 text-sm mt-4 text-right animate-pulse">클릭 또는 SPACE 하여 계속 ▼</p>
+            <p class="text-white text-lg leading-relaxed">
+                <span x-text="displayedDialogText"></span><span class="animate-pulse" x-show="isTyping">|</span>
+            </p>
+            <p class="text-slate-500 text-sm mt-4 text-right animate-pulse" x-show="!isTyping">클릭 또는 SPACE 하여 계속 ▼</p>
         </div>
     </div>
 

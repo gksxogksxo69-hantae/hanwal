@@ -205,6 +205,11 @@ document.addEventListener('alpine:init', () => {
 
         // ── 클릭 처리 (다음 대사) ──
         handleClick() {
+            // 빠른 다중 클릭 쓰로틀링 (0.2초 이내 무시)
+            const now = Date.now();
+            if (this.lastClickTime && now - this.lastClickTime < 200) return;
+            this.lastClickTime = now;
+
             if (this.isTransitioning || this.showSkipModal || this.isCompleted) return;
 
             // 타이핑 중이면 즉시 전체 표시
@@ -266,10 +271,17 @@ document.addEventListener('alpine:init', () => {
 
         // ── 키보드 지원 ──
         handleKeydown(e) {
+            // 꾹 누르기(키 리피트) 중복 실행 방지
+            if (e.repeat) return;
+
             if (e.key === ' ' || e.key === 'Enter') {
                 e.preventDefault();
                 this.handleClick();
             } else if (e.key === 'Escape') {
+                e.preventDefault();
+                // 씬 진행도에 상관없이 너무 초반에는 스킵 불가능하도록 (인덱스 > 0 일때만)
+                if (this.isTransitioning || this.currentSceneIndex === 0) return;
+                
                 if (this.showSkipModal) {
                     this.closeSkipModal();
                 } else {

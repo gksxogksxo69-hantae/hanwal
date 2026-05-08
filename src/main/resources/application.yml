@@ -9,8 +9,14 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:1234}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  # 초기 데이터베이스 프로비저닝 (data.sql 연동)
+  sql:
+    init:
+      mode: always
+
   # JPA (Hibernate) 설정
   jpa:
+    defer-datasource-initialization: true
     hibernate:
       ddl-auto: update
     show-sql: true

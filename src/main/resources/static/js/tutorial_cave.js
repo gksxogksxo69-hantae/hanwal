@@ -63,6 +63,9 @@ document.addEventListener('alpine:init', () => {
         currentDialog: false,
         dialogSpeaker: '',
         dialogText: '',
+        displayedDialogText: '',
+        isTyping: false,
+        typingTimer: null,
 
         async init() {
             await this.loadPlayerInfo();
@@ -124,6 +127,8 @@ document.addEventListener('alpine:init', () => {
 
         setupInput() {
             window.addEventListener('keydown', (e) => {
+                if (e.repeat) return; // 반복 키 입력(꾹 누름) 완전 차단
+
                 if (this.currentDialog) {
                     if (e.code === 'Space' || e.code === 'Enter') this.nextDialog();
                     return;
@@ -158,6 +163,7 @@ document.addEventListener('alpine:init', () => {
                 this.dialogSpeaker = d.speaker;
                 this.dialogText = d.text;
                 this.currentDialog = true;
+                this.typeText(this.dialogText);
             } else {
                 this.currentDialog = false;
                 this.onDialogFinish();
@@ -205,7 +211,35 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        typeText(text) {
+            this.displayedDialogText = '';
+            this.isTyping = true;
+            let i = 0;
+
+            if (this.typingTimer) clearInterval(this.typingTimer);
+
+            this.typingTimer = setInterval(() => {
+                if (i < text.length) {
+                    this.displayedDialogText += text[i];
+                    i++;
+                } else {
+                    clearInterval(this.typingTimer);
+                    this.typingTimer = null;
+                    this.isTyping = false;
+                }
+            }, 35);
+        },
+
         nextDialog() {
+            // 타이핑 중일 때 클릭하면 바로 전부 완성되게
+            if (this.isTyping) {
+                clearInterval(this.typingTimer);
+                this.typingTimer = null;
+                this.displayedDialogText = this.dialogText;
+                this.isTyping = false;
+                return;
+            }
+
             this.currentDialogIndex++;
             this.updateCurrentDialogUI();
         },

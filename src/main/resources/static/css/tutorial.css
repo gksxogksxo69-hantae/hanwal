@@ -174,59 +174,51 @@
 /* ── 캐릭터 초상화 ── */
 .portrait-container {
     position: absolute;
-    bottom: 200px;
+    bottom: 130px; /* 텍스트 박스 바로 위쪽 */
+    left: 6% !important; /* 무조건 왼쪽 배치 */
+    right: auto !important;
+    transform: none !important;
     z-index: 10;
     transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.portrait-container.left {
-    left: 5%;
-}
-
-.portrait-container.right {
-    right: 5%;
-}
-
+/* 기존 좌/우/중앙 배치 클래스는 사용되지 않지만, js에서 자동 삽입되므로 무시 (공백 방치 대신 기본 속성 오버라이드) */
+.portrait-container.left,
+.portrait-container.right,
 .portrait-container.center {
-    left: 50%;
-    transform: translateX(-50%);
+    display: block; /* 빈 규칙 방지용 추가 */
 }
 
 .portrait-img {
-    height: 320px;
+    height: 260px; /* 크기를 약간 줄여 덜 부담스럽게 */
     width: auto;
-    filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.6));
+    filter: drop-shadow(0 4px 15px rgba(0, 0, 0, 0.4));
+    mix-blend-mode: multiply; /* 하얀색 배경 투명화 핵심 로직 */
     transition: all 0.4s ease;
     image-rendering: auto;
 }
 
 /* 말하고 있는 캐릭터 강조 */
 .portrait-container.speaking .portrait-img {
-    filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.6)) brightness(1.1);
-    transform: scale(1.02);
+    filter: drop-shadow(0 0px 15px rgba(245, 158, 11, 0.5)) brightness(1.1);
+    transform: scale(1.05);
 }
 
 /* 말 안 하는 캐릭터 어둡게 */
 .portrait-container.dimmed .portrait-img {
-    filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.6)) brightness(0.5);
-    transform: scale(0.98);
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6)) brightness(0.5);
+    transform: scale(0.95);
 }
 
 /* 초상화 등장 애니메이션 */
-.portrait-container.enter-left {
-    animation: portraitEnterLeft 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-@keyframes portraitEnterLeft {
-    from { transform: translateX(-100px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+.portrait-container.enter-left,
+.portrait-container.enter-right {
+    animation: portraitEnter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-.portrait-container.enter-right {
-    animation: portraitEnterRight 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-@keyframes portraitEnterRight {
-    from { transform: translateX(100px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+@keyframes portraitEnter {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
 /* ── 텍스트 박스 ── */
@@ -501,11 +493,11 @@
 /* ── 반응형 ── */
 @media (max-width: 768px) {
     .portrait-img {
-        height: 200px;
+        height: 180px;
     }
 
     .portrait-container {
-        bottom: 180px;
+        bottom: 110px;
     }
 
     .text-box-inner {

@@ -3,37 +3,27 @@ document.addEventListener('alpine:init', () => {
         
         playerGender: 'MALE',
         playerNickname: '모험가',
-        ultName: '제황검형 (궁극기)',
 
-        // 엔티티 스탯
-        player: {
-            id: 'PLAYER',
-            name: '모험가',
-            hp: 500,
-            maxHp: 500,
-            speed: 120, // 속도 높음 (선턴)
-            portrait: '/images/portrait_male.png'
-        },
-        enemy: {
-            id: 'ENEMY',
-            name: '천마신교 추격자',
-            hp: 9999, // 튜토리얼 몹 체력 비정상적으로 높게 설정 
-            maxHp: 9999,
-            speed: 80,
-            portrait: '/images/portrait_guard.png',
-            isDead: false
-        },
-
-        turnQueue: [],      // 턴 큐 [Entity, Entity]
-        logs: [],           // 전투 로그 { time, message, type: 'system'|'player'|'enemy'|'skill' }
+        // 파티 최대 4인 배열 (튜토리얼은 1명만 할당하고 나머지는 null)
+        party: [null, null, null, null],
         
-        // 상태 머신: START -> WAITING_INPUT -> ANIMATING -> ENEMY_TURN -> WIN/LOSE
-        gameState: 'START',
+        // 적군 배열
+        enemies: [],
+
+        turnQueue: [],      // 화면 상단 타임라인 렌더링 및 턴 순서용 큐 [Entity, Entity...]
+        logs: [],           // 전투 로그
+        
+        // 현재 조작 중인(턴이 온) 엔티티
+        currentActor: null,
+        // 타겟팅 시스템 (기사 스킬 등)
+        selectedTarget: null,
+
+        gameState: 'START', // START, WAITING_INPUT, ANIMATING, WIN, LOSE
         isPlayerTurn: false,
 
         async init() {
             await this.loadPlayerInfo();
-            this.setupInitialState();
+            this.setupEntities();
             this.startBattle();
         },
 
@@ -48,34 +38,57 @@ document.addEventListener('alpine:init', () => {
             } catch (e) {
                 // Ignore API error in static testing
             }
-
-            this.player.name = this.playerNickname;
-            if (this.playerGender === 'MALE') {
-                this.ultName = '제황검형 (궁극)';
-                this.player.portrait = '/images/portrait_male.png';
-            } else {
-                this.ultName = '빙백신검 (궁극)';
-                this.player.portrait = '/images/portrait_female.png';
-            }
         },
 
-        setupInitialState() {
-            // 속도 기반 정렬
-            this.turnQueue = [this.player, this.enemy].sort((a, b) => b.speed - a.speed);
-            // 초기 액티브 설정
-            this.turnQueue.forEach(e => e.isActive = false);
+        setupEntities() {
+            // [1] 주인공(플레이어) 세팅
+            const hero = {
+                id: 'party-1',
+                type: 'PARTY',
+                name: this.playerNickname,
+                hp: 1200, maxHp: 1200,
+                mp: 100, maxMp: 100,
+                speed: 120, // 선턴
+                isActive: false,
+                isDead: false,
+                standing: this.playerGender === 'MALE' ? '/images/char_sprite.png' : '/images/char_sprite_female.png', // 추후 전신 일러스트로 교체 가능
+                portrait: this.playerGender === 'MALE' ? '/images/portrait_male.png' : '/images/portrait_female.png',
+                skills: [
+                    { id: 'attack', name: '기본 공격', cost: 0 },
+                    { id: 'defend', name: '방어', cost: 0 },
+                    { id: 'locked', name: '잠김', cost: 0 },
+                    { id: 'ult', name: this.playerGender === 'MALE' ? '제황검형 (궁극)' : '빙백신검 (궁극)', cost: 100 }
+                ]
+            };
+            this.party[0] = hero;
+
+            // [2] 튜토리얼 보스(적군) 세팅
+            const boss = {
+                id: 'enemy-1',
+                type: 'ENEMY',
+                name: '천마신교 추격자',
+                hp: 99999, maxHp: 99999,
+                speed: 80,
+                isActive: false,
+                isDead: false,
+                standing: '/images/portrait_guard.png',
+                portrait: '/images/portrait_guard.png'
+            };
+            this.enemies.push(boss);
+            this.selectedTarget = boss.id;
+
+            // 턴 큐 병합 및 정렬 (Speed 내림차순)
+            this.turnQueue = [hero, boss].sort((a, b) => b.speed - a.speed);
             
-            this.addLog(`야생의 [${this.enemy.name}] 가 앞길을 가로막습니다!`, 'system');
-            
+            this.addLog(`야생의 [${boss.name}] 가 길을 막아섰습니다!`, 'system');
             if(this.playerGender === 'FEMALE') {
-                this.addLog('✨ [패시브] 빙백신공이 발동되어 주변 온도가 급격히 낮아집니다.', 'skill');
+                this.addLog('✨ [패시브] 빙백신공이 발동되어 온도가 급격히 낮아집니다.', 'skill');
             } else {
-                this.addLog('✨ [패시브] 창궁대연신공이 단전을 맴돌며 검기를 증폭시킵니다.', 'skill');
+                this.addLog('✨ [패시브] 창궁대연신공이 단전을 돌며 검기를 증폭시킵니다.', 'skill');
             }
         },
 
         startBattle() {
-            // 1초 지연 후 첫 턴 시작
             setTimeout(() => {
                 this.nextTurn();
             }, 1000);
@@ -86,64 +99,85 @@ document.addEventListener('alpine:init', () => {
             const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
             this.logs.push({ time: timeStr, message, type });
             
-            // 자동 스크롤
             setTimeout(() => {
                 const container = document.getElementById('log-container');
                 if(container) container.scrollTop = container.scrollHeight;
             }, 50);
         },
 
+        selectTarget(enemy) {
+            if(!enemy.isDead) {
+                this.selectedTarget = enemy.id;
+            }
+        },
+
         nextTurn() {
-            if (this.enemy.hp <= 0) return this.handleWin();
+            // 생존 적이 없으면 승리
+            if (this.enemies.every(e => e.isDead)) return this.handleWin();
 
-            // 맨 앞 큐의 엔티티가 턴 획득
-            const currentEntity = this.turnQueue[0];
-            this.turnQueue.forEach(e => e.isActive = false);
-            currentEntity.isActive = true;
+            // 턴 큐의 첫 번째 엔티티 가져오기
+            const current = this.turnQueue[0];
+            this.currentActor = current;
 
-            if (currentEntity.id === 'PLAYER') {
+            // 모든 엔티티의 빛남(장판) 끄고, 현재 엔티티만 활성화
+            this.party.forEach(p => p && (p.isActive = false));
+            this.enemies.forEach(e => e.isActive = false);
+            current.isActive = true;
+
+            if (current.isDead) {
+                // 죽어있으면 쿨하게 패스
+                this.endTurn();
+                return;
+            }
+
+            if (current.type === 'PARTY') {
                 this.gameState = 'WAITING_INPUT';
                 this.isPlayerTurn = true;
-                this.addLog(`${this.player.name}의 턴! 조작을 기다립니다.`, 'system');
+                this.addLog(`[${current.name}] 의 턴! 명령을 대기합니다.`, 'system');
             } else {
                 this.gameState = 'ENEMY_TURN';
                 this.isPlayerTurn = false;
-                this.executeEnemyTurn();
+                this.executeEnemyTurn(current);
             }
         },
 
-        async executeAction(actionType) {
+        async executeAction(skillIndex) {
             this.gameState = 'ANIMATING';
             this.isPlayerTurn = false;
+            
+            const actor = this.currentActor;
+            const target = this.enemies.find(e => e.id === this.selectedTarget) || this.enemies[0];
 
-            if (actionType === 'ATTACK') {
-                this.addLog(`[${this.player.name}] 의 기본 공격!`, 'player');
-                await this.playHitAnimation(this.enemy, 50, false);
+            if (skillIndex === 0) { // 기본 공격
+                this.addLog(`[${actor.name}] 의 기본 공격!`, 'player');
+                await this.playHitAnimation(target, 125, false);
                 this.endTurn();
             } 
-            else if (actionType === 'SKILL') {
-                this.addLog(`[${this.player.name}] 이 궁극기 [${this.ultName}] 를 시전합니다!!`, 'skill');
-                
-                // 튜토리얼 뽕맛 효과 - 오버 킬 데미지
-                await this.playUltimateAnimation();
-                await this.playHitAnimation(this.enemy, 99999, true); 
+            else if (skillIndex === 1) { // 방어
+                this.addLog(`[${actor.name}] 과(와) 방어 태세를 취했다.`, 'player');
+                await new Promise(r => setTimeout(r, 600));
                 this.endTurn();
             }
-            else if (actionType === 'DEFEND') {
-                this.addLog(`[${this.player.name}] 가 방어 태세를 갖춥니다. (피해량 감소)`, 'player');
-                await new Promise(r => setTimeout(r, 1000));
+            else if (skillIndex === 3) { // 궁극기
+                this.addLog(`[${actor.name}] 이 궁극기 [${actor.skills[3].name}] 를 해방합니다!!`, 'skill');
+                
+                await this.playUltimateAnimation();
+                await this.playHitAnimation(target, 99999, true); 
                 this.endTurn();
             }
         },
 
-        executeEnemyTurn() {
-            this.addLog(`[${this.enemy.name}] 의 매서운 공격!`, 'enemy');
+        executeEnemyTurn(actor) {
+            this.addLog(`[${actor.name}] 의 매서운 공격!`, 'enemy');
             
             setTimeout(async () => {
-                // 화면 전체가 가볍게 흔들리는 피격 플레이어 효과 (임시)
+                // 랜덤한 살아있는 아군 타겟
+                const aliveParty = this.party.filter(p => p && !p.isDead);
+                const target = aliveParty[0];
+
                 document.body.classList.add('hit-shake');
-                this.addLog(`[${this.player.name}] 는 0의 데미지를 입었다...! (튜토리얼 보정)`, 'system');
-                this.player.hp -= 0; 
+                this.addLog(`[${target.name}] 는 0의 데미지를 입었다...! (튜토리얼 보정)`, 'system');
+                target.hp -= 0; 
                 
                 setTimeout(() => {
                     document.body.classList.remove('hit-shake');
@@ -154,41 +188,32 @@ document.addEventListener('alpine:init', () => {
         },
 
         endTurn() {
-            // 현재 엔티티 맨 뒤로 보내기
+            // 현재 엔티티 맨 뒤로 보내서 타임라인 순환
             const current = this.turnQueue.shift();
             current.isActive = false;
             this.turnQueue.push(current);
+            
+            this.currentActor = null; // 대기 모드 UI 처리 위해 제거
 
-            // 사망 체크
-            if(this.enemy.hp <= 0) {
-                this.handleWin();
-            } else {
-                // 다음 턴 스케줄
-                setTimeout(() => {
-                    this.nextTurn();
-                }, 800);
-            }
+            setTimeout(() => {
+                this.nextTurn();
+            }, 600);
         },
 
         playHitAnimation(target, damage, isCritical = false) {
             return new Promise((resolve) => {
-                const container = document.getElementById('enemy-container');
-                const damageLayer = document.getElementById('damage-layer');
+                const targetEl = document.getElementById(`enemy-${target.id}`);
+                const damageLayer = document.getElementById(`damage-layer-${target.id}`);
                 
-                // 데미지 텍스트 렌더링
                 const dmgEl = document.createElement('div');
                 dmgEl.className = 'dmg-text ' + (isCritical ? 'critical' : '');
                 dmgEl.innerText = damage;
-                // 약간 랜덤한 팝업 위치
-                dmgEl.style.left = `${50 + (Math.random()*20 - 10)}%`;
-                dmgEl.style.top = `${50 + (Math.random()*20 - 10)}%`;
+                dmgEl.style.left = `50%`;
+                dmgEl.style.top = `20%`;
                 
                 damageLayer.appendChild(dmgEl);
-                
-                // 적 스프라이트 흔들림 효과
-                container.classList.add('hit-shake');
+                if(targetEl) targetEl.classList.add('hit-shake');
 
-                // 체력 차감
                 target.hp -= damage;
                 if(target.hp <= 0) {
                     target.hp = 0;
@@ -196,31 +221,29 @@ document.addEventListener('alpine:init', () => {
                     this.addLog(`치명타! [${target.name}] 가 쓰러졌습니다!`, 'system');
                 }
 
-                // 애니메이션 클린업
                 setTimeout(() => {
-                    container.classList.remove('hit-shake');
+                    if(targetEl) targetEl.classList.remove('hit-shake');
                     dmgEl.remove();
                     resolve();
-                }, 800); // 흔들림/데미지 플로팅 시간 대기
+                }, 800);
             });
         },
 
         playUltimateAnimation() {
             return new Promise((resolve) => {
-                const layer = document.getElementById('effect-layer');
-                const effectEl = document.createElement('div');
+                // 궁극기 이펙트는 화면 중앙 적군 영역 전체에서 발생하도록 조치
+                const targetId = this.selectedTarget || this.enemies[0].id;
+                const layer = document.getElementById(`effect-layer-${targetId}`);
+                if (!layer) return resolve();
 
+                const effectEl = document.createElement('div');
                 if (this.playerGender === 'MALE') {
-                    // 제황검형: 화면을 완전히 가르는 황금색 참격
-                    effectEl.className = 'slash-effect';
+                    effectEl.className = 'slash-effect'; // 제황검형
                 } else {
-                    // 빙백신검: 적 중심에서 퍼지는 엄청난 얼음 폭발
-                    effectEl.className = 'ice-explosion';
+                    effectEl.className = 'ice-explosion'; // 빙백신검
                 }
 
                 layer.appendChild(effectEl);
-
-                // 연출 지속시간인 약 0.7초 후 제거
                 setTimeout(() => {
                     effectEl.remove();
                     resolve();
@@ -230,15 +253,15 @@ document.addEventListener('alpine:init', () => {
 
         handleWin() {
             this.gameState = 'WIN';
-            this.addLog(`👑 전투에서 승리했습니다! 무림맹 본산으로 이동합니다.`, 'system');
+            this.currentActor = null;
+            this.addLog(`👑 전투에서 승리했습니다! 무림맹 본산으로 귀환합니다.`, 'system');
             
             setTimeout(() => {
                 document.getElementById('whiteOut').classList.add('active');
                 
-                // 2.5초 후 타운으로 리다이렉션
                 setTimeout(() => {
                     window.location.href = '/town';
-                }, 2500);
+                }, 2000);
             }, 1000);
         }
 

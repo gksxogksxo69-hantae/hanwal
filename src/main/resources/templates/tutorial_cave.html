@@ -129,8 +129,16 @@
         <div class="bg-black/80 border border-slate-700 p-6 rounded-lg backdrop-blur-md">
             <h3 class="text-amber-400 font-bold gowun-batang text-xl mb-2" x-text="dialogSpeaker"></h3>
             <p class="text-white text-lg leading-relaxed" x-text="dialogText"></p>
-            <p class="text-slate-500 text-sm mt-4 text-right animate-pulse">클릭하여 계속 ▼</p>
+            <p class="text-slate-500 text-sm mt-4 text-right animate-pulse">클릭 또는 SPACE 하여 계속 ▼</p>
         </div>
+    </div>
+
+    <!-- 타임 스킵 연출 모달 -->
+    <div x-show="showTimeSkip"
+         x-transition.opacity.duration.2000ms
+         class="ui-layer absolute inset-0 flex flex-col items-center justify-center bg-black z-50">
+        <p class="gowun-batang text-3xl text-white tracking-[0.5em] mb-4" x-text="timeSkipText">수개월 후...</p>
+        <div class="w-24 h-px bg-white/50"></div>
     </div>
 
     <!-- Alpine.js -->

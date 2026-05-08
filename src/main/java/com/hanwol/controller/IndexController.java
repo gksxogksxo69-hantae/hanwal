@@ -20,4 +20,9 @@ public class IndexController {
     public String tutorialCave() {
         return "tutorial_cave";
     }
+
+    @GetMapping("/battle/tutorial")
+    public String battleTutorial() {
+        return "battle_tutorial";
+    }
 }

@@ -4,7 +4,7 @@ import com.hanwol.dto.battle.HeroTemplateDto;
 import com.hanwol.dto.battle.HeroSkillDto;
 import com.hanwol.domain.character.GameCharacter;
 import com.hanwol.domain.skill.Skill;
-import com.hanwol.repository.GameCharacterRepository;
+import com.hanwol.domain.character.GameCharacterRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;

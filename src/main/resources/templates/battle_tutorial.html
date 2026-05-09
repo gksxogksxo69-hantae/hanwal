@@ -130,8 +130,9 @@
         /* [Zone 3] 다이내믹 커맨드 패널 (하단) */
         .command-panel {
             min-height: 140px;
-            background: #0f172a;
-            border-top: 2px solid #334155;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255,255,255,0.1);
             display: flex;
             padding: 1rem;
             gap: 1.5rem;
@@ -207,6 +208,29 @@
 
     <div class="battle-container">
         
+        <!-- [Story Mode Overlay] 비주얼 노벨 연출 -->
+        <div class="absolute inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col justify-end pb-12 transition-opacity duration-1000"
+             x-show="gameState === 'STORY'"
+             x-transition:leave="opacity-100"
+             x-transition:leave-end="opacity-0"
+             @click="nextStory">
+            
+            <div class="w-full max-w-4xl mx-auto px-6">
+                <div class="bg-slate-900/80 border border-slate-700/50 rounded-lg p-6 md:p-8 shadow-2xl relative overflow-hidden backdrop-blur-sm">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50"></div>
+                    
+                    <div class="min-h-[100px] flex items-center">
+                        <p class="text-xl md:text-3xl gowun-batang text-slate-200 leading-relaxed tracking-wide" x-text="currentStoryLine"></p>
+                        <span class="animate-pulse ml-2 w-2 h-6 bg-slate-400 inline-block" x-show="isTyping"></span>
+                    </div>
+                    
+                    <div class="absolute bottom-4 right-6 text-sm text-slate-500 animate-pulse" x-show="!isTyping">
+                        클릭하여 진행 
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- [Zone 1] 최상단 타임라인 (Turn Queue) -->
         <div class="top-timeline">
             <!-- 턴을 순서대로 나란히 정렬 -->

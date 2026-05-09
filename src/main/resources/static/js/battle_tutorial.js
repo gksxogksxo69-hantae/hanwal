@@ -1,33 +1,32 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('battleApp', () => ({
-        
         playerGender: 'MALE',
         playerNickname: '모험가',
 
-        // 파티 최대 4인 배열 (튜토리얼은 1명만 할당하고 나머지는 null)
         party: [null, null, null, null],
-        
-        // 적군 배열
         enemies: [],
-
-        turnQueue: [],      // 화면 상단 타임라인 렌더링 및 턴 순서용 큐 [Entity, Entity...]
-        logs: [],           // 전투 로그
-        
-        // 현재 조작 중인(턴이 온) 엔티티
+        turnQueue: [],      
+        logs: [],           
         currentActor: null,
-        // 타겟팅 시스템 (기사 스킬 등)
         selectedTarget: null,
+        heroTemplate: null, 
 
-        heroTemplate: null, // DB에서 받아온 캐릭터 템플릿
-
-        gameState: 'START', // START, WAITING_INPUT, ANIMATING, WIN, LOSE
+        gameState: 'STORY', // STORY, WAITING_INPUT, ANIMATING, ENEMY_TURN, WIN, LOSE
+        tutorialStep: 0,
         isPlayerTurn: false,
+
+        // Story State
+        storyLines: [],
+        currentStoryLine: "",
+        storyIndex: 0,
+        isTyping: false,
+        typeInterval: null,
 
         async init() {
             await this.loadPlayerInfo();
-            await this.loadHeroTemplate(); // DB에서 스킬 가져오기
+            await this.loadHeroTemplate(); 
             this.setupEntities();
-            this.startBattle();
+            this.startStory();
         },
 
         async loadPlayerInfo() {
@@ -38,9 +37,7 @@ document.addEventListener('alpine:init', () => {
                     this.playerGender = data.gender || 'MALE';
                     this.playerNickname = data.nickname || '모험가';
                 }
-            } catch (e) {
-                // Ignore API error in static testing
-            }
+            } catch (e) {}
         },
 
         async loadHeroTemplate() {
@@ -56,7 +53,6 @@ document.addEventListener('alpine:init', () => {
         },
 
         setupEntities() {
-            // API를 못 불러왔을 때를 대비한 튜토리얼용 임시 에셋
             if (!this.heroTemplate) {
                 this.heroTemplate = {
                     name: this.playerNickname, role: 'WARRIOR', baseHp: 120, baseAtk: 30, baseDef: 15, baseSpd: 100,
@@ -64,12 +60,11 @@ document.addEventListener('alpine:init', () => {
                         { skillId: 's1', name: '기본 공격', description: '적을 공격하고 기력을 1 회복합니다.', skillType: 'DAMAGE', targetType: 'SINGLE', isUltimate: false, damageMultiplier: 1.0, energyCost: -1, spiritCost: 0 },
                         { skillId: 's2', name: '강타', description: '기력을 소모하여 강한 피해를 줍니다.', skillType: 'DAMAGE', targetType: 'SINGLE', isUltimate: false, damageMultiplier: 1.5, energyCost: 2, spiritCost: 0 },
                         { skillId: 's3', name: '기운 집중', description: '투기를 1 회복합니다.', skillType: 'BUFF', targetType: 'SELF', isUltimate: false, damageMultiplier: 0, energyCost: 1, spiritCost: -1 },
-                        { skillId: 's4', name: '절대기검', description: '투기를 소모하는 강력한 궁극기.', skillType: 'DAMAGE', targetType: 'SINGLE', isUltimate: true, damageMultiplier: 3.0, energyCost: 0, spiritCost: 3 }
+                        { skillId: 's4', name: '절대기검', description: '투기를 소모하는 강력한 궁극기.', skillType: 'DAMAGE', targetType: 'SINGLE', isUltimate: true, damageMultiplier: 3.0, energyCost: 0, spiritCost: 6 }
                     ]
                 };
             }
 
-            // 스킬 4슬롯 고정 배치 알고리즘 (궁극기를 4번에) 배치
             let preparedSkills = Array(4).fill(null).map(() => ({ id: 'locked', name: '잠긴 스킬', energyCost: 0, spiritCost: 0, isLock: true }));
             
             let normalIdx = 0;
@@ -80,32 +75,30 @@ document.addEventListener('alpine:init', () => {
                     multiplier: s.damageMultiplier, energyCost: s.energyCost, spiritCost: s.spiritCost, isLock: false
                 };
                 if (s.isUltimate) {
-                    preparedSkills[3] = sd; // 궁극기는 무조건 슬롯 4
+                    preparedSkills[3] = sd; 
                 } else if (normalIdx < 3) {
-                    preparedSkills[normalIdx] = sd; // 일반 기는 슬롯 1~3 순서대로
+                    preparedSkills[normalIdx] = sd;
                     normalIdx++;
                 }
             });
 
-            // [1] 주인공(플레이어) 세팅
             const hero = {
                 id: 'party-1',
                 type: 'PARTY',
-                name: this.playerNickname + `(${this.heroTemplate.name})`, // 이름 렌더링
-                hp: this.heroTemplate.baseHp * 10, maxHp: this.heroTemplate.baseHp * 10, // 체력 스케일 보정
-                energy: 3, maxEnergy: 5,
-                spirit: 0, maxSpirit: 5,
-                atk: this.heroTemplate.baseAtk * 5, // 공격력 스케일
+                name: this.playerNickname + `(${this.heroTemplate.name})`, 
+                hp: this.heroTemplate.baseHp * 10, maxHp: this.heroTemplate.baseHp * 10, 
+                energy: 0, maxEnergy: 5,
+                spirit: 0, maxSpirit: 6,
+                atk: this.heroTemplate.baseAtk * 5, 
                 def: this.heroTemplate.baseDef * 5,
                 speed: this.heroTemplate.baseSpd,
                 isActive: false,  isDead: false,
-                standing: this.playerGender === 'MALE' ? '/images/char_sprite.png' : '/images/char_sprite_female.png', // 추후 전신 일러스트로 교체 가능
+                standing: this.playerGender === 'MALE' ? '/images/char_sprite.png' : '/images/char_sprite_female.png', 
                 portrait: this.playerGender === 'MALE' ? '/images/portrait_male.png' : '/images/portrait_female.png',
                 skills: preparedSkills
             };
             this.party[0] = hero;
 
-            // [2] 튜토리얼 보스(적군) 세팅
             const boss = {
                 id: 'enemy-1',
                 type: 'ENEMY',
@@ -114,24 +107,69 @@ document.addEventListener('alpine:init', () => {
                 speed: 80,
                 isActive: false,
                 isDead: false,
-                standing: '/images/portrait_guard.png',
-                portrait: '/images/portrait_guard.png'
+                standing: '/images/enemy_demon_cult_pursuer.png',
+                portrait: '/images/enemy_demon_cult_pursuer.png'
             };
             this.enemies.push(boss);
             this.selectedTarget = boss.id;
 
-            // 턴 큐 병합 및 정렬 (Speed 내림차순)
             this.turnQueue = [hero, boss].sort((a, b) => b.speed - a.speed);
+        },
+
+        startStory() {
+            const heroName = this.playerGender === 'MALE' ? '남궁천' : '남궁설화';
+            this.storyLines = [
+                `(${heroName}은 거친 숨을 몰아쉬며 숲을 빠져나왔다.)`,
+                `"큭... 여기까지 쫓아올 줄이야..."`,
+                `(그때, 발밑에서 기이한 빛을 뿜어내는 영약, [기연]을 발견했다!)`,
+                `"이것은... 전설로만 듣던 만년한철의 정수?!"`,
+                `(영약을 품으려는 찰나, 등 뒤에서 서늘한 살기가 느껴졌다.)`,
+                `[천마신교 추격자]: "어리석은 놈. 도망칠 수 있을 줄 알았더냐."`,
+                `"빌어먹을... 싸울 수밖에 없겠군!"`
+            ];
+            this.storyIndex = 0;
+            this.typeNextStoryLine();
+        },
+
+        typeNextStoryLine() {
+            if (this.storyIndex >= this.storyLines.length) {
+                this.endStory();
+                return;
+            }
+            this.isTyping = true;
+            const fullText = this.storyLines[this.storyIndex];
+            this.currentStoryLine = "";
+            let charIdx = 0;
             
-            this.addLog(`야생의 [${boss.name}] 가 길을 막아섰습니다!`, 'system');
-            if(this.playerGender === 'FEMALE') {
-                this.addLog('✨ [패시브] 빙백신공이 발동되어 온도가 급격히 낮아집니다.', 'skill');
+            clearInterval(this.typeInterval);
+            this.typeInterval = setInterval(() => {
+                this.currentStoryLine += fullText.charAt(charIdx);
+                charIdx++;
+                if (charIdx >= fullText.length) {
+                    clearInterval(this.typeInterval);
+                    this.isTyping = false;
+                }
+            }, 50);
+        },
+
+        nextStory() {
+            if (this.isTyping) {
+                clearInterval(this.typeInterval);
+                this.currentStoryLine = this.storyLines[this.storyIndex];
+                this.isTyping = false;
             } else {
-                this.addLog('✨ [패시브] 창궁대연신공이 단전을 돌며 검기를 증폭시킵니다.', 'skill');
+                this.storyIndex++;
+                this.typeNextStoryLine();
             }
         },
 
-        startBattle() {
+        endStory() {
+            this.gameState = 'START';
+            this.addLog(`전투가 시작되었습니다!`, 'system');
+            
+            // Tutorial Step 1
+            this.tutorialStep = 1;
+            
             setTimeout(() => {
                 this.nextTurn();
             }, 1000);
@@ -149,26 +187,20 @@ document.addEventListener('alpine:init', () => {
         },
 
         selectTarget(enemy) {
-            if(!enemy.isDead) {
-                this.selectedTarget = enemy.id;
-            }
+            if(!enemy.isDead) this.selectedTarget = enemy.id;
         },
 
         nextTurn() {
-            // 생존 적이 없으면 승리
             if (this.enemies.every(e => e.isDead)) return this.handleWin();
 
-            // 턴 큐의 첫 번째 엔티티 가져오기
             const current = this.turnQueue[0];
             this.currentActor = current;
 
-            // 모든 엔티티의 빛남(장판) 끄고, 현재 엔티티만 활성화
             this.party.forEach(p => p && (p.isActive = false));
             this.enemies.forEach(e => e.isActive = false);
             current.isActive = true;
 
             if (current.isDead) {
-                // 죽어있으면 쿨하게 패스
                 this.endTurn();
                 return;
             }
@@ -176,7 +208,12 @@ document.addEventListener('alpine:init', () => {
             if (current.type === 'PARTY') {
                 this.gameState = 'WAITING_INPUT';
                 this.isPlayerTurn = true;
-                this.addLog(`[${current.name}] 의 턴! 명령을 대기합니다.`, 'system');
+                
+                if (this.tutorialStep === 1) {
+                    this.addLog(`[가이드] '기본 공격(첫 번째 스킬)'을 사용하여 기력(Energy)을 1 모으세요.`, 'skill');
+                } else if (this.tutorialStep === 3) {
+                    this.addLog(`[가이드] 기연의 힘이 발동했습니다! 궁극기를 사용하여 적을 쓰러뜨리세요! (필요 투기: 6)`, 'skill');
+                }
             } else {
                 this.gameState = 'ENEMY_TURN';
                 this.isPlayerTurn = false;
@@ -185,62 +222,61 @@ document.addEventListener('alpine:init', () => {
         },
 
         async executeAction(skillIndex) {
-            // 빠른 더블 클릭 방어 (동시성 최적화)
             if (this.gameState !== 'WAITING_INPUT') return;
 
-            this.gameState = 'ANIMATING';
-            this.isPlayerTurn = false;
-            
             const actor = this.currentActor;
             const skill = actor.skills[skillIndex];
             
-            if(skill.isLock) {
-                this.gameState = 'WAITING_INPUT';
-                this.isPlayerTurn = true;
+            if(skill.isLock) return;
+
+            // Tutorial Validation
+            if (this.tutorialStep === 1 && skillIndex !== 0) {
+                this.addLog(`[가이드] 지금은 '기본 공격(첫 번째 스킬)'만 사용할 수 있습니다.`, 'system');
+                return;
+            }
+            if (this.tutorialStep === 3 && !skill.isUltimate) {
+                this.addLog(`[가이드] 투기가 가득 찼습니다! '궁극기(네 번째 스킬)'를 사용하세요.`, 'system');
                 return;
             }
 
-            // 자원 체크
+            // Resource Check
             if (skill.energyCost > 0 && actor.energy < skill.energyCost) {
                 this.addLog(`기력(Energy)이 부족합니다! [필요: ${skill.energyCost}]`, 'system');
-                this.gameState = 'WAITING_INPUT';
-                this.isPlayerTurn = true;
                 return;
             }
             if (skill.spiritCost > 0 && actor.spirit < skill.spiritCost) {
                 this.addLog(`투기(Spirit)가 부족합니다! [필요: ${skill.spiritCost}]`, 'system');
-                this.gameState = 'WAITING_INPUT';
-                this.isPlayerTurn = true;
                 return;
             }
 
-            // 자원 증감 처리 (cost가 음수면 자원 회복)
-            if (skill.energyCost !== 0) {
-                actor.energy = Math.max(0, Math.min(actor.maxEnergy, actor.energy - skill.energyCost));
-            }
-            if (skill.spiritCost !== 0) {
-                actor.spirit = Math.max(0, Math.min(actor.maxSpirit, actor.spirit - skill.spiritCost));
-            }
+            this.gameState = 'ANIMATING';
+            this.isPlayerTurn = false;
+
+            if (skill.energyCost !== 0) actor.energy = Math.max(0, Math.min(actor.maxEnergy, actor.energy - skill.energyCost));
+            if (skill.spiritCost !== 0) actor.spirit = Math.max(0, Math.min(actor.maxSpirit, actor.spirit - skill.spiritCost));
 
             const target = this.enemies.find(e => e.id === this.selectedTarget) || this.enemies[0];
             const dmgAmt = Math.floor(actor.atk * skill.multiplier);
 
             if (skill.type === 'BUFF') {
                 this.addLog(`[${actor.name}] 의 [${skill.name}]!`, 'player');
-                this.addLog(`🛡️ 기운을 끌어올립니다. [효과 발생!]`, 'skill');
                 await new Promise(r => setTimeout(r, 600));
                 this.endTurn();
             } 
             else if (skill.isUltimate) {
                 this.addLog(`[${actor.name}] 이 궁극기 [${skill.name}] 를 해방합니다!!`, 'skill');
                 await this.playUltimateAnimation();
-                await this.playHitAnimation(target, Math.max(9999, dmgAmt) , true);  // 튜토리얼 뽕맛
+                await this.playHitAnimation(target, Math.max(9999, dmgAmt) , true); 
                 this.endTurn();
             }
             else {
-                // 일반 데미지 스킬
                 this.addLog(`[${actor.name}] 의 [${skill.name}]!`, 'player');
                 await this.playHitAnimation(target, dmgAmt, false);
+                
+                if (this.tutorialStep === 1) {
+                    this.tutorialStep = 2; // Move to enemy turn step
+                }
+                
                 this.endTurn();
             }
         },
@@ -249,16 +285,21 @@ document.addEventListener('alpine:init', () => {
             this.addLog(`[${actor.name}] 의 매서운 공격!`, 'enemy');
             
             setTimeout(async () => {
-                // 랜덤한 살아있는 아군 타겟
                 const aliveParty = this.party.filter(p => p && !p.isDead);
                 const target = aliveParty[0];
 
                 document.body.classList.add('hit-shake');
                 this.addLog(`[${target.name}] 는 0의 데미지를 입었다...! (튜토리얼 보정)`, 'system');
-                target.hp -= 0; 
                 
                 setTimeout(() => {
                     document.body.classList.remove('hit-shake');
+                    
+                    if (this.tutorialStep === 2) {
+                        this.tutorialStep = 3;
+                        target.spirit = 6;
+                        this.addLog(`✨ 품고 있던 [기연]이 붉은 빛을 내뿜으며 단전의 투기가 가득 찼습니다! (투기: 6)`, 'skill');
+                    }
+                    
                     this.endTurn();
                 }, 500);
 
@@ -266,12 +307,10 @@ document.addEventListener('alpine:init', () => {
         },
 
         endTurn() {
-            // 현재 엔티티 맨 뒤로 보내서 타임라인 순환
             const current = this.turnQueue.shift();
             current.isActive = false;
             this.turnQueue.push(current);
-            
-            this.currentActor = null; // 대기 모드 UI 처리 위해 제거
+            this.currentActor = null; 
 
             setTimeout(() => {
                 this.nextTurn();
@@ -309,16 +348,15 @@ document.addEventListener('alpine:init', () => {
 
         playUltimateAnimation() {
             return new Promise((resolve) => {
-                // 궁극기 이펙트는 화면 중앙 적군 영역 전체에서 발생하도록 조치
                 const targetId = this.selectedTarget || this.enemies[0].id;
                 const layer = document.getElementById(`effect-layer-${targetId}`);
                 if (!layer) return resolve();
 
                 const effectEl = document.createElement('div');
                 if (this.playerGender === 'MALE') {
-                    effectEl.className = 'slash-effect'; // 제황검형
+                    effectEl.className = 'slash-effect'; 
                 } else {
-                    effectEl.className = 'ice-explosion'; // 빙백신검
+                    effectEl.className = 'ice-explosion'; 
                 }
 
                 layer.appendChild(effectEl);
@@ -332,11 +370,10 @@ document.addEventListener('alpine:init', () => {
         handleWin() {
             this.gameState = 'WIN';
             this.currentActor = null;
-            this.addLog(`👑 전투에서 승리했습니다! 무림맹 본산으로 귀환합니다.`, 'system');
+            this.addLog(`👑 전투에서 승리했습니다! 1막으로 이동합니다...`, 'system');
             
             setTimeout(() => {
                 document.getElementById('whiteOut').classList.add('active');
-                
                 setTimeout(() => {
                     window.location.href = '/town';
                 }, 2000);

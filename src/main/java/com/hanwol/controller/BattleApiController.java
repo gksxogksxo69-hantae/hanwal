@@ -37,7 +37,7 @@ public class BattleApiController {
                     .description(skill.getDescription())
                     .skillType(skill.getSkillType().name())
                     .targetType(skill.getTargetType().name())
-                    .isUltimate("BATTLE".equals(cs.getSkillSlot()) || skill.getEnergyCost() == 0 && skill.getSpiritCost() >= 3)
+                    .isUltimate("ULTIMATE".equals(cs.getSkillSlot()) || "ULTIMATE".equals(skill.getSkillType().name()))
                     .damageMultiplier(skill.getDamageMultiplier().doubleValue())
                     .energyCost(skill.getEnergyCost())
                     .spiritCost(skill.getSpiritCost())

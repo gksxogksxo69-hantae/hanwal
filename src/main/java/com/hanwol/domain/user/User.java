@@ -1,5 +1,6 @@
 package com.hanwol.domain.user;
 
+import com.hanwol.domain.enums.RouteType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -31,7 +32,7 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 10)
-    private Gender gender; // 로그인 후 최초 캐릭터 설정 시 세팅됨
+    private Gender gender;
 
     @Column(nullable = false)
     private int level = 1;
@@ -45,6 +46,15 @@ public class User {
     @Column(nullable = false)
     private long premiumCurrency = 0;
 
+    // --- 루트 시스템 ---
+    @Enumerated(EnumType.STRING)
+    @Column(length = 10)
+    private RouteType routeType; // 최초 선택 후 변경 불가
+
+    @Column(nullable = false)
+    private int storyChapter = 0; // 0=프롤로그, 1~5=각 막
+
+    // --- 위치 ---
     @Column(nullable = false)
     private int locX = 400;
 
@@ -54,6 +64,7 @@ public class User {
     @Column
     private LocalDateTime lastSyncTime;
 
+    // --- 튜토리얼 ---
     @Column(nullable = false)
     private int tutorialStep = 0;
 
@@ -72,9 +83,29 @@ public class User {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
-        this.locX = 400; // 마을 중앙 스폰 X
-        this.locY = 300; // 마을 중앙 스폰 Y
+        this.locX = 400;
+        this.locY = 300;
         this.lastSyncTime = LocalDateTime.now();
+    }
+
+    /**
+     * 루트 선택 (최초 1회만)
+     */
+    public void selectRoute(RouteType route) {
+        if (this.routeType != null) {
+            throw new IllegalStateException("루트는 한 번만 선택할 수 있습니다.");
+        }
+        this.routeType = route;
+    }
+
+    /**
+     * 스토리 챕터 진행
+     */
+    public void advanceStoryChapter() {
+        if (this.storyChapter >= 5) {
+            throw new IllegalStateException("이미 최종 막에 도달했습니다.");
+        }
+        this.storyChapter++;
     }
 
     public void updateLocation(int x, int y, LocalDateTime syncTime) {
@@ -101,5 +132,23 @@ public class User {
     public void completeTutorial() {
         this.isTutorialCompleted = true;
     }
-}
 
+    public void gainExp(long amount) {
+        this.exp += amount;
+    }
+
+    public void levelUp() {
+        this.level++;
+    }
+
+    public void spendGold(long amount) {
+        if (this.gold < amount) {
+            throw new IllegalStateException("골드가 부족합니다.");
+        }
+        this.gold -= amount;
+    }
+
+    public void gainGold(long amount) {
+        this.gold += amount;
+    }
+}

@@ -1,18 +1,43 @@
--- 1. 메인 캐릭터 템플릿 데이터 삽입 (이미 있으면 무시)
-INSERT IGNORE INTO character_template (template_id, name, role, base_hp, base_mp, base_atk, base_def, base_spd) VALUES
-('CH_NAMGUNG_CHUN', '남궁천', 'WARRIOR', 150, 50, 35, 15, 95),
-('CH_NAMGUNG_SEOLHA', '남궁설화', 'MAGE', 100, 100, 42, 8, 115);
+-- 1. 신규 스킬 마스터 삽입 (skills 테이블)
+INSERT IGNORE INTO skills (id, name, description, skill_type, target_type, element, scaling_stat, damage_multiplier, energy_cost, spirit_gain, spirit_cost) VALUES
+(1, '36계 줄랑랑', '행동 게이지를 30% 당기고 2턴 방어력 증가', 'BATTLE', 'SELF', 'VOID', 'ATK', 0.00, 1, 2, 0),
+(2, '흙 뿌리기', '적 단일 소량 피해 + 2턴 실명(명중률 50% 감소)', 'NORMAL', 'SINGLE_ENEMY', 'EARTH', 'ATK', 0.50, -1, 1, 0),
+(10, '창궁대연보', '행동 게이지 40% 상승 + 3턴 회피율 급증', 'BATTLE', 'SELF', 'VOID', 'ATK', 0.00, 1, 2, 0),
+(11, '창궁일송', '단일 DEF비례 대미지 + 2턴 무력화', 'NORMAL', 'SINGLE_ENEMY', 'EARTH', 'DEF', 1.00, -1, 1, 0),
+(12, '제황검형 - 일검서해', 'DEF 비례 광역 대미지 + 방어력 파쇄', 'ULTIMATE', 'ALL_ENEMY', 'METAL', 'DEF', 3.50, 0, 0, 6),
 
--- 2. 스킬 템플릿 데이터 삽입 (이미 있으면 무시)
-INSERT IGNORE INTO skill_template (skill_id, name, description, skill_type, target_type, is_ultimate, damage_multiplier, mp_cost) VALUES
-('SK_HEAVEN_SLASH', '창천일격', '무거운 검으로 적을 내려쳐 강력한 물리 피해를 입힙니다.', 'DAMAGE', 'SINGLE', false, 1.50, 10),
-('SK_IRON_WILL', '철벽기세', '내력을 끌어올려 자신에게 보호막을 씌웁니다. (데미지 경감)', 'BUFF', 'SELF', false, 0.00, 15),
-('SK_ICE_THRUST', '빙결 한기', '차가운 기운을 뿜어 적을 타격하고 일정 확률로 행동 게이지를 감소시킵니다.', 'DAMAGE', 'SINGLE', false, 1.10, 15),
-('SK_SNOW_BURST', '설화폭풍', '화려한 냉기 폭풍으로 적 전체에게 강력한 마법 피해를 입힙니다.', 'DAMAGE', 'ALL', true, 1.80, 35);
+(20, '꺄악! 비명지르기', '적 전체 행동 게이지 15% 감소', 'BATTLE', 'ALL_ENEMY', 'VOID', 'ATK', 0.00, 1, 2, 0),
+(21, '짱돌 투척', '적 단일 피해 + 30% 확률 기절(1턴)', 'NORMAL', 'SINGLE_ENEMY', 'EARTH', 'ATK', 0.50, -1, 1, 0),
+(30, '빙백한풍', '적 전체 속도 감소 + 빙결 유도(50% 확률)', 'BATTLE', 'ALL_ENEMY', 'WATER', 'ATK', 1.50, 1, 2, 0),
+(31, '빙백투창', '단일 극딜 + 확정 빙결 1턴', 'NORMAL', 'SINGLE_ENEMY', 'WATER', 'ATK', 1.20, -1, 1, 0),
+(32, '빙백신검 - 천년빙봉', '단일 대상 확정 빙결 + 극딜', 'ULTIMATE', 'SINGLE_ENEMY', 'WATER', 'ATK', 4.00, 0, 0, 6);
 
--- 3. 캐릭터 - 스킬 매핑 데이터 삽입 (이미 있으면 무시)
-INSERT IGNORE INTO character_skill_relation (template_id, skill_id) VALUES
-('CH_NAMGUNG_CHUN', 'SK_HEAVEN_SLASH'),
-('CH_NAMGUNG_CHUN', 'SK_IRON_WILL'),
-('CH_NAMGUNG_SEOLHA', 'SK_ICE_THRUST'),
-('CH_NAMGUNG_SEOLHA', 'SK_SNOW_BURST');
+-- 2. 신규 캐릭터 마스터 삽입 (characters 테이블)
+INSERT IGNORE INTO characters (id, name, title, element, role, route_type, base_hp, base_atk, base_def, base_spd, base_crit_rate, base_crit_dmg, base_effect_hit_rate, base_effect_resist, hp_growth, atk_growth, def_growth, spd_growth_per_level, ehr_growth_per_level, spirit_bonus_condition, spirit_bonus_amount) VALUES
+(1, '남궁천', '가문의 수치', 'EARTH', '딜탱', 'CHUN', 130, 14, 12, 98, 5.00, 150.00, 10.00, 15.00, 'S', 'B', 'S', 0.20, 0.10, 'ON_HIT', 1),
+(2, '남궁설화', '비명쟁이', 'WATER', '디버퍼', 'SULHWA', 75, 10, 4, 102, 5.00, 150.00, 30.00, 5.00, 'D', 'B', 'D', 0.30, 0.50, 'ON_DEBUFF_LAND', 1),
+(3, '팽아린', '하북의 적련', 'FIRE', '폭딜러', 'CHUN', 100, 18, 8, 105, 15.00, 180.00, 5.00, 5.00, 'B', 'S', 'C', 0.25, 0.10, 'ON_CRIT', 2),
+(4, '당소소', '그림자 독', 'METAL', '암살자', 'SULHWA', 80, 16, 6, 115, 10.00, 200.00, 15.00, 5.00, 'C', 'A', 'D', 0.40, 0.20, 'ON_KILL', 3),
+(5, '남궁현', '가문의 원로', 'VOID', '서포터', NULL, 120, 12, 10, 95, 5.00, 150.00, 5.00, 20.00, 'A', 'C', 'A', 0.15, 0.10, 'ON_ALLY_HIT', 1);
+
+-- 3. 캐릭터-스킬 매핑 삽입 (character_skills 테이블)
+INSERT IGNORE INTO character_skills (id, character_id, skill_id, skill_slot, required_gyeongji) VALUES
+(1, 1, 2, 'NORMAL', NULL),
+(2, 1, 1, 'BATTLE', NULL),
+(3, 1, 12, 'ULTIMATE', 'CHOILRYU'),
+(4, 2, 21, 'NORMAL', NULL),
+(5, 2, 20, 'BATTLE', NULL),
+(6, 2, 32, 'ULTIMATE', 'CHOILRYU');
+
+-- 4. 스킬 진화 매핑 삽입 (skill_evolutions 테이블)
+INSERT IGNORE INTO skill_evolutions (id, before_skill_id, after_skill_id, required_chapter, route_type, event_description) VALUES
+(1, 1, 10, 1, 'CHUN', '36계 줄랑랑 -> 창궁대연보'),
+(2, 2, 11, 1, 'CHUN', '흙 뿌리기 -> 창궁일송'),
+(3, 20, 30, 1, 'SULHWA', '꺄악! 비명지르기 -> 빙백한풍'),
+(4, 21, 31, 1, 'SULHWA', '짱돌 투척 -> 빙백투창');
+
+-- 5. 합벽기 매핑 삽입 (combo_skills 테이블)
+INSERT IGNORE INTO combo_skills (id, route_type, char_a_id, char_b_id, combo_name, combo_rank, spirit_cost_a, spirit_cost_b, required_chapter, element_fusion, effect_json, description) VALUES
+(1, 'CHUN', 1, 3, '염토쌍무 - 폭염지진', 'MAIN', 6, 6, 3, '용암(熔岩)', '{"damage_type":"AOE","scaling":"DEF","multiplier":4.5}', '천과 아린의 합벽기'),
+(2, 'SULHWA', 2, 4, '빙독쌍련 - 극한독화', 'MAIN', 6, 6, 3, '동결독(凍結毒)', '{"damage_type":"AOE","multiplier":3.8}', '설화와 소소의 합벽기'),
+(3, 'SULHWA', 2, 5, '현빙무영 - 한월장막', 'SUB', 4, 4, 2, '절대영도(絕對零度)', '{"damage_type":"AOE","multiplier":4.0}', '설화와 할배의 합벽기');

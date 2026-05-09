@@ -292,9 +292,13 @@
                                 <div class="w-full h-1.5 bg-slate-800 border border-slate-900 rounded-full overflow-hidden">
                                     <div class="bg-emerald-500 h-full transition-all" :style="`width: ${(ally.hp/ally.maxHp)*100}%`"></div>
                                 </div>
-                                <!-- MP -->
+                                <!-- Energy -->
+                                <div class="w-full h-1 bg-slate-800 border border-slate-900 rounded-full overflow-hidden mb-[1px]">
+                                    <div class="bg-yellow-500 h-full transition-all" :style="`width: ${(ally.energy/ally.maxEnergy)*100}%`"></div>
+                                </div>
+                                <!-- Spirit -->
                                 <div class="w-full h-1 bg-slate-800 border border-slate-900 rounded-full overflow-hidden">
-                                    <div class="bg-blue-500 h-full transition-all" :style="`width: ${(ally.mp/ally.maxMp)*100}%`"></div>
+                                    <div class="bg-fuchsia-500 h-full transition-all" :style="`width: ${(ally.spirit/ally.maxSpirit)*100}%`"></div>
                                 </div>
                             </div>
                         </div>
@@ -327,10 +331,18 @@
                                     <div class="bg-emerald-500 h-full transition-all" :style="`width: ${(currentActor.hp / currentActor.maxHp) * 100}%`"></div>
                                 </div>
                             </div>
-                            <div>
-                                <div class="text-[10px] text-blue-400 mb-0.5">MP <span x-text="currentActor.mp"></span></div>
-                                <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-                                    <div class="bg-blue-500 h-full transition-all" :style="`width: ${(currentActor.mp / currentActor.maxMp) * 100}%`"></div>
+                            <div class="flex gap-2 w-full">
+                                <div class="flex-1">
+                                    <div class="text-[10px] text-yellow-400 mb-0.5">기력 <span x-text="currentActor.energy"></span></div>
+                                    <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                                        <div class="bg-yellow-500 h-full transition-all" :style="`width: ${(currentActor.energy / currentActor.maxEnergy) * 100}%`"></div>
+                                    </div>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="text-[10px] text-fuchsia-400 mb-0.5">투기 <span x-text="currentActor.spirit"></span></div>
+                                    <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                                        <div class="bg-fuchsia-500 h-full transition-all" :style="`width: ${(currentActor.spirit / currentActor.maxSpirit) * 100}%`"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -382,9 +394,14 @@
 
                                 <!-- 툴팁 (호버 시 스킬 상세 설명) -->
                                 <div x-show="!skill.isLock" class="absolute bottom-[105%] left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-900 border border-slate-600 p-3 text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition z-50 text-slate-300 shadow-xl overflow-hidden">
-                                    <div class="text-blue-400 font-bold mb-1 flex justify-between">
-                                        <span>소모 MP: <span x-text="skill.cost"></span></span>
-                                        <span class="text-emerald-400" x-text="skill.type === 'BUFF' ? '버프' : '공격기'"></span>
+                                    <div class="text-slate-300 font-bold mb-1 flex justify-between">
+                                        <span class="flex gap-2 text-[10px]">
+                                            <span x-show="skill.energyCost > 0" class="text-yellow-400">기력-<span x-text="skill.energyCost"></span></span>
+                                            <span x-show="skill.energyCost < 0" class="text-yellow-400">기력+<span x-text="Math.abs(skill.energyCost)"></span></span>
+                                            <span x-show="skill.spiritCost > 0" class="text-fuchsia-400">투기-<span x-text="skill.spiritCost"></span></span>
+                                            <span x-show="skill.spiritCost < 0" class="text-fuchsia-400">투기+<span x-text="Math.abs(skill.spiritCost)"></span></span>
+                                        </span>
+                                        <span class="text-emerald-400 shrink-0" x-text="skill.type === 'BUFF' ? '버프' : '공격기'"></span>
                                     </div>
                                     <div class="w-full h-px bg-slate-700 my-1"></div>
                                     <div class="text-xs leading-relaxed" x-text="skill.description"></div>

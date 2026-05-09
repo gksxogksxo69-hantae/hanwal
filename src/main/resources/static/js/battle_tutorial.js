@@ -59,20 +59,25 @@ document.addEventListener('alpine:init', () => {
             // API를 못 불러왔을 때를 대비한 튜토리얼용 임시 에셋
             if (!this.heroTemplate) {
                 this.heroTemplate = {
-                    name: this.playerNickname, role: 'WARRIOR', baseHp: 120, baseMp: 50, baseAtk: 30, baseDef: 15, baseSpd: 100,
-                    skills: [{ skillId: 'fallback', name: '기본 공격', description: '기본적인 공격입니다.', skillType: 'DAMAGE', targetType: 'SINGLE', isUltimate: false, damageMultiplier: 1.0, mpCost: 0 }]
+                    name: this.playerNickname, role: 'WARRIOR', baseHp: 120, baseAtk: 30, baseDef: 15, baseSpd: 100,
+                    skills: [
+                        { skillId: 's1', name: '기본 공격', description: '적을 공격하고 기력을 1 회복합니다.', skillType: 'DAMAGE', targetType: 'SINGLE', isUltimate: false, damageMultiplier: 1.0, energyCost: -1, spiritCost: 0 },
+                        { skillId: 's2', name: '강타', description: '기력을 소모하여 강한 피해를 줍니다.', skillType: 'DAMAGE', targetType: 'SINGLE', isUltimate: false, damageMultiplier: 1.5, energyCost: 2, spiritCost: 0 },
+                        { skillId: 's3', name: '기운 집중', description: '투기를 1 회복합니다.', skillType: 'BUFF', targetType: 'SELF', isUltimate: false, damageMultiplier: 0, energyCost: 1, spiritCost: -1 },
+                        { skillId: 's4', name: '절대기검', description: '투기를 소모하는 강력한 궁극기.', skillType: 'DAMAGE', targetType: 'SINGLE', isUltimate: true, damageMultiplier: 3.0, energyCost: 0, spiritCost: 3 }
+                    ]
                 };
             }
 
             // 스킬 4슬롯 고정 배치 알고리즘 (궁극기를 4번에) 배치
-            let preparedSkills = Array(4).fill(null).map(() => ({ id: 'locked', name: '잠긴 스킬', cost: 0, isLock: true }));
+            let preparedSkills = Array(4).fill(null).map(() => ({ id: 'locked', name: '잠긴 스킬', energyCost: 0, spiritCost: 0, isLock: true }));
             
             let normalIdx = 0;
             this.heroTemplate.skills.forEach(s => {
                 const sd = {
                     id: s.skillId, name: s.name, description: s.description,
                     type: s.skillType, target: s.targetType, isUltimate: s.isUltimate, 
-                    multiplier: s.damageMultiplier, cost: s.mpCost, isLock: false
+                    multiplier: s.damageMultiplier, energyCost: s.energyCost, spiritCost: s.spiritCost, isLock: false
                 };
                 if (s.isUltimate) {
                     preparedSkills[3] = sd; // 궁극기는 무조건 슬롯 4
@@ -88,7 +93,8 @@ document.addEventListener('alpine:init', () => {
                 type: 'PARTY',
                 name: this.playerNickname + `(${this.heroTemplate.name})`, // 이름 렌더링
                 hp: this.heroTemplate.baseHp * 10, maxHp: this.heroTemplate.baseHp * 10, // 체력 스케일 보정
-                mp: this.heroTemplate.baseMp * 2, maxMp: this.heroTemplate.baseMp * 2,
+                energy: 3, maxEnergy: 5,
+                spirit: 0, maxSpirit: 5,
                 atk: this.heroTemplate.baseAtk * 5, // 공격력 스케일
                 def: this.heroTemplate.baseDef * 5,
                 speed: this.heroTemplate.baseSpd,
@@ -194,14 +200,27 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            // MP 소모
-            if (actor.mp < skill.cost) {
-                this.addLog(`내력(MP)이 부족합니다! [필요: ${skill.cost}]`, 'system');
+            // 자원 체크
+            if (skill.energyCost > 0 && actor.energy < skill.energyCost) {
+                this.addLog(`기력(Energy)이 부족합니다! [필요: ${skill.energyCost}]`, 'system');
                 this.gameState = 'WAITING_INPUT';
                 this.isPlayerTurn = true;
                 return;
             }
-            actor.mp -= skill.cost;
+            if (skill.spiritCost > 0 && actor.spirit < skill.spiritCost) {
+                this.addLog(`투기(Spirit)가 부족합니다! [필요: ${skill.spiritCost}]`, 'system');
+                this.gameState = 'WAITING_INPUT';
+                this.isPlayerTurn = true;
+                return;
+            }
+
+            // 자원 증감 처리 (cost가 음수면 자원 회복)
+            if (skill.energyCost !== 0) {
+                actor.energy = Math.max(0, Math.min(actor.maxEnergy, actor.energy - skill.energyCost));
+            }
+            if (skill.spiritCost !== 0) {
+                actor.spirit = Math.max(0, Math.min(actor.maxSpirit, actor.spirit - skill.spiritCost));
+            }
 
             const target = this.enemies.find(e => e.id === this.selectedTarget) || this.enemies[0];
             const dmgAmt = Math.floor(actor.atk * skill.multiplier);

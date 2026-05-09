@@ -43,10 +43,10 @@ public class ComboSkill {
     @Column(nullable = false, length = 10)
     private ComboRank comboRank;
 
-    @Column(nullable = false)
+    @Column(name = "spirit_cost_a", nullable = false)
     private int spiritCostA = 6;
 
-    @Column(nullable = false)
+    @Column(name = "spirit_cost_b", nullable = false)
     private int spiritCostB = 6;
 
     @Column(nullable = false)

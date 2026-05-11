@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>한월(韓月) - 무림 로비</title>
+    <title>한월(韓月) - 붕괴 스타레일 스타일 무림 로비</title>
     <link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
 
     <!-- Tailwind CSS -->
@@ -28,57 +28,123 @@
         /* 로비 배경 (블러 처리된 평화로운 배경) */
         .lobby-bg {
             position: absolute;
-            inset: -20px; /* 블러 경계 처리용 여백 */
+            inset: -20px; 
             background-image: url('/images/bg_estate_peace.png');
             background-size: cover;
             background-position: center;
-            filter: blur(8px) brightness(0.6);
+            filter: blur(4px) brightness(0.7);
             z-index: 1;
         }
 
-        /* 캐릭터 스탠딩 애니메이션 (숨쉬기 효과) */
+        /* 캐릭터 스탠딩 애니메이션 & CSS 마스크 (바닥 투명화) */
         @keyframes subtle-float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
-        }
-        .character-standing {
-            animation: subtle-float 4s ease-in-out infinite;
-        }
-
-        /* Bento Grid Glassmorphism 스타일 */
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.65);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            0% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-8px) scale(1.01); }
+            100% { transform: translateY(0px) scale(1); }
         }
         
-        /* 무협풍 버튼 호버 효과 */
-        .bento-btn {
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .bento-btn::before {
-            content: '';
+        .character-container {
             position: absolute;
-            top: 0; left: -100%; width: 50%; height: 100%;
-            background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
-            transform: skewX(-20deg);
-            transition: left 0.5s ease;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            height: 95vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            z-index: 5;
+            pointer-events: none;
+            /* 캐릭터 하단 스무스하게 날리기 (Fade-out) */
+            -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+            mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
         }
-        .bento-btn:hover::before {
-            left: 150%;
+
+        .character-standing {
+            height: 100%;
+            object-fit: contain;
+            animation: subtle-float 5s ease-in-out infinite;
+            filter: drop-shadow(0 0 40px rgba(0,0,0,0.6));
         }
-        .bento-btn:hover {
-            transform: translateY(-2px) scale(1.02);
-            border-color: rgba(245, 158, 11, 0.5); /* Amber-500 */
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+
+        /* Glassmorphism 베이스 */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .bento-btn:active {
-            transform: translateY(1px) scale(0.98);
+
+        /* 우측 사이드 엣지 아이콘 (원형) */
+        .side-icon-btn {
+            position: relative;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            margin-bottom: 16px;
         }
+        .side-icon-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateX(-4px);
+        }
+        
+        /* 호버 시 튀어나오는 텍스트 라벨 */
+        .side-icon-label {
+            position: absolute;
+            right: 70px;
+            background: rgba(0,0,0,0.7);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(10px);
+            transition: all 0.2s;
+        }
+        .side-icon-btn:hover .side-icon-label {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* 메인 미션 사선 버튼 (Skew) */
+        .action-skew {
+            transform: skewX(-15deg);
+            overflow: hidden;
+            position: relative;
+        }
+        .action-skew-content {
+            transform: skewX(15deg); /* 글자는 똑바르게 유지 */
+        }
+        .skew-btn-main {
+            background: linear-gradient(135deg, rgba(217, 119, 6, 0.95), rgba(153, 27, 27, 0.95)); /* 호박~짙은빨강 */
+            box-shadow: -8px 0 30px rgba(217, 119, 6, 0.3);
+            border-right: 4px solid #fcd34d;
+        }
+        .skew-btn-sub {
+            background: rgba(30, 41, 59, 0.85); /* 다크 블루 */
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-right: 4px solid #a78bfa; /* 퍼플 포인트 */
+        }
+
+        .skew-btn-hover {
+            transition: all 0.3s;
+        }
+        .skew-btn-hover:hover {
+            transform: skewX(-15deg) scale(1.05) translateX(-8px);
+            filter: brightness(1.2);
+        }
+
     </style>
 </head>
 <body x-data="lobbyApp()">
@@ -86,109 +152,123 @@
     <!-- 배경 레이어 -->
     <div class="lobby-bg"></div>
 
-    <!-- UI 컨테이너 (그라데이션 오버레이) -->
-    <div class="relative z-10 w-screen h-screen flex flex-col justify-between overflow-hidden bg-gradient-to-t from-slate-900/90 via-transparent to-slate-900/50 p-4 sm:p-8">
+    <!-- 중앙 캐릭터 렌더링 영역 (바닥에서부터 솟아오르는 형태) -->
+    <div class="character-container">
+        <img :src="playerFullPortrait" class="character-standing" alt="Representative Character">
+    </div>
+
+    <!-- UI 레이어 (위 쪽과 양 옆 구조) -->
+    <div class="relative z-10 w-screen h-screen overflow-hidden flex flex-col justify-between">
         
         <!-- 상단 헤더 영역 -->
-        <header class="flex justify-between items-start">
-            <!-- 유저 정보 구역 -->
-            <div class="glass-panel rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:bg-slate-800/80 transition shadow-lg">
-                <div class="w-14 h-14 bg-slate-800 rounded-full border-2 border-amber-500 overflow-hidden flex items-center justify-center relative">
+        <header class="flex justify-between items-start p-6">
+            
+            <!-- 좌상단: 프로필 (얇고 미니멀하게) -->
+            <div class="glass-panel rounded-full pr-6 pl-2 py-2 flex items-center gap-3 cursor-pointer hover:bg-slate-800/80 w-auto">
+                <div class="w-12 h-12 rounded-full border border-amber-500 overflow-hidden flex items-center justify-center bg-black/50">
                     <img :src="playerPortrait" alt="Player Portrait" class="w-full h-full object-cover">
                 </div>
-                <div>
-                    <div class="text-amber-400 text-sm font-semibold gowun-batang tracking-wider">Lv.<span x-text="playerLevel">1</span></div>
-                    <h2 class="text-white font-bold text-2xl gowun-batang" x-text="playerNickname">모험가</h2>
+                <div class="flex flex-col justify-center">
+                    <div class="flex items-center gap-2">
+                        <span class="bg-amber-600 text-white text-[10px] px-1.5 rounded font-bold">Lv.<span x-text="playerLevel"></span></span>
+                        <h2 class="text-white font-bold text-lg leading-tight gowun-batang" x-text="playerNickname">모험가</h2>
+                    </div>
+                    <div class="text-slate-400 text-xs font-medium">UID: 800012345</div>
                 </div>
             </div>
 
-            <!-- 우측 상단 재화 영역 -->
-            <div class="flex gap-3">
-                <div class="glass-panel px-5 py-2.5 rounded-xl flex items-center gap-3">
-                    <i data-lucide="coins" class="text-yellow-500 w-5 h-5"></i>
-                    <span class="text-white font-mono font-bold text-lg tracking-wide" x-text="playerGold.toLocaleString()">0</span>
-                    <button class="bg-slate-700/50 hover:bg-slate-600 rounded p-1 ml-2"><i data-lucide="plus" class="w-4 h-4 text-white"></i></button>
+            <!-- 우상단: 재화 및 설정 아이콘 -->
+            <div class="flex gap-4 items-center">
+                <!-- 골드 -->
+                <div class="glass-panel px-4 py-1.5 rounded-full flex items-center gap-2">
+                    <i data-lucide="coins" class="text-yellow-500 w-4 h-4"></i>
+                    <span class="text-white font-mono text-sm tracking-wide" x-text="playerGold.toLocaleString()">0</span>
                 </div>
-                <div class="glass-panel px-5 py-2.5 rounded-xl flex items-center gap-3">
-                    <i data-lucide="gem" class="text-cyan-400 w-5 h-5"></i>
-                    <span class="text-white font-mono font-bold text-lg tracking-wide" x-text="playerGems.toLocaleString()">0</span>
-                    <button class="bg-slate-700/50 hover:bg-slate-600 rounded p-1 ml-2"><i data-lucide="plus" class="w-4 h-4 text-white"></i></button>
+                <!-- 젬 -->
+                <div class="glass-panel px-4 py-1.5 rounded-full flex items-center gap-2">
+                    <i data-lucide="gem" class="text-cyan-400 w-4 h-4"></i>
+                    <span class="text-white font-mono text-sm tracking-wide" x-text="playerGems.toLocaleString()">0</span>
                 </div>
-                <button class="glass-panel p-3 rounded-xl hover:bg-slate-800/80 transition" title="우편함">
-                    <i data-lucide="mail" class="text-slate-300 w-6 h-6"></i>
-                </button>
-                <button class="glass-panel p-3 rounded-xl hover:bg-slate-800/80 transition" title="설정">
-                    <i data-lucide="settings" class="text-slate-300 w-6 h-6"></i>
-                </button>
+                <!-- 작은 아이콘 세트 -->
+                <div class="flex gap-2 ml-4">
+                    <button class="bg-black/30 hover:bg-white/20 p-2.5 rounded-full text-slate-300 transition backdrop-blur-md">
+                        <i data-lucide="mail" class="w-5 h-5"></i>
+                    </button>
+                    <button class="bg-black/30 hover:bg-white/20 p-2.5 rounded-full text-slate-300 transition backdrop-blur-md">
+                        <i data-lucide="settings" class="w-5 h-5"></i>
+                    </button>
+                </div>
             </div>
         </header>
 
-        <!-- 중앙 캐릭터 렌더링 영역 -->
-        <main class="absolute inset-0 flex items-center justify-center pointer-events-none -z-10">
-            <!-- 캔버스 말고 중앙에 고해상도 초상화를 큼지막하게 렌더링 -->
-            <img :src="playerFullPortrait" class="h-[90vh] object-contain character-standing" style="filter: drop-shadow(0 0 30px rgba(0,0,0,0.5));" alt="Representative Character">
-        </main>
+        <!-- 중앙-우측 사이드 엣지 메뉴 (가챠, 파티 등) -->
+        <div class="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col items-end pointer-events-auto">
+            <button @click="openModal('GACHA')" class="glass-panel side-icon-btn group">
+                <i data-lucide="sparkles" class="w-6 h-6"></i>
+                <div class="side-icon-label text-amber-300">[객잔] 영입</div>
+            </button>
+            <button @click="openModal('PARTY')" class="glass-panel side-icon-btn group">
+                <i data-lucide="users" class="w-6 h-6"></i>
+                <div class="side-icon-label text-blue-300">[편성] 출진</div>
+            </button>
+            <button @click="openModal('INVENTORY')" class="glass-panel side-icon-btn group">
+                <i data-lucide="package" class="w-6 h-6"></i>
+                <div class="side-icon-label text-slate-300">[보따리] 인벤토리</div>
+            </button>
+            <button @click="openModal('GUILD')" class="glass-panel side-icon-btn group">
+                <i data-lucide="shield" class="w-6 h-6"></i>
+                <div class="side-icon-label text-green-300">[문파] 연합</div>
+            </button>
+        </div>
 
-        <!-- 하단/우측 Bento Grid 메뉴 영역 -->
-        <footer class="flex justify-between items-end">
-            <!-- 좌측 서브 메뉴 (인벤토리, 파티, 문파 등) -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 w-3/5 lg:w-2/5">
-                <button @click="openModal('GACHA')" class="glass-panel bento-btn rounded-2xl p-4 flex flex-col items-center justify-center gap-2">
-                    <div class="bg-amber-500/20 p-3 rounded-full"><i data-lucide="sparkles" class="text-amber-400 w-8 h-8"></i></div>
-                    <span class="text-white font-bold gowun-batang text-lg">객잔 (영입)</span>
-                </button>
-                <button @click="openModal('PARTY')" class="glass-panel bento-btn rounded-2xl p-4 flex flex-col items-center justify-center gap-2">
-                    <div class="bg-blue-500/20 p-3 rounded-full"><i data-lucide="users" class="text-blue-400 w-8 h-8"></i></div>
-                    <span class="text-white font-bold gowun-batang text-lg">편성 (출진)</span>
-                </button>
-                <button @click="openModal('INVENTORY')" class="glass-panel bento-btn rounded-2xl p-4 flex flex-col items-center justify-center gap-2">
-                    <div class="bg-slate-500/20 p-3 rounded-full"><i data-lucide="package" class="text-slate-300 w-8 h-8"></i></div>
-                    <span class="text-white font-bold gowun-batang text-lg">보따리</span>
-                </button>
-                <button @click="openModal('GUILD')" class="glass-panel bento-btn rounded-2xl p-4 flex flex-col items-center justify-center gap-2">
-                    <div class="bg-green-500/20 p-3 rounded-full"><i data-lucide="shield" class="text-green-400 w-8 h-8"></i></div>
-                    <span class="text-white font-bold gowun-batang text-lg">문파</span>
-                </button>
-            </div>
+        <!-- 우측 하단 대형 메인 시작 버튼 -->
+        <div class="absolute bottom-10 right-0 flex flex-col gap-3 pointer-events-auto">
+            
+            <!-- 요일 던전 (작은 사선 버튼) -->
+            <button @click="openModal('DUNGEON')" class="action-skew skew-btn-sub skew-btn-hover w-72 h-16 mr-[-20px] flex items-center justify-end pr-10 cursor-pointer">
+                <div class="action-skew-content flex items-center gap-4">
+                    <div class="text-right">
+                        <div class="text-purple-300 text-[10px] font-bold tracking-widest uppercase mb-0.5">일일 수련</div>
+                        <h3 class="text-white font-bold gowun-batang text-lg">기억의 전당</h3>
+                    </div>
+                    <div class="bg-purple-500/20 p-2 rounded-full"><i data-lucide="swords" class="text-purple-400 w-5 h-5"></i></div>
+                </div>
+            </button>
+            
+            <!-- 메인 스토리 (큰 사선 버튼) -->
+            <button @click="goToStory()" class="action-skew skew-btn-main skew-btn-hover w-80 h-24 mr-[-20px] flex items-center justify-end pr-12 cursor-pointer group">
+                <div class="action-skew-content flex items-center gap-5">
+                    <div class="text-right">
+                        <div class="text-amber-200 text-xs font-bold tracking-[0.2em] uppercase mb-1 drop-shadow-md">Main Story</div>
+                        <h3 class="text-white font-extrabold gowun-batang text-3xl drop-shadow-lg">임무 시작</h3>
+                    </div>
+                    <div class="bg-white/20 p-3 rounded-full shadow-inner">
+                        <i data-lucide="navigation" class="text-white w-7 h-7 transform rotate-45 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"></i>
+                    </div>
+                </div>
+            </button>
 
-            <!-- 우측 메인 콘텐츠 메뉴 -->
-            <div class="flex flex-col gap-4 w-[280px]">
-                <!-- 요일 던전 (재화) -->
-                <button @click="openModal('DUNGEON')" class="glass-panel bento-btn flex items-center justify-between p-5 rounded-2xl border-purple-500/30">
-                    <div>
-                        <div class="text-purple-300 text-xs font-bold mb-1 tracking-widest">일일 성장의 길</div>
-                        <h3 class="text-white font-bold gowun-batang text-xl">수련의 탑 (던전)</h3>
-                    </div>
-                    <i data-lucide="swords" class="text-purple-400 w-8 h-8"></i>
-                </button>
-                
-                <!-- 메인 스토리 (버튼 큼직하게) -->
-                <button @click="goToStory()" class="bg-gradient-to-br from-amber-600 to-red-700 p-6 rounded-2xl shadow-[0_10px_25px_rgba(245,158,11,0.4)] bento-btn flex items-center justify-between border-2 border-amber-400/50 group">
-                    <div>
-                        <div class="text-amber-200 text-sm font-bold mb-1 tracking-widest uppercase">MAIN STORY</div>
-                        <h3 class="text-white font-extrabold gowun-batang text-3xl drop-shadow-md">천하제일 임무</h3>
-                    </div>
-                    <div class="bg-white/20 p-3 rounded-full group-hover:rotate-12 transition-transform">
-                        <i data-lucide="map" class="text-white w-10 h-10"></i>
-                    </div>
-                </button>
-            </div>
-        </footer>
+        </div>
 
-        <!-- 상호작용 모달 UI -->
+        <!-- 좌측 하단 여백 (몰입감 극대화용: 텅 비어 있음) -->
+        <div class="absolute bottom-6 left-6 text-slate-500/50 text-[10px] font-mono pointer-events-none">
+            Hanwol Project v1.0 / Character Renderer Active
+        </div>
+
+        <!-- 상호작용 모달 UI (이전과 동일한 기능) -->
         <div x-show="currentModal !== null" 
              style="display: none;"
-             class="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+             class="absolute inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 pointer-events-auto"
              x-transition.opacity>
-            <div @click.away="closeModal()" class="bg-slate-900 border border-amber-600 rounded-2xl max-w-2xl w-full text-white overflow-hidden shadow-[0_0_40px_rgba(245,158,11,0.15)] flex flex-col" style="height: 60vh;">
-                <div class="p-5 border-b border-amber-600/30 flex justify-between items-center bg-gradient-to-r from-slate-800 to-slate-900">
-                    <h3 class="text-2xl font-bold gowun-batang text-amber-500" x-text="modalTitle"></h3>
-                    <button @click="closeModal()" class="text-slate-400 hover:text-white p-2 bg-slate-800 rounded-full transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <div @click.away="closeModal()" class="bg-slate-900 border border-slate-700 rounded-xl max-w-xl w-full text-white overflow-hidden shadow-2xl flex flex-col" style="height: 50vh;">
+                <div class="p-4 border-b border-slate-700/50 flex justify-between items-center bg-slate-800">
+                    <h3 class="text-xl font-bold gowun-batang text-amber-500" x-text="modalTitle"></h3>
+                    <button @click="closeModal()" class="text-slate-400 hover:text-white p-1 rounded-full transition"><i data-lucide="x" class="w-5 h-5"></i></button>
                 </div>
-                <div class="flex-1 p-8 flex flex-col items-center justify-center pointer-events-auto">
-                    <i data-lucide="construction" class="text-slate-600 w-24 h-24 mb-6"></i>
-                    <h4 class="text-xl font-bold mb-2">아직 공사 중입니다</h4>
-                    <p class="text-slate-400 text-center" x-text="`[${modalTitle}] 기능은 다음 업데이트를 기다려주세요!`"></p>
+                <div class="flex-1 p-8 flex flex-col items-center justify-center">
+                    <i data-lucide="ghost" class="text-slate-600 w-16 h-16 mb-4 animate-bounce"></i>
+                    <h4 class="text-lg font-bold mb-1">개발 중인 구역입니다</h4>
+                    <p class="text-slate-400 font-mono text-sm text-center" x-text="`[ ${modalTitle} ] 시스템 구현 예정`"></p>
                 </div>
             </div>
         </div>

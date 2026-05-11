@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>한월(韓月) - 붕괴 스타레일 스타일 무림 로비</title>
+    <title>한월(韓月) - 최적화 로비</title>
     <link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
 
     <!-- Tailwind CSS -->
@@ -25,42 +25,15 @@
         body { margin: 0; overflow: hidden; background-color: #0f172a; font-family: 'Pretendard', sans-serif; }
         .gowun-batang { font-family: 'Gowun Batang', serif; }
         
-        /* 로비 배경 */
+        /* 로비 배경 - 블러 연산을 최소화하여 성능 최적화 */
         .lobby-bg {
             position: absolute;
-            inset: -20px; 
+            inset: -10px; 
             background-image: url('/images/bg_estate_peace.png');
             background-size: cover;
             background-position: center;
-            filter: blur(4px) brightness(0.65);
+            opacity: 0.5; /* filter:brightness 대신 opacity와 body 배경색 활용 */
             z-index: 1;
-        }
-
-        /* 벚꽃 잎 흩날리는 효과 */
-        .petal {
-            position: absolute;
-            background-color: #fce4ec;
-            border-radius: 15px 0 15px 0;
-            opacity: 0.8;
-            box-shadow: 0 0 5px rgba(255,192,203,0.5);
-            pointer-events: none;
-            z-index: 2;
-            animation: fall linear infinite, sway ease-in-out infinite alternate;
-        }
-        @keyframes fall {
-            0% { top: -10%; }
-            100% { top: 110%; transform: rotate(180deg); }
-        }
-        @keyframes sway {
-            0% { transform: translateX(0px) rotate(0deg); }
-            100% { transform: translateX(100px) rotate(45deg); }
-        }
-
-        /* 캐릭터 스탠딩 페이드 아웃 */
-        @keyframes subtle-float {
-            0% { transform: translateY(0px) scale(1); }
-            50% { transform: translateY(-8px) scale(1.01); }
-            100% { transform: translateY(0px) scale(1); }
         }
         
         .character-container {
@@ -75,6 +48,7 @@
             align-items: flex-end;
             z-index: 5;
             pointer-events: none;
+            /* 마스크 효과는 가벼운 편이므로 유지하되 너무 부드럽지 않게 */
             -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
             mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
         }
@@ -82,9 +56,8 @@
         .character-standing {
             height: 100%;
             object-fit: contain;
-            animation: subtle-float 5s ease-in-out infinite;
-            filter: drop-shadow(0 0 40px rgba(0,0,0,0.6));
-            transition: opacity 0.5s ease-in-out;
+            /* drop-shadow와 float 애니메이션 삭제(렌더링 부하 원인 1순위) */
+            transition: opacity 0.3s ease-in-out;
         }
 
         /* 캐릭터정보 태그 */
@@ -98,27 +71,23 @@
 
         /* 교체 버튼 */
         .swap-btn {
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(8px);
+            background: rgba(255,255,255,0.15);
             border: 1px solid rgba(255,255,255,0.2);
             border-radius: 50%;
             padding: 12px;
             color: #fff;
-            transition: all 0.3s;
+            transition: transform 0.2s, background 0.2s;
         }
         .swap-btn:hover {
             background: rgba(255,255,255,0.25);
-            transform: rotate(180deg) scale(1.1);
-            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+            transform: scale(1.1);
         }
 
-        /* Glassmorphism 베이스 */
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        /* 심플 패널 (backdrop-filter 삭제하여 연산 최적화) */
+        .simple-panel {
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }
 
         /* 우측 사이드 엣지 아이콘 (원형) */
@@ -133,34 +102,29 @@
             color: rgba(255, 255, 255, 0.7);
             cursor: pointer;
             margin-bottom: 16px;
+            transition: background 0.2s, color 0.2s;
         }
         .side-icon-btn:hover {
             color: #fff;
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.4);
-            transform: translateX(-4px);
+            background: rgba(255, 255, 255, 0.2);
         }
         
         .side-icon-label {
             position: absolute;
             right: 70px;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.85);
             padding: 6px 12px;
-            border-radius: 8px;
+            border-radius: 6px;
             font-size: 0.85rem;
             font-weight: bold;
             white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transform: translateX(10px);
-            transition: all 0.2s;
+            display: none; /* opacity 페이드 대신 display 토글로 성능 잡기 */
         }
         .side-icon-btn:hover .side-icon-label {
-            opacity: 1;
-            transform: translateX(0);
+            display: block;
         }
 
-        /* 메인 미션 사선 버튼 (Skew) */
+        /* 사선 버튼들 */
         .action-skew {
             transform: skewX(-15deg);
             overflow: hidden;
@@ -170,45 +134,41 @@
             transform: skewX(15deg);
         }
         .skew-btn-main {
-            background: linear-gradient(135deg, rgba(217, 119, 6, 0.95), rgba(153, 27, 27, 0.95));
-            box-shadow: -8px 0 30px rgba(217, 119, 6, 0.3);
+            background: #b45309; /* 그라데이션 제거, 단색으로 렌더 속도 확보 */
+            box-shadow: -8px 0 20px rgba(180, 83, 9, 0.4);
             border-right: 4px solid #fcd34d;
+            transition: background 0.2s;
         }
         .skew-btn-sub {
-            background: rgba(30, 41, 59, 0.85);
-            backdrop-filter: blur(10px);
+            background: rgba(30, 41, 59, 0.95);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-right: 4px solid #a78bfa;
+            transition: background 0.2s;
         }
 
-        .skew-btn-hover:hover {
-            transform: skewX(-15deg) scale(1.05) translateX(-8px);
-            filter: brightness(1.2);
-        }
+        .skew-btn-main:hover { background: #d97706; }
+        .skew-btn-sub:hover { background: rgba(51, 65, 85, 0.95); }
 
         /* 편성 창 전용 픽업 카드 스타일 */
         .party-overlay {
-            background: rgba(4, 9, 20, 0.85); /* 매우 어두운 심연의 색 */
-            backdrop-filter: blur(24px);
+            background: rgba(9, 14, 23, 0.97); /* 블러 대신 진한 솔리드에 가까운 투명도 처리 */
         }
         
         .roster-card {
             width: 25%;
             height: 75vh;
             position: relative;
-            background: linear-gradient(180deg, rgba(30,41,59,0), rgba(15,23,42,0.9));
+            background: rgba(15, 23, 42, 0.9);
             border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 12px;
+            border-radius: 8px;
             overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: transform 0.2s, border-color 0.2s;
             cursor: pointer;
         }
 
         .roster-card:hover {
-            transform: translateY(-20px) scale(1.02);
+            transform: translateY(-8px);
             border-color: rgba(255, 255, 255, 0.3);
-            box-shadow: 0 15px 40px rgba(251, 191, 36, 0.2);
         }
 
         .roster-card img {
@@ -216,11 +176,6 @@
             height: 100%;
             object-fit: cover;
             object-position: center 20%;
-            transition: transform 0.8s ease;
-        }
-        
-        .roster-card:hover img {
-            transform: scale(1.08);
         }
 
         .roster-info {
@@ -229,7 +184,7 @@
             left: 0;
             right: 0;
             padding: 30px 20px 20px;
-            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 70%, transparent 100%);
         }
 
         .empty-slot {
@@ -237,15 +192,15 @@
             align-items: center;
             justify-content: center;
             flex-direction: column;
-            color: rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.3);
             font-size: 3rem;
-            border: 2px dashed rgba(255,255,255,0.1);
-            background: transparent;
+            border: 2px dashed rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.02);
         }
         .empty-slot:hover {
             border-style: solid;
             background: rgba(255,255,255,0.05);
-            color: rgba(255,255,255,0.6);
+            color: rgba(255,255,255,0.8);
         }
 
     </style>
@@ -255,22 +210,19 @@
     <!-- 배경 레이어 -->
     <div class="lobby-bg"></div>
 
-    <!-- 벚꽃 파티클 -->
-    <div id="particle-container"></div>
-
     <!-- 중앙 캐릭터 렌더링 영역 -->
     <div class="character-container">
         <!-- 뷰포트 변경될때 자연스럽게 트랜지션 되도록 x-bind 사용 -->
         <img :src="currentLobbyCharacter.src" :key="currentLobbyCharacter.id" 
-             x-transition.opacity.duration.500ms
+             x-transition.opacity.duration.300ms
              class="character-standing" alt="Representative Character">
     </div>
 
     <!-- 캐릭터 상세 정보 및 대표 캐릭터 교체 버튼 -->
     <div class="char-info-tag flex items-end gap-6">
-        <div class="glass-panel p-6 rounded-2xl border-l-4" :class="`border-${currentLobbyCharacter.color.split('-')[1]}-500`">
+        <div class="simple-panel p-6 rounded-xl border-l-4" :class="`border-${currentLobbyCharacter.color.split('-')[1]}-500`">
             <h1 class="text-4xl font-extrabold text-white drop-shadow-md gowun-batang mb-2" x-text="currentLobbyCharacter.name"></h1>
-            <p class="font-bold tracking-widest text-sm drop-shadow-md" :class="currentLobbyCharacter.color" x-text="currentLobbyCharacter.desc"></p>
+            <p class="font-bold tracking-widest text-sm drop-shadow-sm" :class="currentLobbyCharacter.color" x-text="currentLobbyCharacter.desc"></p>
         </div>
         
         <button @click="nextCharacter()" class="swap-btn" title="대표 캐릭터 교체">
@@ -285,8 +237,8 @@
         <header class="flex justify-between items-start p-6 pointer-events-auto">
             
             <!-- 좌상단: 프로필 (얇고 미니멀하게) -->
-            <div class="glass-panel rounded-full pr-6 pl-2 py-2 flex items-center gap-3 cursor-pointer hover:bg-slate-800/80 w-auto">
-                <div class="w-12 h-12 rounded-full border border-amber-500 overflow-hidden flex items-center justify-center bg-black/50">
+            <div class="simple-panel rounded-full pr-6 pl-2 py-2 flex items-center gap-3 cursor-pointer hover:bg-slate-800/90 w-auto">
+                <div class="w-12 h-12 rounded-full border border-amber-500 overflow-hidden flex items-center justify-center bg-black/80">
                     <img :src="playerPortrait" alt="Player Portrait" class="w-full h-full object-cover">
                 </div>
                 <div class="flex flex-col justify-center">
@@ -301,21 +253,21 @@
             <!-- 우상단: 재화 및 설정 아이콘 -->
             <div class="flex gap-4 items-center">
                 <!-- 골드 -->
-                <div class="glass-panel px-4 py-1.5 rounded-full flex items-center gap-2">
+                <div class="simple-panel px-4 py-1.5 rounded-full flex items-center gap-2">
                     <i data-lucide="coins" class="text-yellow-500 w-4 h-4"></i>
                     <span class="text-white font-mono text-sm tracking-wide" x-text="playerGold.toLocaleString()">0</span>
                 </div>
                 <!-- 젬 -->
-                <div class="glass-panel px-4 py-1.5 rounded-full flex items-center gap-2">
+                <div class="simple-panel px-4 py-1.5 rounded-full flex items-center gap-2">
                     <i data-lucide="gem" class="text-cyan-400 w-4 h-4"></i>
                     <span class="text-white font-mono text-sm tracking-wide" x-text="playerGems.toLocaleString()">0</span>
                 </div>
                 <!-- 작은 아이콘 세트 -->
                 <div class="flex gap-2 ml-4">
-                    <button class="bg-black/30 hover:bg-white/20 p-2.5 rounded-full text-slate-300 transition backdrop-blur-md">
+                    <button class="bg-black/50 hover:bg-black/70 p-2.5 rounded-full text-slate-300 transition">
                         <i data-lucide="mail" class="w-5 h-5"></i>
                     </button>
-                    <button class="bg-black/30 hover:bg-white/20 p-2.5 rounded-full text-slate-300 transition backdrop-blur-md">
+                    <button class="bg-black/50 hover:bg-black/70 p-2.5 rounded-full text-slate-300 transition">
                         <i data-lucide="settings" class="w-5 h-5"></i>
                     </button>
                 </div>
@@ -324,19 +276,19 @@
 
         <!-- 중앙-우측 사이드 엣지 메뉴 (가챠, 파티 등) -->
         <div class="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col items-end pointer-events-auto">
-            <button @click="openModal('GACHA')" class="glass-panel side-icon-btn group">
+            <button @click="openModal('GACHA')" class="simple-panel side-icon-btn group">
                 <i data-lucide="sparkles" class="w-6 h-6"></i>
                 <div class="side-icon-label text-amber-300">[객잔] 영입</div>
             </button>
-            <button @click="openModal('PARTY')" class="glass-panel side-icon-btn group">
+            <button @click="openModal('PARTY')" class="simple-panel side-icon-btn group">
                 <i data-lucide="users" class="w-6 h-6"></i>
                 <div class="side-icon-label text-blue-300">[편성] 출진</div>
             </button>
-            <button @click="openModal('INVENTORY')" class="glass-panel side-icon-btn group">
+            <button @click="openModal('INVENTORY')" class="simple-panel side-icon-btn group">
                 <i data-lucide="package" class="w-6 h-6"></i>
                 <div class="side-icon-label text-slate-300">[보따리] 인벤토리</div>
             </button>
-            <button @click="openModal('GUILD')" class="glass-panel side-icon-btn group">
+            <button @click="openModal('GUILD')" class="simple-panel side-icon-btn group">
                 <i data-lucide="shield" class="w-6 h-6"></i>
                 <div class="side-icon-label text-green-300">[문파] 연합</div>
             </button>
@@ -345,7 +297,7 @@
         <!-- 우측 하단 대형 메인 시작 버튼 -->
         <div class="absolute bottom-10 right-0 flex flex-col gap-3 pointer-events-auto">
             
-            <button @click="openModal('DUNGEON')" class="action-skew skew-btn-sub skew-btn-hover w-72 h-16 mr-[-20px] flex items-center justify-end pr-10 cursor-pointer">
+            <button @click="openModal('DUNGEON')" class="action-skew skew-btn-sub w-72 h-16 mr-[-20px] flex items-center justify-end pr-10 cursor-pointer">
                 <div class="action-skew-content flex items-center gap-4">
                     <div class="text-right">
                         <div class="text-purple-300 text-[10px] font-bold tracking-widest uppercase mb-0.5">일일 수련</div>
@@ -355,14 +307,14 @@
                 </div>
             </button>
             
-            <button @click="goToStory()" class="action-skew skew-btn-main skew-btn-hover w-80 h-24 mr-[-20px] flex items-center justify-end pr-12 cursor-pointer group">
+            <button @click="goToStory()" class="action-skew skew-btn-main w-80 h-24 mr-[-20px] flex items-center justify-end pr-12 cursor-pointer group">
                 <div class="action-skew-content flex items-center gap-5">
                     <div class="text-right">
                         <div class="text-amber-200 text-xs font-bold tracking-[0.2em] uppercase mb-1 drop-shadow-md">Main Story</div>
-                        <h3 class="text-white font-extrabold gowun-batang text-3xl drop-shadow-lg">임무 시작</h3>
+                        <h3 class="text-white font-extrabold gowun-batang text-3xl drop-shadow-sm">임무 시작</h3>
                     </div>
-                    <div class="bg-white/20 p-3 rounded-full shadow-inner">
-                        <i data-lucide="navigation" class="text-white w-7 h-7 transform rotate-45 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"></i>
+                    <div class="bg-black/20 p-3 rounded-full shadow-inner">
+                        <i data-lucide="navigation" class="text-white w-7 h-7 transform rotate-45 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1"></i>
                     </div>
                 </div>
             </button>
@@ -372,7 +324,7 @@
         <div x-show="currentModal !== null" 
              style="display: none;"
              class="absolute inset-0 z-50 flex items-center justify-center pointer-events-auto transition-opacity"
-             :class="currentModal === 'PARTY' ? 'party-overlay p-8' : 'bg-black/60 backdrop-blur-md p-4'"
+             :class="currentModal === 'PARTY' ? 'party-overlay p-8' : 'bg-slate-900/90 p-4'"
              x-transition.opacity>
              
             <!-- 1. 편성창(PARTY) 4열 그리드 전용 뷰 -->
@@ -383,7 +335,7 @@
                             <h2 class="text-4xl font-bold gowun-batang text-white drop-shadow-lg">출진 편성</h2>
                             <p class="text-amber-200/70 text-sm tracking-widest mt-2 uppercase">Formation Setup</p>
                         </div>
-                        <button @click="closeModal()" class="text-slate-400 hover:text-white p-3 rounded-full bg-slate-800/50 hover:bg-slate-700 transition"><i data-lucide="x" class="w-6 h-6"></i></button>
+                        <button @click="closeModal()" class="text-slate-400 hover:text-white p-3 rounded-full bg-black/50 hover:bg-black/80 transition"><i data-lucide="x" class="w-6 h-6"></i></button>
                     </div>
 
                     <!-- 4열 그리드 -->
@@ -393,11 +345,11 @@
                                 <!-- 캐릭터가 빈 슬롯이 아닐 때 -->
                                 <template x-if="char !== null">
                                     <div class="w-full h-full relative">
-                                        <div class="absolute top-4 left-4 z-10 px-3 py-1 rounded text-xs font-bold text-white shadow-lg" :class="char.color" x-text="char.role"></div>
-                                        <img :src="char.src" :alt="char.name">
+                                        <div class="absolute top-4 left-4 z-10 px-3 py-1 rounded text-xs font-bold text-white shadow-md" :class="char.color" x-text="char.role"></div>
+                                        <img :src="char.src" :alt="char.name" loading="lazy">
                                         <div class="roster-info">
                                             <div class="text-amber-300 text-xs tracking-widest mb-1" x-text="char.desc"></div>
-                                            <div class="text-3xl font-extrabold text-white gowun-batang drop-shadow-md" x-text="char.name"></div>
+                                            <div class="text-3xl font-extrabold text-white gowun-batang drop-shadow-sm" x-text="char.name"></div>
                                             <div class="text-slate-400 text-sm font-mono mt-1">Lv. 30 (Max)</div>
                                         </div>
                                     </div>
@@ -406,8 +358,8 @@
                                 <!-- 캐릭터가 빈 슬롯일 때 -->
                                 <template x-if="char === null">
                                     <div class="text-center">
-                                        <i data-lucide="plus" class="w-16 h-16 mx-auto mb-4 opacity-50"></i>
-                                        <p class="text-sm font-bold tracking-widest uppercase">Select</p>
+                                        <i data-lucide="plus" class="w-16 h-16 mx-auto mb-4 opacity-70"></i>
+                                        <p class="text-sm font-bold tracking-widest uppercase opacity-70">Select</p>
                                     </div>
                                 </template>
                             </div>
@@ -415,7 +367,7 @@
                     </div>
                     
                     <div class="mt-8 flex justify-center">
-                        <button class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-4 px-16 rounded-full shadow-[0_0_20px_rgba(245,158,11,0.4)] text-lg tracking-widest uppercase transition transform hover:scale-105">
+                        <button class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-4 px-16 rounded-full shadow-lg text-lg tracking-widest uppercase transition transform hover:scale-105">
                             저장 및 뒤로가기
                         </button>
                     </div>
@@ -424,13 +376,13 @@
 
             <!-- 2. 기타 로비 메뉴용 디폴트 뷰 -->
             <template x-if="currentModal !== 'PARTY' && currentModal !== null">
-                <div @click.away="closeModal()" class="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-xl w-full text-white overflow-hidden shadow-2xl flex flex-col" style="height: 50vh;">
-                    <div class="p-5 border-b border-slate-700/50 flex justify-between items-center bg-slate-800/80">
+                <div @click.away="closeModal()" class="bg-slate-800 border border-slate-600 rounded-xl max-w-xl w-full text-white overflow-hidden shadow-2xl flex flex-col" style="height: 50vh;">
+                    <div class="p-5 border-b border-slate-600 flex justify-between items-center bg-slate-900">
                         <h3 class="text-xl font-bold gowun-batang text-amber-500" x-text="modalTitle"></h3>
-                        <button @click="closeModal()" class="text-slate-400 hover:text-white p-1 rounded-full transition bg-slate-700/50 hover:bg-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+                        <button @click="closeModal()" class="text-slate-400 hover:text-white p-1 rounded-full transition bg-slate-800 hover:bg-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
                     </div>
                     <div class="flex-1 p-8 flex flex-col items-center justify-center">
-                        <i data-lucide="ghost" class="text-slate-500 w-20 h-20 mb-6 animate-pulse"></i>
+                        <i data-lucide="ghost" class="text-slate-500 w-20 h-20 mb-6"></i>
                         <h4 class="text-xl font-bold mb-2 tracking-wide text-slate-100">공사 중</h4>
                         <p class="text-slate-400 font-mono text-sm text-center" x-text="`[ ${modalTitle} ] 공간을 현재 구축하고 있습니다.`"></p>
                     </div>
@@ -443,27 +395,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
-            
-            // 벛꽃 파티클 생성 로직
-            const container = document.getElementById('particle-container');
-            const particleCount = 20; // 파티클 갯수
-            for (let i = 0; i < particleCount; i++) {
-                const petal = document.createElement('div');
-                petal.classList.add('petal');
-                petal.style.left = Math.random() * 100 + 'vw';
-                petal.style.width = (Math.random() * 8 + 6) + 'px';
-                petal.style.height = (Math.random() * 6 + 4) + 'px';
-                
-                const fallDuration = (Math.random() * 8 + 5) + 's';
-                const swayDuration = (Math.random() * 4 + 2) + 's';
-                const delay = (Math.random() * 10) + 's';
-                
-                petal.style.animationName = 'fall, sway';
-                petal.style.animationDuration = `${fallDuration}, ${swayDuration}`;
-                petal.style.animationDelay = `${delay}, 0s`;
-                
-                container.appendChild(petal);
-            }
         });
     </script>
 </body>

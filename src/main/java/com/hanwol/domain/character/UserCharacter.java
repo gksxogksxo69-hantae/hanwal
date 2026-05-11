@@ -42,6 +42,10 @@ public class UserCharacter {
     @Column(nullable = false, length = 20)
     private String currentGyeongji = "SAMRYU"; // 현재 경지
 
+    // 원신식 돌파 (0~6)
+    @Column(nullable = false)
+    private int breakthrough = 0;
+
     // 스킬 레벨 (무공 수련)
     @Column(nullable = false)
     private int skillLevelNormal = 1;
@@ -81,8 +85,20 @@ public class UserCharacter {
     /**
      * 경지 돌파
      */
-    public void breakthrough(String newGyeongji) {
+    public void breakthroughGyeongji(String newGyeongji) {
         this.currentGyeongji = newGyeongji;
+    }
+
+    /**
+     * 캐릭터 중복 획득 시 돌파 (최대 6돌파)
+     * @return 6돌파 초과 여부 (초과 시 다른 재화로 변환하기 위함)
+     */
+    public boolean addBreakthrough() {
+        if (this.breakthrough >= 6) {
+            return false; // 이미 풀돌파 상태
+        }
+        this.breakthrough++;
+        return true;
     }
 
     /**

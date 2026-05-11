@@ -72,7 +72,7 @@ public class CharacterGrowthService {
 
         // TODO: 돌파 재화 소모 로직 추가
 
-        uc.breakthrough(nextTier.name());
+        uc.breakthroughGyeongji(nextTier.name());
         log.info("경지 돌파! {} -> {}", currentTier.getDisplayName(), nextTier.getDisplayName());
     }
 

@@ -11,6 +11,11 @@ document.addEventListener('alpine:init', () => {
         currentModal: null,
         modalTitle: '',
         isLoading: true,
+        customPortrait: null,
+
+        // 가챠 상태
+        gachaResults: [],
+        isGachaAnimating: false,
 
         // ── 캐릭터 (서버에서 로딩) ──
         myCharacters: [],
@@ -66,8 +71,14 @@ document.addEventListener('alpine:init', () => {
                 this.myCharacters = [this.fallbackCharacter()];
             }
             // 파티 초기화: 보유 캐릭터 순서대로 최대 4명 배치
+            // 파티 설정
+            let savedSlots = data.party || [null, null, null, null];
             for (let i = 0; i < 4; i++) {
-                this.currentParty[i] = this.myCharacters[i] || null;
+                if (savedSlots[i]) {
+                    this.currentParty[i] = this.myCharacters.find(c => c.id === savedSlots[i]) || null;
+                } else {
+                    this.currentParty[i] = i < this.myCharacters.length && savedSlots.every(s => !s) ? this.myCharacters[i] : null;
+                }
             }
         },
 
@@ -93,6 +104,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         get playerPortrait() {
+            if (this.customPortrait) return this.customPortrait;
             return this.playerGender === 'FEMALE' ? '/images/portrait_female.png' : '/images/portrait_male.png';
         },
 
@@ -106,6 +118,19 @@ document.addEventListener('alpine:init', () => {
             this.currentCharIndex = (this.currentCharIndex + 1) % this.myCharacters.length;
         },
 
+        setMainCharacter(index) {
+            this.currentCharIndex = index;
+            // 모달을 유지하고 싶다면 closeModal 호출 안함. 피드백을 위해 닫음.
+            this.closeModal();
+            // TODO: 필요한 경우 서버에 대표 캐릭터 상태 저장 API 호출 (차후 구현)
+        },
+
+        setProfileImage(src) {
+            this.customPortrait = src;
+            this.closeModal();
+            // TODO: 필요한 경우 서버에 프로필 이미지 저장 API 호출 (차후 구현)
+        },
+
         // ── 액션 ──
         openModal(type) {
             const titles = {
@@ -113,7 +138,8 @@ document.addEventListener('alpine:init', () => {
                 'PARTY': '편성 (출진)',
                 'INVENTORY': '보따리 (인벤토리)',
                 'GUILD': '문파 (길드)',
-                'DUNGEON': '수련의 탑 (던전)'
+                'DUNGEON': '수련의 탑 (던전)',
+                'PROFILE': '유저 프로필 설정'
             };
             this.modalTitle = titles[type] || '시스템';
             this.currentModal = type;
@@ -121,6 +147,50 @@ document.addEventListener('alpine:init', () => {
 
         closeModal() {
             this.currentModal = null;
+        },
+
+        async saveParty() {
+            const slots = this.currentParty.map(c => c ? c.id : null);
+            try {
+                const res = await fetch('/api/party/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ slots })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.closeModal();
+                } else {
+                    alert('편성 저장에 실패했습니다.');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        },
+
+        async drawGacha(count) {
+            const cost = count === 1 ? 150 : 1500;
+            if (this.playerGems < cost) {
+                alert('보석이 부족합니다!');
+                return;
+            }
+
+            this.isGachaAnimating = true;
+            try {
+                const res = await fetch(`/api/gacha/draw?count=${count}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    this.playerGems = data.remainingGems;
+                    this.gachaResults = data.results;
+                    // TODO: myCharacters 목록 갱신을 위해 다시 호출하거나 로컬 상태 업데이트
+                    await this.loadMyCharacters(); 
+                } else {
+                    alert(data.error);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+            this.isGachaAnimating = false;
         },
 
         goToStory() {

@@ -54,6 +54,19 @@ public class User {
     @Column(nullable = false)
     private int storyChapter = 0; // 0=프롤로그, 1~5=각 막
 
+    // --- 파티 편성 (출진 슬롯) ---
+    @Column
+    private Long partySlot1;
+
+    @Column
+    private Long partySlot2;
+
+    @Column
+    private Long partySlot3;
+
+    @Column
+    private Long partySlot4;
+
     // --- 위치 ---
     @Column(nullable = false)
     private int locX = 400;
@@ -150,5 +163,23 @@ public class User {
 
     public void gainGold(long amount) {
         this.gold += amount;
+    }
+
+    public void updateParty(Long slot1, Long slot2, Long slot3, Long slot4) {
+        this.partySlot1 = slot1;
+        this.partySlot2 = slot2;
+        this.partySlot3 = slot3;
+        this.partySlot4 = slot4;
+    }
+
+    public void spendGems(long amount) {
+        if (this.premiumCurrency < amount) {
+            throw new IllegalStateException("보석이 부족합니다.");
+        }
+        this.premiumCurrency -= amount;
+    }
+
+    public void gainGems(long amount) {
+        this.premiumCurrency += amount;
     }
 }

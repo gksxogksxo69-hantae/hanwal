@@ -34,21 +34,19 @@
         .panel{background:rgba(10,14,26,.8);border:1px solid rgba(255,255,255,.08);border-radius:9999px}
         .panel-box{background:rgba(10,14,26,.85);border:1px solid rgba(255,255,255,.08);border-radius:12px}
 
-        /* 사이드 아이콘 */
-        .side-btn{
-            position:relative;width:50px;height:50px;border-radius:50%;
-            display:flex;align-items:center;justify-content:center;
-            color:rgba(255,255,255,.65);cursor:pointer;
-            background:rgba(10,14,26,.7);border:1px solid rgba(255,255,255,.08);
-            transition:background .15s,color .15s;
+        /* 상단 네비게이션 버튼 */
+        .top-nav-btn {
+            position: relative; width: 46px; height: 46px; border-radius: 12px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: rgba(255,255,255,.7); cursor: pointer;
+            background: rgba(10,14,26,.65); border: 1px solid rgba(255,255,255,.1);
+            transition: all .2s;
+            backdrop-filter: blur(4px);
         }
-        .side-btn:hover{background:rgba(255,255,255,.12);color:#fff}
-        .side-tip{
-            position:absolute;right:62px;padding:5px 10px;border-radius:6px;
-            background:rgba(0,0,0,.9);font-size:.8rem;font-weight:600;
-            white-space:nowrap;display:none;
-        }
-        .side-btn:hover .side-tip{display:block}
+        .top-nav-btn:hover { background: rgba(255,255,255,.15); color: #fff; transform: translateY(-2px); border-color: rgba(255,255,255,.3); }
+        .top-nav-btn i { margin-bottom: 2px; }
+        .top-nav-label { font-size: 0.65rem; font-weight: 700; letter-spacing: -0.5px; opacity: 0.8; }
+        .top-nav-btn:hover .top-nav-label { opacity: 1; }
 
         /* 스큐 버튼 */
         .skew{transform:skewX(-12deg);transition:background .15s}
@@ -97,17 +95,12 @@
     <img :src="currentLobbyCharacter.src" :alt="currentLobbyCharacter.name" loading="lazy">
 </div>
 
-<!-- 캐릭터 정보 + 교체 -->
+<!-- 캐릭터 정보 -->
 <div class="absolute left-[8%] top-[38%] z-20 flex items-end gap-4 pointer-events-auto" x-show="!isLoading">
     <div class="panel-box p-5 border-l-4 border-amber-500">
         <h1 class="text-3xl font-extrabold serif mb-1" x-text="currentLobbyCharacter.name"></h1>
         <p class="text-amber-300 text-xs font-bold tracking-widest" x-text="currentLobbyCharacter.desc"></p>
     </div>
-    <button @click="nextCharacter()" x-show="myCharacters.length > 1"
-            class="w-11 h-11 rounded-full bg-white/10 border border-white/20 text-white flex items-center justify-center hover:bg-white/20 transition"
-            title="대표 캐릭터 교체">
-        <i data-lucide="refresh-cw" class="w-5 h-5"></i>
-    </button>
 </div>
 
 <!-- UI 오버레이 -->
@@ -115,8 +108,8 @@
 
     <!-- 상단 헤더 -->
     <header class="flex justify-between items-start p-5 pointer-events-auto">
-        <div class="panel pr-5 pl-2 py-1.5 flex items-center gap-3">
-            <div class="w-11 h-11 rounded-full border border-amber-500 overflow-hidden bg-black/60">
+        <button @click="openModal('PROFILE')" class="panel pr-5 pl-2 py-1.5 flex items-center gap-3 cursor-pointer hover:bg-white/10 transition text-left">
+            <div class="w-11 h-11 rounded-full border border-amber-500 overflow-hidden bg-black/60 shrink-0">
                 <img :src="playerPortrait" alt="avatar" class="w-full h-full object-cover">
             </div>
             <div>
@@ -126,47 +119,51 @@
                 </div>
                 <div class="text-slate-500 text-[10px]">UID: 800012345</div>
             </div>
-        </div>
+        </button>
 
-        <div class="flex gap-3 items-center">
-            <div class="panel px-3.5 py-1 flex items-center gap-1.5">
-                <i data-lucide="coins" class="text-yellow-500 w-3.5 h-3.5"></i>
-                <span class="font-mono text-sm" x-text="playerGold.toLocaleString()"></span>
+        <div class="flex flex-col items-end gap-3">
+            <div class="flex gap-3 items-center">
+                <div class="panel px-3.5 py-1 flex items-center gap-1.5">
+                    <i data-lucide="coins" class="text-yellow-500 w-3.5 h-3.5"></i>
+                    <span class="font-mono text-sm" x-text="playerGold.toLocaleString()"></span>
+                </div>
+                <div class="panel px-3.5 py-1 flex items-center gap-1.5">
+                    <i data-lucide="gem" class="text-cyan-400 w-3.5 h-3.5"></i>
+                    <span class="font-mono text-sm" x-text="playerGems.toLocaleString()"></span>
+                </div>
+                <div class="flex gap-1.5 ml-2">
+                    <button class="w-9 h-9 rounded-full bg-black/40 flex items-center justify-center text-slate-400 hover:text-white transition">
+                        <i data-lucide="mail" class="w-4 h-4"></i>
+                    </button>
+                    <button class="w-9 h-9 rounded-full bg-black/40 flex items-center justify-center text-slate-400 hover:text-white transition">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                    </button>
+                </div>
             </div>
-            <div class="panel px-3.5 py-1 flex items-center gap-1.5">
-                <i data-lucide="gem" class="text-cyan-400 w-3.5 h-3.5"></i>
-                <span class="font-mono text-sm" x-text="playerGems.toLocaleString()"></span>
-            </div>
-            <div class="flex gap-1.5 ml-2">
-                <button class="w-9 h-9 rounded-full bg-black/40 flex items-center justify-center text-slate-400 hover:text-white transition">
-                    <i data-lucide="mail" class="w-4 h-4"></i>
+
+            <!-- 신규 상단 메뉴 -->
+            <div class="flex gap-2">
+                <button @click="openModal('GACHA')" class="top-nav-btn group">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-amber-300 group-hover:text-amber-400"></i>
+                    <span class="top-nav-label text-amber-100">객잔</span>
                 </button>
-                <button class="w-9 h-9 rounded-full bg-black/40 flex items-center justify-center text-slate-400 hover:text-white transition">
-                    <i data-lucide="settings" class="w-4 h-4"></i>
+                <button @click="openModal('PARTY')" class="top-nav-btn group">
+                    <i data-lucide="users" class="w-4 h-4 text-blue-300 group-hover:text-blue-400"></i>
+                    <span class="top-nav-label text-blue-100">편성</span>
+                </button>
+                <button @click="openModal('INVENTORY')" class="top-nav-btn group">
+                    <i data-lucide="package" class="w-4 h-4 text-slate-300 group-hover:text-white"></i>
+                    <span class="top-nav-label text-slate-200">보따리</span>
+                </button>
+                <button @click="openModal('GUILD')" class="top-nav-btn group">
+                    <i data-lucide="shield" class="w-4 h-4 text-green-300 group-hover:text-green-400"></i>
+                    <span class="top-nav-label text-green-100">문파</span>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- 우측 사이드 메뉴 -->
-    <div class="absolute right-5 top-1/2 -translate-y-1/2 flex flex-col gap-3 pointer-events-auto">
-        <button @click="openModal('GACHA')" class="side-btn">
-            <i data-lucide="sparkles" class="w-5 h-5"></i>
-            <span class="side-tip text-amber-300">[객잔] 영입</span>
-        </button>
-        <button @click="openModal('PARTY')" class="side-btn">
-            <i data-lucide="users" class="w-5 h-5"></i>
-            <span class="side-tip text-blue-300">[편성] 출진</span>
-        </button>
-        <button @click="openModal('INVENTORY')" class="side-btn">
-            <i data-lucide="package" class="w-5 h-5"></i>
-            <span class="side-tip text-slate-300">[보따리]</span>
-        </button>
-        <button @click="openModal('GUILD')" class="side-btn">
-            <i data-lucide="shield" class="w-5 h-5"></i>
-            <span class="side-tip text-green-300">[문파]</span>
-        </button>
-    </div>
+
 
     <!-- 우하단 메인 버튼 -->
     <div class="absolute bottom-8 right-0 flex flex-col gap-2.5 pointer-events-auto">
@@ -239,8 +236,149 @@
             </div>
         </template>
 
+        <!-- 프로필 설정창 -->
+        <template x-if="currentModal==='PROFILE'">
+            <div class="panel-box w-full max-w-4xl flex flex-col overflow-hidden shadow-2xl" @click.away="closeModal()" style="height: 70vh;">
+                <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/40">
+                    <div>
+                        <h2 class="text-2xl font-bold serif text-white">유저 프로필 설정</h2>
+                        <p class="text-slate-400 text-sm mt-1">대표 캐릭터와 프로필 이미지를 보유한 캐릭터로 변경합니다.</p>
+                    </div>
+                    <button @click="closeModal()" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto p-6 bg-slate-900/50 scrollbar-hide">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
+                        <template x-for="(char, idx) in myCharacters" :key="idx">
+                            <div class="relative group cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-200 bg-slate-800"
+                                 :class="currentCharIndex === idx ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)]' : 'border-transparent hover:border-white/30'">
+                                <div class="aspect-[3/4] w-full relative">
+                                    <img :src="char.src" class="w-full h-full object-cover object-top" loading="lazy">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                                    
+                                    <!-- Hover Action Overlay -->
+                                    <div class="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-center items-center gap-3 p-4">
+                                        <button @click.stop="setMainCharacter(idx)" class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-sm font-bold shadow transition">
+                                            메인 화면 설정
+                                        </button>
+                                        <button @click.stop="setProfileImage(char.src)" class="w-full py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-bold shadow transition">
+                                            프로필로 설정
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Current Indicator -->
+                                    <div x-show="currentCharIndex === idx" class="absolute top-2 left-2 bg-amber-500 text-black text-[10px] font-bold px-2 py-0.5 rounded shadow">
+                                        메인 로비
+                                    </div>
+                                    
+                                    <div class="absolute bottom-2 left-0 right-0 text-center px-2">
+                                        <div class="font-bold serif text-sm text-white truncate drop-shadow-md" x-text="char.name"></div>
+                                        <div class="text-[10px] text-amber-300 font-bold tracking-widest mt-0.5" x-text="char.desc"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- 객잔 (가챠) 모달 -->
+        <template x-if="currentModal==='GACHA'">
+            <div class="panel-box w-full max-w-5xl flex flex-col overflow-hidden shadow-2xl" @click.away="!isGachaAnimating && closeModal()" style="height: 80vh;">
+                <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/40">
+                    <div>
+                        <h2 class="text-3xl font-bold serif text-amber-500">천하객잔 (영입)</h2>
+                        <p class="text-slate-400 text-sm mt-1">새로운 동료를 맞이합니다.</p>
+                    </div>
+                    <button @click="closeModal()" x-show="!isGachaAnimating" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                
+                <div class="flex-1 relative flex flex-col items-center justify-center p-6" x-show="gachaResults.length === 0">
+                    <div class="text-center mb-10">
+                        <i data-lucide="wine" class="text-amber-500 w-24 h-24 mx-auto mb-6 opacity-80"></i>
+                        <h3 class="text-2xl font-bold serif text-white mb-2">동료 영입</h3>
+                        <p class="text-slate-400">보석을 소모하여 무림의 고수들을 영입할 수 있습니다.</p>
+                    </div>
+                    <div class="flex gap-6">
+                        <button @click="drawGacha(1)" :disabled="isGachaAnimating" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold py-4 px-12 rounded-xl transition flex flex-col items-center disabled:opacity-50">
+                            <span class="text-lg mb-1">1회 영입</span>
+                            <span class="text-cyan-400 text-sm flex items-center gap-1"><i data-lucide="gem" class="w-3 h-3"></i> 150</span>
+                        </button>
+                        <button @click="drawGacha(10)" :disabled="isGachaAnimating" class="bg-amber-600 hover:bg-amber-500 border border-amber-400 text-white font-bold py-4 px-12 rounded-xl transition flex flex-col items-center shadow-[0_0_20px_rgba(245,158,11,0.3)] disabled:opacity-50">
+                            <span class="text-lg mb-1">10회 연달아 영입</span>
+                            <span class="text-amber-100 text-sm flex items-center gap-1"><i data-lucide="gem" class="w-3 h-3"></i> 1500</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex-1 p-6 flex flex-col items-center bg-slate-900/80 overflow-y-auto" x-show="gachaResults.length > 0">
+                    <h3 class="text-2xl font-bold serif text-amber-400 mb-6 mt-4">영입 결과</h3>
+                    <div class="flex flex-wrap justify-center gap-4 max-w-4xl">
+                        <template x-for="(res, idx) in gachaResults" :key="idx">
+                            <div class="w-32 flex flex-col items-center animate-pulse" :style="`animation: bounce 0.5s ease-out ${idx*0.1}s forwards`">
+                                <div class="w-full aspect-[3/4] rounded-lg overflow-hidden border-2 mb-2 relative" :class="res.isNew ? 'border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.6)]' : 'border-slate-500'">
+                                    <img :src="res.imagePath" class="w-full h-full object-cover">
+                                    <template x-if="res.isNew">
+                                        <div class="absolute top-0 left-0 right-0 bg-red-600/90 text-white text-[10px] font-bold text-center py-0.5">NEW</div>
+                                    </template>
+                                    <template x-if="!res.isNew && !res.isOverflow">
+                                        <div class="absolute bottom-0 left-0 right-0 bg-blue-600/90 text-white text-[10px] font-bold text-center py-0.5" x-text="`돌파 +1 (${res.breakthroughAfter}돌)`"></div>
+                                    </template>
+                                    <template x-if="res.isOverflow">
+                                        <div class="absolute bottom-0 left-0 right-0 bg-slate-700/90 text-white text-[10px] font-bold text-center py-0.5">보석 +15 반환</div>
+                                    </template>
+                                </div>
+                                <div class="text-[11px] font-bold text-white text-center w-full truncate" x-text="res.name"></div>
+                            </div>
+                        </template>
+                    </div>
+                    <button @click="gachaResults = []" class="mt-10 bg-slate-700 hover:bg-slate-600 px-8 py-3 rounded-full font-bold transition">확인</button>
+                </div>
+            </div>
+        </template>
+
+        <!-- 보따리 (인벤토리) 모달 -->
+        <template x-if="currentModal==='INVENTORY'">
+            <div class="panel-box w-full max-w-5xl flex flex-col overflow-hidden shadow-2xl" @click.away="closeModal()" style="height: 80vh;">
+                <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/40">
+                    <div>
+                        <h2 class="text-3xl font-bold serif text-white">보따리 (캐릭터 목록)</h2>
+                        <p class="text-slate-400 text-sm mt-1">획득한 동료들의 세부 정보를 확인합니다.</p>
+                    </div>
+                    <button @click="closeModal()" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                
+                <div class="flex-1 p-6 overflow-y-auto bg-slate-900/50 scrollbar-hide">
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        <template x-for="(char, idx) in myCharacters" :key="idx">
+                            <div class="rounded-xl overflow-hidden border border-slate-700 bg-slate-800 hover:border-amber-500 hover:shadow-[0_0_10px_rgba(245,158,11,0.2)] transition cursor-pointer flex flex-col">
+                                <div class="aspect-square w-full relative">
+                                    <img :src="char.src" class="w-full h-full object-cover object-top">
+                                    <div class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-white" :class="char.color" x-text="char.role"></div>
+                                </div>
+                                <div class="p-3 text-center flex-1 flex flex-col justify-between">
+                                    <div>
+                                        <div class="text-xs text-amber-400 font-bold tracking-widest mb-1" x-text="char.desc"></div>
+                                        <div class="font-bold serif text-base text-white truncate" x-text="char.name"></div>
+                                    </div>
+                                    <div class="text-slate-400 text-xs font-mono mt-2 bg-black/30 rounded py-1" x-text="'Lv. ' + char.level"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </template>
+
         <!-- 기타 모달 -->
-        <template x-if="currentModal && currentModal!=='PARTY'">
+        <template x-if="currentModal && currentModal!=='PARTY' && currentModal!=='PROFILE' && currentModal!=='GACHA' && currentModal!=='INVENTORY'">
             <div @click.away="closeModal()" class="panel-box max-w-md w-full overflow-hidden shadow-xl" style="height:45vh">
                 <div class="p-4 border-b border-white/5 flex justify-between items-center bg-black/30">
                     <h3 class="text-lg font-bold serif text-amber-500" x-text="modalTitle"></h3>

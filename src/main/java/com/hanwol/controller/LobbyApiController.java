@@ -50,7 +50,12 @@ public class LobbyApiController {
                 return buildCharMap(gc, uc.getLevel());
             }).collect(Collectors.toList());
 
-            return ResponseEntity.ok(Map.of("success", true, "characters", charList));
+            List<Long> partySlots = Arrays.asList(user.getPartySlot1(), user.getPartySlot2(), user.getPartySlot3(), user.getPartySlot4());
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "characters", charList,
+                "party", partySlots
+            ));
         }
 
         // 보유 캐릭터 없음 → 마스터 데이터에서 이미지 있는 주요 캐릭터를 내려줌

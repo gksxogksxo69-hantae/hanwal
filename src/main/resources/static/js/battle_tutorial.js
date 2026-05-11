@@ -210,9 +210,13 @@ document.addEventListener('alpine:init', () => {
                 this.isPlayerTurn = true;
                 
                 if (this.tutorialStep === 1) {
-                    this.addLog(`[가이드] '기본 공격(첫 번째 스킬)'을 사용하여 기력(Energy)을 1 모으세요.`, 'skill');
+                    this.addLog(`[가이드] '행동 후퇴(첫 번째 스킬)'을 사용하여 적의 공격을 유도하세요.`, 'skill');
                 } else if (this.tutorialStep === 3) {
-                    this.addLog(`[가이드] 기연의 힘이 발동했습니다! 궁극기를 사용하여 적을 쓰러뜨리세요! (필요 투기: 6)`, 'skill');
+                    // 궁극기 슬롯이 잠겨있으면 강제로 해제
+                    this.unlockUltimate();
+                    const ultSkill = current.skills.find(s => s.isUltimate && !s.isLock);
+                    const ultName = ultSkill ? ultSkill.name : '궁극기';
+                    this.addLog(`[가이드] 기연의 힘이 발동했습니다! [${ultName}]을 사용하여 적을 쓰러뜨리세요!`, 'skill');
                 }
             } else {
                 this.gameState = 'ENEMY_TURN';
@@ -235,7 +239,15 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
             if (this.tutorialStep === 3 && !skill.isUltimate) {
-                this.addLog(`[가이드] 투기가 가득 찼습니다! '궁극기(네 번째 스킬)'를 사용하세요.`, 'system');
+                const ultSkill = actor.skills.find(s => s.isUltimate && !s.isLock);
+                const ultIdx = actor.skills.findIndex(s => s.isUltimate && !s.isLock);
+                if (ultSkill) {
+                    this.addLog(`[가이드] 투기가 가득 찼습니다! [${ultSkill.name}] (${ultIdx+1}번째 스킬)을 사용하세요.`, 'system');
+                } else {
+                    // 궁극기가 잠겨있으면 즉시 해제 시도
+                    this.unlockUltimate();
+                    this.addLog(`[가이드] 궁극기가 해금되었습니다! 다시 시도해 주세요.`, 'system');
+                }
                 return;
             }
 
@@ -297,6 +309,8 @@ document.addEventListener('alpine:init', () => {
                     if (this.tutorialStep === 2) {
                         this.tutorialStep = 3;
                         target.spirit = 6;
+                        // 궁극기 슬롯 강제 해금
+                        this.unlockUltimate();
                         this.addLog(`✨ 품고 있던 [기연]이 붉은 빛을 내뿜으며 단전의 투기가 가득 찼습니다! (투기: 6)`, 'skill');
                     }
                     
@@ -378,6 +392,30 @@ document.addEventListener('alpine:init', () => {
                     window.location.href = '/town';
                 }, 2000);
             }, 1000);
+        },
+
+        // 궁극기 슬롯 강제 해금 (튜토리얼용)
+        unlockUltimate() {
+            const hero = this.party[0];
+            if (!hero) return;
+
+            // 이미 해금된 궁극기가 있으면 스킵
+            if (hero.skills.some(s => s.isUltimate && !s.isLock)) return;
+
+            // 잠긴 슬롯 중 하나를 궁극기로 교체 (마지막 슬롯 우선)
+            const heroName = this.playerGender === 'MALE' ? '제황검형 - 일검서해' : '빙백신검 - 천년빙봉';
+            const ultSkillData = this.playerGender === 'MALE'
+                ? { id: 'ult_chun', name: heroName, description: 'DEF 비례 광역 극딜. 적을 소멸시킨다.', type: 'DAMAGE', target: 'ALL_ENEMY', isUltimate: true, multiplier: 3.5, energyCost: 0, spiritCost: 6, isLock: false }
+                : { id: 'ult_sulhwa', name: heroName, description: '확정 빙결 + 극딜. 만물을 얼려버린다.', type: 'DAMAGE', target: 'SINGLE_ENEMY', isUltimate: true, multiplier: 4.0, energyCost: 0, spiritCost: 6, isLock: false };
+
+            // 마지막 슬롯(3번 인덱스)에 궁극기 배치 시도, 잠겨있으면 그 칸에
+            for (let i = hero.skills.length - 1; i >= 0; i--) {
+                if (hero.skills[i].isLock) {
+                    hero.skills[i] = ultSkillData;
+                    this.addLog(`🔓 [${heroName}] 궁극기가 해금되었습니다!`, 'skill');
+                    return;
+                }
+            }
         }
 
     }));

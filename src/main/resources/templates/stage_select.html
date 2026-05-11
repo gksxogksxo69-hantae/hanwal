@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한월(韓月) - 임무 (막 단위)</title>
+    <link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts (Gowun Batang & Pretendard) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #0f172a; font-family: 'Pretendard', sans-serif; }
+        .gowun-batang { font-family: 'Gowun Batang', serif; }
+        
+        .bg-layer {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0.4;
+            transition: background-image 0.5s ease-in-out;
+            z-index: 1;
+        }
+
+        /* 스테이지 노드 디자인 */
+        .stage-node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid rgba(148, 163, 184, 0.5); /* 비활성 테두리 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: bold;
+            font-size: 1.25rem;
+            cursor: pointer;
+            position: absolute;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        
+        .stage-node.cleared {
+            border-color: #10b981; /* 초록색 패스 */
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+        
+        .stage-node.current {
+            border-color: #f59e0b; /* 앰버/노란색 활성 */
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+            animation: pulse-ring 2s infinite;
+        }
+        
+        .stage-node:hover {
+            transform: scale(1.15);
+            border-color: #fff;
+        }
+
+        /* 경로 연결 선 */
+        .path-line {
+            position: absolute;
+            height: 4px;
+            background: rgba(148, 163, 184, 0.3);
+            z-index: 0;
+            transform-origin: left center;
+        }
+        .path-line.cleared {
+            background: #10b981;
+        }
+
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(245, 158, 11, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+    </style>
+</head>
+<body x-data="stageApp()">
+
+    <!-- 전체 배경 (막에 따라 변경됨) -->
+    <div class="bg-layer" :style="`background-image: url(${currentAct.bg})`"></div>
+    <div class="absolute inset-0 bg-gradient-to-r from-slate-900 via-transparent to-slate-900 z-10 pointer-events-none"></div>
+
+    <div class="relative z-20 h-screen w-screen flex">
+        
+        <!-- 좌측 탭 (막 선택) -->
+        <aside class="w-64 bg-slate-900/80 backdrop-blur-md border-r border-slate-700/50 flex flex-col">
+            <div class="p-6 border-b border-slate-700/50 flex justify-between items-center">
+                <button @click="goBack()" class="text-slate-400 hover:text-white transition"><i data-lucide="arrow-left"></i></button>
+                <h1 class="text-2xl font-bold gowun-batang text-amber-500">천하제일 임무</h1>
+                <div class="w-6"></div> <!-- 보정용 -->
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                <template x-for="(act, index) in acts" :key="index">
+                    <button @click="selectAct(index)" 
+                            class="w-full text-left p-4 rounded-xl border transition-all duration-300"
+                            :class="currentActIndex === index ? 'bg-amber-900/40 border-amber-500/50' : 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-700/50'">
+                        <div class="text-sm font-bold text-amber-400 mb-1" x-text="`제 ${index + 1} 막`"></div>
+                        <div class="text-white font-bold gowun-batang text-lg" x-text="act.title"></div>
+                    </button>
+                </template>
+            </div>
+        </aside>
+
+        <!-- 우측 메인 스테이지 보드 -->
+        <main class="flex-1 relative overflow-hidden flex items-center justify-center">
+            
+            <div class="absolute top-8 right-8 text-right drop-shadow-lg">
+                <h2 class="text-5xl font-bold gowun-batang text-white opacity-40" x-text="`제 ${currentActIndex + 1} 막`"></h2>
+                <h3 class="text-2xl text-amber-300 gowun-batang mt-2" x-text="currentAct.title"></h3>
+            </div>
+
+            <!-- 스테이지 노드 컨테이너 -->
+            <div class="relative w-[800px] h-[500px]">
+                <!-- 스테이지 노드들 -->
+                <template x-for="(stage, idx) in currentAct.stages" :key="idx">
+                    <!-- 선분 (다음 노드 번호 존재 시) -->
+                    <div x-show="idx < currentAct.stages.length - 1" class="absolute z-0">
+                        <div class="path-line" 
+                             :class="{ 'cleared': stage.status === 'cleared' }"
+                             :style="calcLineStyle(stage, currentAct.stages[idx+1])"></div>
+                    </div>
+                </template>
+                
+                <template x-for="(stage, idx) in currentAct.stages" :key="idx">
+                    <div>
+                        <button class="stage-node z-10"
+                                :class="stage.status"
+                                :style="`left: ${stage.x}px; top: ${stage.y}px;`"
+                                @click="openStageDetail(stage)"
+                                :disabled="stage.status === 'locked'">
+                            <span class="font-mono" x-show="stage.type !== 'boss'" x-text="`${currentActIndex+1}-${idx+1}`"></span>
+                            <i data-lucide="skull" class="w-6 h-6" x-show="stage.type === 'boss'"></i>
+                        </button>
+                        
+                        <!-- 노드 이름 라벨 -->
+                        <div class="absolute text-center drop-shadow-md z-10 pointer-events-none"
+                             :style="`left: ${stage.x - 30}px; top: ${stage.y + 70}px; width: 120px;`">
+                             <div class="text-sm font-bold block"
+                                  :class="stage.status === 'locked' ? 'text-slate-500' : 'text-white'"
+                                  x-text="stage.name"></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+        </main>
+
+        <!-- 스테이지 상세 모달 -->
+        <div x-show="selectedStage" 
+             style="display: none;"
+             class="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+             x-transition.opacity>
+            <div @click.away="selectedStage = null" class="bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl w-full max-w-md overflow-hidden">
+                <div class="bg-gradient-to-r from-amber-600 to-red-800 p-5 relative">
+                    <button @click="selectedStage = null" class="absolute top-4 right-4 text-white/70 hover:text-white"><i data-lucide="x"></i></button>
+                    <div class="text-amber-200 text-sm font-bold mb-1 tracking-widest" x-text="`${currentActIndex+1}-${selectedStage?.id || 1}`"></div>
+                    <h3 class="text-2xl font-bold gowun-batang text-white" x-text="selectedStage?.name"></h3>
+                </div>
+                
+                <div class="p-6">
+                    <p class="text-slate-300 text-sm mb-6 leading-relaxed bg-slate-800 p-4 rounded-lg" x-text="selectedStage?.desc"></p>
+                    
+                    <div class="mb-6">
+                        <div class="text-xs text-slate-400 font-bold mb-2">권장 레벨: <span class="text-amber-400">Lv. 10</span></div>
+                        <div class="text-xs text-slate-400 font-bold mb-2">소모 행동력: <span class="text-green-400">10 지령서</span></div>
+                    </div>
+                    
+                    <button @click="startStage()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 rounded-lg shadow-[0_0_15px_rgba(245,158,11,0.3)] transition transform hover:scale-[1.02]">
+                        전투 시작
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('stageApp', () => ({
+                currentActIndex: 0,
+                selectedStage: null,
+                
+                // 가상의 스테이지 데이터 구조
+                acts: [
+                    {
+                        title: '불타는 세가',
+                        bg: '/images/bg_estate_fire.png',
+                        stages: [
+                            { id: 1, name: '타오르는 앞뜰', desc: '혈교의 무리가 들이닥쳤다. 생존자들을 돕기 위해 빠르게 진압해야 한다.', type: 'normal', status: 'cleared', x: 50, y: 150 },
+                            { id: 2, name: '부서진 연무장', desc: '이곳에서 수련하던 이들은 모두 쓰러졌다... 남은 적병을 처치하자.', type: 'normal', status: 'current', x: 250, y: 250 },
+                            { id: 3, name: '세가 뒷문', desc: '도망치는 길을 가로막고 있는 수문장을 돌파하라.', type: 'normal', status: 'locked', x: 500, y: 100 },
+                            { id: 4, name: '절벽의 끝', desc: '더 이상 물러설 곳이 없다. 칠흑 같은 낭떠러지를 등지고 마지막 결전을 치러야 한다.', type: 'boss', status: 'locked', x: 700, y: 300 }
+                        ]
+                    },
+                    {
+                        title: '은밀한 기연',
+                        bg: '/images/bg_cliff.png', // 비경 이미지 재사용
+                        stages: [
+                            { id: 1, name: '동굴 입구', desc: '어두운 동굴, 정체 모를 살기가 느껴진다.', type: 'normal', status: 'locked', x: 100, y: 300 },
+                            { id: 2, name: '독기 서린 숲', desc: '독으로 가득한 식물들이 길을 막고 있다.', type: 'normal', status: 'locked', x: 350, y: 150 },
+                            { id: 3, name: '유적 중심부', desc: '오래된 무공 비급이 잠든 곳. 수호자를 물리쳐라.', type: 'boss', status: 'locked', x: 600, y: 250 }
+                        ]
+                    }
+                ],
+
+                get currentAct() {
+                    return this.acts[this.currentActIndex];
+                },
+
+                init() {
+                },
+
+                selectAct(index) {
+                    this.currentActIndex = index;
+                },
+
+                goBack() {
+                    window.location.href = '/town'; // 로비로 돌아가기
+                },
+
+                openStageDetail(stage) {
+                    if (stage.status !== 'locked') {
+                        this.selectedStage = stage;
+                    }
+                },
+
+                startStage() {
+                    // 실제 전투 시스템으로 진입하는 로직 (기 개발된 battle_tutorial.html 등을 활용)
+                    window.location.href = '/battle/tutorial';
+                },
+
+                // 두 점(노드) 사이의 거리와 각도를 이용해 선분을 그리는 함수
+                calcLineStyle(stage1, stage2) {
+                    // 노드의 중앙 위치 (60px 크기이므로 반지름은 30)
+                    const x1 = stage1.x + 30;
+                    const y1 = stage1.y + 30;
+                    const x2 = stage2.x + 30;
+                    const y2 = stage2.y + 30;
+                    
+                    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                    const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+                    
+                    return `
+                        left: ${x1}px;
+                        top: ${y1}px;
+                        width: ${distance}px;
+                        transform: rotate(${angle}deg);
+                    `;
+                }
+            }));
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

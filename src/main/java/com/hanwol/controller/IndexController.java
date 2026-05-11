@@ -25,4 +25,9 @@ public class IndexController {
     public String battleTutorial() {
         return "battle_tutorial";
     }
+
+    @GetMapping("/stage-select")
+    public String stageSelect() {
+        return "stage_select";
+    }
 }

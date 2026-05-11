@@ -100,7 +100,7 @@
     <div class="relative z-20 h-screen w-screen flex">
         
         <!-- 좌측 탭 (막 선택) -->
-        <aside class="w-64 bg-slate-900/80 backdrop-blur-md border-r border-slate-700/50 flex flex-col">
+        <aside class="w-64 bg-slate-900/95 border-r border-slate-700/50 flex flex-col">
             <div class="p-6 border-b border-slate-700/50 flex justify-between items-center">
                 <button @click="goBack()" class="text-slate-400 hover:text-white transition"><i data-lucide="arrow-left"></i></button>
                 <h1 class="text-2xl font-bold gowun-batang text-amber-500">천하제일 임무</h1>
@@ -128,7 +128,7 @@
             </div>
 
             <!-- 스테이지 노드 컨테이너 -->
-            <div class="relative w-[800px] h-[500px]">
+            <div class="relative w-[820px] h-[450px]">
                 <!-- 스테이지 노드들 -->
                 <template x-for="(stage, idx) in currentAct.stages" :key="idx">
                     <!-- 선분 (다음 노드 번호 존재 시) -->
@@ -198,25 +198,78 @@
                 currentActIndex: 0,
                 selectedStage: null,
                 
-                // 가상의 스테이지 데이터 구조
+                // 스테이지 데이터 (추후 서버 API로 전환 예정)
                 acts: [
                     {
-                        title: '불타는 세가',
+                        title: '남궁세가의 비극',
                         bg: '/images/bg_estate_fire.png',
                         stages: [
-                            { id: 1, name: '타오르는 앞뜰', desc: '혈교의 무리가 들이닥쳤다. 생존자들을 돕기 위해 빠르게 진압해야 한다.', type: 'normal', status: 'cleared', x: 50, y: 150 },
-                            { id: 2, name: '부서진 연무장', desc: '이곳에서 수련하던 이들은 모두 쓰러졌다... 남은 적병을 처치하자.', type: 'normal', status: 'current', x: 250, y: 250 },
-                            { id: 3, name: '세가 뒷문', desc: '도망치는 길을 가로막고 있는 수문장을 돌파하라.', type: 'normal', status: 'locked', x: 500, y: 100 },
-                            { id: 4, name: '절벽의 끝', desc: '더 이상 물러설 곳이 없다. 칠흑 같은 낭떠러지를 등지고 마지막 결전을 치러야 한다.', type: 'boss', status: 'locked', x: 700, y: 300 }
+                            { id: 1, name: '세가 정문', desc: '한밤중, 남궁세가 정문에 정체불명의 무리가 나타났다. 경비 무사들이 쓰러져 있다.', type: 'normal', status: 'cleared', x: 30, y: 380 },
+                            { id: 2, name: '불타는 앞뜰', desc: '곳곳에 불길이 번지고 있다. 혈교 하급 무사들이 길을 막는다.', type: 'normal', status: 'cleared', x: 120, y: 280 },
+                            { id: 3, name: '무너진 연무장', desc: '동문 사형제들이 쓰러져 있다. 아직 숨이 붙어있는 자들을 구해야 한다.', type: 'normal', status: 'current', x: 220, y: 370 },
+                            { id: 4, name: '객실 복도', desc: '객실에 숨어있던 문객들이 혈교도에게 공격받고 있다. 구하러 가자.', type: 'normal', status: 'locked', x: 320, y: 250 },
+                            { id: 5, name: '세가 창고', desc: '세가의 보물이 약탈당하고 있다. 도둑놈들을 처단하자.', type: 'normal', status: 'locked', x: 410, y: 350 },
+                            { id: 6, name: '내원 진입로', desc: '가주님이 계신 내원으로 향하는 길. 정예 혈교 무사가 가로막는다.', type: 'elite', status: 'locked', x: 500, y: 230 },
+                            { id: 7, name: '불타는 서재', desc: '가문의 검결과 비급이 보관된 서재가 불타고 있다! 적의 책략이다.', type: 'normal', status: 'locked', x: 590, y: 340 },
+                            { id: 8, name: '내원 마당', desc: '가주 남궁현이 부상당한 채 서 있다. 그의 앞을 가로막는 혈교 두목...', type: 'normal', status: 'locked', x: 670, y: 210 },
+                            { id: 9, name: '혈교 선봉장', desc: '"남궁세가는 오늘로 역사 속으로 사라진다." 혈교 선봉장이 검을 뽑는다.', type: 'boss', status: 'locked', x: 750, y: 320 }
                         ]
                     },
                     {
-                        title: '은밀한 기연',
-                        bg: '/images/bg_cliff.png', // 비경 이미지 재사용
+                        title: '절벽 아래의 기연',
+                        bg: '/images/bg_cliff.png',
                         stages: [
-                            { id: 1, name: '동굴 입구', desc: '어두운 동굴, 정체 모를 살기가 느껴진다.', type: 'normal', status: 'locked', x: 100, y: 300 },
-                            { id: 2, name: '독기 서린 숲', desc: '독으로 가득한 식물들이 길을 막고 있다.', type: 'normal', status: 'locked', x: 350, y: 150 },
-                            { id: 3, name: '유적 중심부', desc: '오래된 무공 비급이 잠든 곳. 수호자를 물리쳐라.', type: 'boss', status: 'locked', x: 600, y: 250 }
+                            { id: 1, name: '낙하 지점', desc: '절벽에서 떨어져 기적처럼 살아남았다. 온몸이 부서질 듯 아프다.', type: 'normal', status: 'locked', x: 40, y: 350 },
+                            { id: 2, name: '지하 수맥', desc: '어둠 속에서 물 흐르는 소리가 들린다. 수맥의 약초가 상처를 낫게 해준다.', type: 'normal', status: 'locked', x: 130, y: 230 },
+                            { id: 3, name: '석벽의 벽화', desc: '고대 검법의 형상이 석벽에 새겨져 있다. 본능적으로 따라 움직이게 된다.', type: 'normal', status: 'locked', x: 240, y: 340 },
+                            { id: 4, name: '독충 서식지', desc: '동굴 깊은 곳, 거대한 독충들이 우글거린다. 상처 난 몸으로 싸워야 한다.', type: 'normal', status: 'locked', x: 340, y: 200 },
+                            { id: 5, name: '비밀 수련장', desc: '누군가 이곳에서 수련한 흔적이 있다. 무기가 놓여 있고, 검결이 적힌 서찰이...', type: 'normal', status: 'locked', x: 430, y: 310 },
+                            { id: 6, name: '내공 각성', desc: '서찰의 지시대로 수련하자...단전에 뜨거운 기운이 용솟음친다!', type: 'normal', status: 'locked', x: 530, y: 180 },
+                            { id: 7, name: '동굴의 수호자', desc: '동굴 출구를 지키는 거대한 석수(石獸)가 눈을 번뜩인다.', type: 'elite', status: 'locked', x: 620, y: 300 },
+                            { id: 8, name: '비경 탈출', desc: '석수를 쓰러뜨리자 무너지기 시작하는 동굴. 빛이 보인다...!', type: 'boss', status: 'locked', x: 730, y: 200 }
+                        ]
+                    },
+                    {
+                        title: '강호 첫 발걸음',
+                        bg: '/images/bg_estate_peace.png',
+                        stages: [
+                            { id: 1, name: '산중 오두막', desc: '동굴을 빠져나와 산 속 오두막에 당도했다. 마을까지 가려면 험한 길을 지나야 한다.', type: 'normal', status: 'locked', x: 50, y: 300 },
+                            { id: 2, name: '산적 매복지', desc: '산길에 산적들이 숨어있다. 아직 몸이 완전하지 않지만 상대해야 한다.', type: 'normal', status: 'locked', x: 150, y: 200 },
+                            { id: 3, name: '나루터', desc: '강을 건너야 마을에 갈 수 있다. 나루터에서 수상한 자들이 시비를 건다.', type: 'normal', status: 'locked', x: 260, y: 320 },
+                            { id: 4, name: '저잣거리', desc: '작은 마을에 도착. 혈교의 수배 전단이 온 마을에 붙어있다...내 얼굴이다.', type: 'normal', status: 'locked', x: 360, y: 180 },
+                            { id: 5, name: '객잔 습격', desc: '쉬려고 들렀던 객잔에 현상금 사냥꾼들이 들이닥쳤다.', type: 'normal', status: 'locked', x: 450, y: 300 },
+                            { id: 6, name: '추격전', desc: '마을을 빠져나가는 골목골목. 끈질기게 쫓아오는 사냥꾼 무리.', type: 'normal', status: 'locked', x: 540, y: 190 },
+                            { id: 7, name: '숲 속의 만남', desc: '쓰러지기 직전, 정체불명의 인물이 나타나 길을 안내하겠다고 한다.', type: 'normal', status: 'locked', x: 630, y: 310 },
+                            { id: 8, name: '현상금 사냥꾼 두목', desc: '"남궁세가 잔당의 머리값은 꽤 쏠쏠하지..." 도주를 막는 사냥꾼 수장.', type: 'boss', status: 'locked', x: 740, y: 220 }
+                        ]
+                    },
+                    {
+                        title: '무림맹의 그림자',
+                        bg: '/images/bg_main.png',
+                        stages: [
+                            { id: 1, name: '무림맹 외곽', desc: '정체불명의 안내자를 따라 무림맹 관할 영역에 진입했다. 순찰대가 보인다.', type: 'normal', status: 'locked', x: 40, y: 320 },
+                            { id: 2, name: '신원 조회', desc: '무림맹 관문에서 신원 확인을 요구받는다. "남궁세가...살아있는 자가 있었나?"', type: 'normal', status: 'locked', x: 140, y: 210 },
+                            { id: 3, name: '시험 전투', desc: '무림맹 진입을 위한 실력 검증. 부맹주가 직접 지켜보고 있다.', type: 'normal', status: 'locked', x: 250, y: 330 },
+                            { id: 4, name: '정보 수집', desc: '무림맹 내부에서 남궁세가 습격에 대한 정보를 모은다. 뭔가 이상하다...', type: 'normal', status: 'locked', x: 340, y: 200 },
+                            { id: 5, name: '의문의 서찰', desc: '남궁세가 습격 직전, 무림맹에서 보낸 서찰이 있었다? 누군가 은폐하고 있다.', type: 'normal', status: 'locked', x: 430, y: 320 },
+                            { id: 6, name: '첩자 추적', desc: '무림맹 안에 혈교의 내통자가 있다. 단서를 따라 추적을 시작한다.', type: 'elite', status: 'locked', x: 530, y: 190 },
+                            { id: 7, name: '지하 밀실', desc: '내통자의 밀실에서 충격적인 문서를 발견한다. 남궁세가를 팔아넘긴 자는...', type: 'normal', status: 'locked', x: 620, y: 310 },
+                            { id: 8, name: '매복', desc: '밀실을 나서자마자 무림맹 정예 무사들이 포위한다. "너무 많은 것을 알았군."', type: 'normal', status: 'locked', x: 700, y: 200 },
+                            { id: 9, name: '무림맹 호법', desc: '도망가는 길을 막아서는 무림맹 호법. "죽은 자의 비밀은 새어나가지 않지."', type: 'boss', status: 'locked', x: 760, y: 330 }
+                        ]
+                    },
+                    {
+                        title: '복수의 서막',
+                        bg: '/images/bg_estate_fire.png',
+                        stages: [
+                            { id: 1, name: '탈출', desc: '무림맹을 빠져나왔다. 진실을 알린다면 강호가 뒤집힐 것이다.', type: 'normal', status: 'locked', x: 50, y: 350 },
+                            { id: 2, name: '동맹 결성', desc: '뜻을 같이하는 자들이 모여든다. 제갈세가의 제갈령이 합류한다.', type: 'normal', status: 'locked', x: 150, y: 230 },
+                            { id: 3, name: '당가 접촉', desc: '사천 당가의 당소소에게 독에 관한 도움을 요청한다.', type: 'normal', status: 'locked', x: 260, y: 350 },
+                            { id: 4, name: '첩보 작전', desc: '혈교와 무림맹 내통자 사이의 거래 현장을 급습한다.', type: 'normal', status: 'locked', x: 360, y: 200 },
+                            { id: 5, name: '증거 확보', desc: '거래 현장에서 결정적 증거를 손에 넣는다. 하지만 적도 움직이기 시작했다.', type: 'normal', status: 'locked', x: 450, y: 330 },
+                            { id: 6, name: '역공의 밤', desc: '혈교 잔당이 은신처를 급습해 온다. 방어전이 벌어진다.', type: 'elite', status: 'locked', x: 540, y: 190 },
+                            { id: 7, name: '결전의 땅', desc: '모든 준비가 끝났다. 남궁세가의 원수를 앞에 둔다.', type: 'normal', status: 'locked', x: 630, y: 320 },
+                            { id: 8, name: '혈교 부교주', desc: '"남궁세가 따위, 내 발아래 있어야 할 하찮은 존재..." 최종 결전.', type: 'boss', status: 'locked', x: 740, y: 230 }
                         ]
                     }
                 ],

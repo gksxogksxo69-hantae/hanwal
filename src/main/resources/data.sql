@@ -106,3 +106,10 @@ INSERT IGNORE INTO character_skills (id, character_id, skill_id, skill_slot, req
 (26, 17, 59, 'NORMAL', NULL),
 (27, 18, 59, 'NORMAL', NULL),
 (28, 19, 59, 'NORMAL', NULL);
+
+-- 9. 캐릭터 image_path 매핑 (실제 보유 이미지 연결)
+UPDATE characters SET image_path = '/images/namgung_cheon.png' WHERE id = 1;
+UPDATE characters SET image_path = '/images/portrait_female.png' WHERE id = 2;
+UPDATE characters SET image_path = '/images/dang_soso.png' WHERE id = 4;
+UPDATE characters SET image_path = '/images/zhuge_ryeong.png' WHERE id = 10;
+UPDATE characters SET image_path = '/images/portrait_male.png' WHERE image_path IS NULL;

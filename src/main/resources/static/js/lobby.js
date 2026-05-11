@@ -11,9 +11,25 @@ document.addEventListener('alpine:init', () => {
         currentModal: null,
         modalTitle: '',
 
+        // ── 보유 캐릭터 리스트 (임시 데이터) ──
+        myCharacters: [
+            { id: 'namgung_cheon', name: '남궁천', src: '/images/namgung_cheon.png', desc: '가문의 수치, 막내아들', role: '전사', color: 'bg-amber-600', textColor: 'text-amber-500' },
+            { id: 'zhuge_ryeong', name: '제갈령', src: '/images/zhuge_ryeong.png', desc: '천재 기관술사', role: '서포터', color: 'bg-green-500', textColor: 'text-green-400' },
+            { id: 'dang_soso', name: '당소소', src: '/images/dang_soso.png', desc: '독련화 (독과 암기의 극의)', role: '암살자', color: 'bg-purple-600', textColor: 'text-purple-500' }
+        ],
+        currentCharIndex: 0,
+        
+        // ── 편성 창(Party) 데이터 ──
+        currentParty: [null, null, null, null],
+
         // ── 초기화 ──
         init() {
             this.loadPlayerInfo();
+            // 기본 파티 세팅
+            this.currentParty[0] = this.myCharacters[0];
+            this.currentParty[1] = this.myCharacters[1];
+            this.currentParty[2] = this.myCharacters[2];
+            // 4번 슬롯은 비어둠
         },
 
         async loadPlayerInfo() {
@@ -40,9 +56,12 @@ document.addEventListener('alpine:init', () => {
             return this.playerGender === 'FEMALE' ? '/images/portrait_female.png' : '/images/portrait_male.png';
         },
 
-        get playerFullPortrait() {
-            // 임시로 초상화 이미지를 로비 스탠딩 일러스트로 씁니다. 추후 고해상도 L2D 이미지로 교체 가능.
-            return this.playerGender === 'FEMALE' ? '/images/portrait_female.png' : '/images/portrait_male.png';
+        get currentLobbyCharacter() {
+            return this.myCharacters[this.currentCharIndex];
+        },
+
+        nextCharacter() {
+            this.currentCharIndex = (this.currentCharIndex + 1) % this.myCharacters.length;
         },
 
         // ── 액션 ──

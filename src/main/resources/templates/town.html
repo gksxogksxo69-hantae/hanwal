@@ -3,399 +3,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>한월(韓月) - 최적화 로비</title>
+    <title>한월(韓月) - 로비</title>
     <link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
-
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Google Fonts (Gowun Batang & Pretendard) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
-
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-
-    <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
     <style>
-        body { margin: 0; overflow: hidden; background-color: #0f172a; font-family: 'Pretendard', sans-serif; }
-        .gowun-batang { font-family: 'Gowun Batang', serif; }
-        
-        /* 로비 배경 - 블러 연산을 최소화하여 성능 최적화 */
-        .lobby-bg {
-            position: absolute;
-            inset: -10px; 
-            background-image: url('/images/bg_estate_peace.png');
-            background-size: cover;
-            background-position: center;
-            opacity: 0.5; /* filter:brightness 대신 opacity와 body 배경색 활용 */
-            z-index: 1;
-        }
-        
-        .character-container {
-            position: absolute;
-            bottom: 0;
-            left: 45%;
-            transform: translateX(-50%);
-            width: 100vw;
-            height: 95vh;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            z-index: 5;
-            pointer-events: none;
-            /* 마스크 효과는 가벼운 편이므로 유지하되 너무 부드럽지 않게 */
-            -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
-            mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
-        }
+        *{box-sizing:border-box}
+        body{margin:0;overflow:hidden;background:#0a0e1a;font-family:'Pretendard',sans-serif;color:#fff}
+        .serif{font-family:'Gowun Batang',serif}
 
-        .character-standing {
-            height: 100%;
-            object-fit: contain;
-            /* drop-shadow와 float 애니메이션 삭제(렌더링 부하 원인 1순위) */
-            transition: opacity 0.3s ease-in-out;
-        }
+        /* 배경: 단순 이미지 + 다크 오버레이 (블러 X) */
+        .bg-layer{position:absolute;inset:0;z-index:0}
+        .bg-layer img{width:100%;height:100%;object-fit:cover;opacity:.45}
 
-        /* 캐릭터정보 태그 */
-        .char-info-tag {
-            position: absolute;
-            left: 10%;
-            top: 40%;
-            z-index: 20;
-            pointer-events: auto;
+        /* 캐릭터 마스크 */
+        .char-wrap{
+            position:absolute;bottom:0;left:50%;transform:translateX(-55%);
+            height:92vh;z-index:2;pointer-events:none;
+            -webkit-mask-image:linear-gradient(to bottom,#000 65%,transparent);
+            mask-image:linear-gradient(to bottom,#000 65%,transparent);
         }
+        .char-wrap img{height:100%;object-fit:contain}
 
-        /* 교체 버튼 */
-        .swap-btn {
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 50%;
-            padding: 12px;
-            color: #fff;
-            transition: transform 0.2s, background 0.2s;
-        }
-        .swap-btn:hover {
-            background: rgba(255,255,255,0.25);
-            transform: scale(1.1);
-        }
+        /* 공통 패널 */
+        .panel{background:rgba(10,14,26,.8);border:1px solid rgba(255,255,255,.08);border-radius:9999px}
+        .panel-box{background:rgba(10,14,26,.85);border:1px solid rgba(255,255,255,.08);border-radius:12px}
 
-        /* 심플 패널 (backdrop-filter 삭제하여 연산 최적화) */
-        .simple-panel {
-            background: rgba(15, 23, 42, 0.75);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        /* 사이드 아이콘 */
+        .side-btn{
+            position:relative;width:50px;height:50px;border-radius:50%;
+            display:flex;align-items:center;justify-content:center;
+            color:rgba(255,255,255,.65);cursor:pointer;
+            background:rgba(10,14,26,.7);border:1px solid rgba(255,255,255,.08);
+            transition:background .15s,color .15s;
         }
+        .side-btn:hover{background:rgba(255,255,255,.12);color:#fff}
+        .side-tip{
+            position:absolute;right:62px;padding:5px 10px;border-radius:6px;
+            background:rgba(0,0,0,.9);font-size:.8rem;font-weight:600;
+            white-space:nowrap;display:none;
+        }
+        .side-btn:hover .side-tip{display:block}
 
-        /* 우측 사이드 엣지 아이콘 (원형) */
-        .side-icon-btn {
-            position: relative;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: rgba(255, 255, 255, 0.7);
-            cursor: pointer;
-            margin-bottom: 16px;
-            transition: background 0.2s, color 0.2s;
-        }
-        .side-icon-btn:hover {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.2);
-        }
-        
-        .side-icon-label {
-            position: absolute;
-            right: 70px;
-            background: rgba(0,0,0,0.85);
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: bold;
-            white-space: nowrap;
-            display: none; /* opacity 페이드 대신 display 토글로 성능 잡기 */
-        }
-        .side-icon-btn:hover .side-icon-label {
-            display: block;
-        }
+        /* 스큐 버튼 */
+        .skew{transform:skewX(-12deg);transition:background .15s}
+        .skew-inner{transform:skewX(12deg)}
+        .btn-main{background:#b45309;border-right:3px solid #fbbf24}
+        .btn-main:hover{background:#d97706}
+        .btn-sub{background:rgba(20,27,45,.95);border:1px solid rgba(255,255,255,.08);border-right:3px solid #a78bfa}
+        .btn-sub:hover{background:rgba(40,50,70,.95)}
 
-        /* 사선 버튼들 */
-        .action-skew {
-            transform: skewX(-15deg);
-            overflow: hidden;
-            position: relative;
+        /* 편성 카드 */
+        .r-card{
+            flex:1;position:relative;border-radius:8px;overflow:hidden;
+            background:rgba(15,20,30,.95);border:1px solid rgba(255,255,255,.06);
+            cursor:pointer;transition:transform .15s,border-color .15s;
         }
-        .action-skew-content {
-            transform: skewX(15deg);
+        .r-card:hover{transform:translateY(-6px);border-color:rgba(255,255,255,.25)}
+        .r-card img{width:100%;height:100%;object-fit:cover;object-position:center 15%}
+        .r-card-info{
+            position:absolute;bottom:0;left:0;right:0;padding:24px 16px 16px;
+            background:linear-gradient(to top,rgba(0,0,0,.95),rgba(0,0,0,.3) 80%,transparent);
         }
-        .skew-btn-main {
-            background: #b45309; /* 그라데이션 제거, 단색으로 렌더 속도 확보 */
-            box-shadow: -8px 0 20px rgba(180, 83, 9, 0.4);
-            border-right: 4px solid #fcd34d;
-            transition: background 0.2s;
+        .r-empty{
+            display:flex;align-items:center;justify-content:center;flex-direction:column;
+            color:rgba(255,255,255,.2);border:2px dashed rgba(255,255,255,.15);
         }
-        .skew-btn-sub {
-            background: rgba(30, 41, 59, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-right: 4px solid #a78bfa;
-            transition: background 0.2s;
-        }
-
-        .skew-btn-main:hover { background: #d97706; }
-        .skew-btn-sub:hover { background: rgba(51, 65, 85, 0.95); }
-
-        /* 편성 창 전용 픽업 카드 스타일 */
-        .party-overlay {
-            background: rgba(9, 14, 23, 0.97); /* 블러 대신 진한 솔리드에 가까운 투명도 처리 */
-        }
-        
-        .roster-card {
-            width: 25%;
-            height: 75vh;
-            position: relative;
-            background: rgba(15, 23, 42, 0.9);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 8px;
-            overflow: hidden;
-            transition: transform 0.2s, border-color 0.2s;
-            cursor: pointer;
-        }
-
-        .roster-card:hover {
-            transform: translateY(-8px);
-            border-color: rgba(255, 255, 255, 0.3);
-        }
-
-        .roster-card img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center 20%;
-        }
-
-        .roster-info {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 30px 20px 20px;
-            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 70%, transparent 100%);
-        }
-
-        .empty-slot {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            color: rgba(255,255,255,0.3);
-            font-size: 3rem;
-            border: 2px dashed rgba(255,255,255,0.2);
-            background: rgba(255,255,255,0.02);
-        }
-        .empty-slot:hover {
-            border-style: solid;
-            background: rgba(255,255,255,0.05);
-            color: rgba(255,255,255,0.8);
-        }
-
+        .r-empty:hover{border-style:solid;color:rgba(255,255,255,.5);background:rgba(255,255,255,.03)}
     </style>
 </head>
 <body x-data="lobbyApp()">
 
-    <!-- 배경 레이어 -->
-    <div class="lobby-bg"></div>
+<!-- 배경 -->
+<div class="bg-layer">
+    <img src="/images/bg_estate_peace.png" alt="bg" loading="eager">
+</div>
 
-    <!-- 중앙 캐릭터 렌더링 영역 -->
-    <div class="character-container">
-        <!-- 뷰포트 변경될때 자연스럽게 트랜지션 되도록 x-bind 사용 -->
-        <img :src="currentLobbyCharacter.src" :key="currentLobbyCharacter.id" 
-             x-transition.opacity.duration.300ms
-             class="character-standing" alt="Representative Character">
+<!-- 로딩 스피너 -->
+<div x-show="isLoading" class="fixed inset-0 z-[100] bg-[#0a0e1a] flex items-center justify-center">
+    <div class="text-center">
+        <div class="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p class="text-slate-400 text-sm tracking-widest serif">입장 중...</p>
     </div>
+</div>
 
-    <!-- 캐릭터 상세 정보 및 대표 캐릭터 교체 버튼 -->
-    <div class="char-info-tag flex items-end gap-6">
-        <div class="simple-panel p-6 rounded-xl border-l-4" :class="`border-${currentLobbyCharacter.color.split('-')[1]}-500`">
-            <h1 class="text-4xl font-extrabold text-white drop-shadow-md gowun-batang mb-2" x-text="currentLobbyCharacter.name"></h1>
-            <p class="font-bold tracking-widest text-sm drop-shadow-sm" :class="currentLobbyCharacter.color" x-text="currentLobbyCharacter.desc"></p>
+<!-- 캐릭터 -->
+<div class="char-wrap">
+    <img :src="currentLobbyCharacter.src" :alt="currentLobbyCharacter.name" loading="lazy">
+</div>
+
+<!-- 캐릭터 정보 + 교체 -->
+<div class="absolute left-[8%] top-[38%] z-20 flex items-end gap-4 pointer-events-auto" x-show="!isLoading">
+    <div class="panel-box p-5 border-l-4 border-amber-500">
+        <h1 class="text-3xl font-extrabold serif mb-1" x-text="currentLobbyCharacter.name"></h1>
+        <p class="text-amber-300 text-xs font-bold tracking-widest" x-text="currentLobbyCharacter.desc"></p>
+    </div>
+    <button @click="nextCharacter()" x-show="myCharacters.length > 1"
+            class="w-11 h-11 rounded-full bg-white/10 border border-white/20 text-white flex items-center justify-center hover:bg-white/20 transition"
+            title="대표 캐릭터 교체">
+        <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+    </button>
+</div>
+
+<!-- UI 오버레이 -->
+<div class="relative z-10 w-screen h-screen flex flex-col justify-between pointer-events-none" x-show="!isLoading">
+
+    <!-- 상단 헤더 -->
+    <header class="flex justify-between items-start p-5 pointer-events-auto">
+        <div class="panel pr-5 pl-2 py-1.5 flex items-center gap-3">
+            <div class="w-11 h-11 rounded-full border border-amber-500 overflow-hidden bg-black/60">
+                <img :src="playerPortrait" alt="avatar" class="w-full h-full object-cover">
+            </div>
+            <div>
+                <div class="flex items-center gap-1.5">
+                    <span class="bg-amber-600 text-[10px] px-1.5 rounded font-bold">Lv.<span x-text="playerLevel"></span></span>
+                    <span class="font-bold text-base serif" x-text="playerNickname"></span>
+                </div>
+                <div class="text-slate-500 text-[10px]">UID: 800012345</div>
+            </div>
         </div>
-        
-        <button @click="nextCharacter()" class="swap-btn" title="대표 캐릭터 교체">
-            <i data-lucide="refresh-cw" class="w-6 h-6"></i>
+
+        <div class="flex gap-3 items-center">
+            <div class="panel px-3.5 py-1 flex items-center gap-1.5">
+                <i data-lucide="coins" class="text-yellow-500 w-3.5 h-3.5"></i>
+                <span class="font-mono text-sm" x-text="playerGold.toLocaleString()"></span>
+            </div>
+            <div class="panel px-3.5 py-1 flex items-center gap-1.5">
+                <i data-lucide="gem" class="text-cyan-400 w-3.5 h-3.5"></i>
+                <span class="font-mono text-sm" x-text="playerGems.toLocaleString()"></span>
+            </div>
+            <div class="flex gap-1.5 ml-2">
+                <button class="w-9 h-9 rounded-full bg-black/40 flex items-center justify-center text-slate-400 hover:text-white transition">
+                    <i data-lucide="mail" class="w-4 h-4"></i>
+                </button>
+                <button class="w-9 h-9 rounded-full bg-black/40 flex items-center justify-center text-slate-400 hover:text-white transition">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 우측 사이드 메뉴 -->
+    <div class="absolute right-5 top-1/2 -translate-y-1/2 flex flex-col gap-3 pointer-events-auto">
+        <button @click="openModal('GACHA')" class="side-btn">
+            <i data-lucide="sparkles" class="w-5 h-5"></i>
+            <span class="side-tip text-amber-300">[객잔] 영입</span>
+        </button>
+        <button @click="openModal('PARTY')" class="side-btn">
+            <i data-lucide="users" class="w-5 h-5"></i>
+            <span class="side-tip text-blue-300">[편성] 출진</span>
+        </button>
+        <button @click="openModal('INVENTORY')" class="side-btn">
+            <i data-lucide="package" class="w-5 h-5"></i>
+            <span class="side-tip text-slate-300">[보따리]</span>
+        </button>
+        <button @click="openModal('GUILD')" class="side-btn">
+            <i data-lucide="shield" class="w-5 h-5"></i>
+            <span class="side-tip text-green-300">[문파]</span>
         </button>
     </div>
 
-    <!-- UI 레이어 (위 쪽과 양 옆 구조) -->
-    <div class="relative z-10 w-screen h-screen overflow-hidden flex flex-col justify-between pointer-events-none">
-        
-        <!-- 상단 헤더 영역 -->
-        <header class="flex justify-between items-start p-6 pointer-events-auto">
-            
-            <!-- 좌상단: 프로필 (얇고 미니멀하게) -->
-            <div class="simple-panel rounded-full pr-6 pl-2 py-2 flex items-center gap-3 cursor-pointer hover:bg-slate-800/90 w-auto">
-                <div class="w-12 h-12 rounded-full border border-amber-500 overflow-hidden flex items-center justify-center bg-black/80">
-                    <img :src="playerPortrait" alt="Player Portrait" class="w-full h-full object-cover">
+    <!-- 우하단 메인 버튼 -->
+    <div class="absolute bottom-8 right-0 flex flex-col gap-2.5 pointer-events-auto">
+        <button @click="openModal('DUNGEON')" class="skew btn-sub w-64 h-14 mr-[-16px] flex items-center justify-end pr-8 cursor-pointer">
+            <div class="skew-inner flex items-center gap-3">
+                <div class="text-right">
+                    <div class="text-purple-300 text-[10px] font-bold tracking-widest uppercase">일일 수련</div>
+                    <div class="text-white font-bold serif text-base">기억의 전당</div>
                 </div>
-                <div class="flex flex-col justify-center">
-                    <div class="flex items-center gap-2">
-                        <span class="bg-amber-600 text-white text-[10px] px-1.5 rounded font-bold">Lv.<span x-text="playerLevel"></span></span>
-                        <h2 class="text-white font-bold text-lg leading-tight gowun-batang" x-text="playerNickname">모험가</h2>
-                    </div>
-                    <div class="text-slate-400 text-xs font-medium">UID: 800012345</div>
-                </div>
+                <i data-lucide="swords" class="text-purple-400 w-5 h-5"></i>
             </div>
-
-            <!-- 우상단: 재화 및 설정 아이콘 -->
-            <div class="flex gap-4 items-center">
-                <!-- 골드 -->
-                <div class="simple-panel px-4 py-1.5 rounded-full flex items-center gap-2">
-                    <i data-lucide="coins" class="text-yellow-500 w-4 h-4"></i>
-                    <span class="text-white font-mono text-sm tracking-wide" x-text="playerGold.toLocaleString()">0</span>
+        </button>
+        <button @click="goToStory()" class="skew btn-main w-72 h-20 mr-[-16px] flex items-center justify-end pr-10 cursor-pointer group">
+            <div class="skew-inner flex items-center gap-4">
+                <div class="text-right">
+                    <div class="text-amber-200 text-[10px] font-bold tracking-[.2em] uppercase">Main Story</div>
+                    <div class="text-white font-extrabold serif text-2xl">임무 시작</div>
                 </div>
-                <!-- 젬 -->
-                <div class="simple-panel px-4 py-1.5 rounded-full flex items-center gap-2">
-                    <i data-lucide="gem" class="text-cyan-400 w-4 h-4"></i>
-                    <span class="text-white font-mono text-sm tracking-wide" x-text="playerGems.toLocaleString()">0</span>
-                </div>
-                <!-- 작은 아이콘 세트 -->
-                <div class="flex gap-2 ml-4">
-                    <button class="bg-black/50 hover:bg-black/70 p-2.5 rounded-full text-slate-300 transition">
-                        <i data-lucide="mail" class="w-5 h-5"></i>
-                    </button>
-                    <button class="bg-black/50 hover:bg-black/70 p-2.5 rounded-full text-slate-300 transition">
-                        <i data-lucide="settings" class="w-5 h-5"></i>
-                    </button>
-                </div>
+                <i data-lucide="navigation" class="text-white w-6 h-6 rotate-45 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></i>
             </div>
-        </header>
-
-        <!-- 중앙-우측 사이드 엣지 메뉴 (가챠, 파티 등) -->
-        <div class="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col items-end pointer-events-auto">
-            <button @click="openModal('GACHA')" class="simple-panel side-icon-btn group">
-                <i data-lucide="sparkles" class="w-6 h-6"></i>
-                <div class="side-icon-label text-amber-300">[객잔] 영입</div>
-            </button>
-            <button @click="openModal('PARTY')" class="simple-panel side-icon-btn group">
-                <i data-lucide="users" class="w-6 h-6"></i>
-                <div class="side-icon-label text-blue-300">[편성] 출진</div>
-            </button>
-            <button @click="openModal('INVENTORY')" class="simple-panel side-icon-btn group">
-                <i data-lucide="package" class="w-6 h-6"></i>
-                <div class="side-icon-label text-slate-300">[보따리] 인벤토리</div>
-            </button>
-            <button @click="openModal('GUILD')" class="simple-panel side-icon-btn group">
-                <i data-lucide="shield" class="w-6 h-6"></i>
-                <div class="side-icon-label text-green-300">[문파] 연합</div>
-            </button>
-        </div>
-
-        <!-- 우측 하단 대형 메인 시작 버튼 -->
-        <div class="absolute bottom-10 right-0 flex flex-col gap-3 pointer-events-auto">
-            
-            <button @click="openModal('DUNGEON')" class="action-skew skew-btn-sub w-72 h-16 mr-[-20px] flex items-center justify-end pr-10 cursor-pointer">
-                <div class="action-skew-content flex items-center gap-4">
-                    <div class="text-right">
-                        <div class="text-purple-300 text-[10px] font-bold tracking-widest uppercase mb-0.5">일일 수련</div>
-                        <h3 class="text-white font-bold gowun-batang text-lg">기억의 전당</h3>
-                    </div>
-                    <div class="bg-purple-500/20 p-2 rounded-full"><i data-lucide="swords" class="text-purple-400 w-5 h-5"></i></div>
-                </div>
-            </button>
-            
-            <button @click="goToStory()" class="action-skew skew-btn-main w-80 h-24 mr-[-20px] flex items-center justify-end pr-12 cursor-pointer group">
-                <div class="action-skew-content flex items-center gap-5">
-                    <div class="text-right">
-                        <div class="text-amber-200 text-xs font-bold tracking-[0.2em] uppercase mb-1 drop-shadow-md">Main Story</div>
-                        <h3 class="text-white font-extrabold gowun-batang text-3xl drop-shadow-sm">임무 시작</h3>
-                    </div>
-                    <div class="bg-black/20 p-3 rounded-full shadow-inner">
-                        <i data-lucide="navigation" class="text-white w-7 h-7 transform rotate-45 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1"></i>
-                    </div>
-                </div>
-            </button>
-        </div>
-
-        <!-- 상호작용 모달 UI -->
-        <div x-show="currentModal !== null" 
-             style="display: none;"
-             class="absolute inset-0 z-50 flex items-center justify-center pointer-events-auto transition-opacity"
-             :class="currentModal === 'PARTY' ? 'party-overlay p-8' : 'bg-slate-900/90 p-4'"
-             x-transition.opacity>
-             
-            <!-- 1. 편성창(PARTY) 4열 그리드 전용 뷰 -->
-            <template x-if="currentModal === 'PARTY'">
-                <div class="w-full h-full flex flex-col pt-10 px-10">
-                    <div class="flex justify-between items-center mb-8">
-                        <div>
-                            <h2 class="text-4xl font-bold gowun-batang text-white drop-shadow-lg">출진 편성</h2>
-                            <p class="text-amber-200/70 text-sm tracking-widest mt-2 uppercase">Formation Setup</p>
-                        </div>
-                        <button @click="closeModal()" class="text-slate-400 hover:text-white p-3 rounded-full bg-black/50 hover:bg-black/80 transition"><i data-lucide="x" class="w-6 h-6"></i></button>
-                    </div>
-
-                    <!-- 4열 그리드 -->
-                    <div class="flex-1 flex gap-6 mt-4">
-                        <template x-for="(char, index) in currentParty" :key="index">
-                            <div class="roster-card" :class="!char ? 'empty-slot' : ''">
-                                <!-- 캐릭터가 빈 슬롯이 아닐 때 -->
-                                <template x-if="char !== null">
-                                    <div class="w-full h-full relative">
-                                        <div class="absolute top-4 left-4 z-10 px-3 py-1 rounded text-xs font-bold text-white shadow-md" :class="char.color" x-text="char.role"></div>
-                                        <img :src="char.src" :alt="char.name" loading="lazy">
-                                        <div class="roster-info">
-                                            <div class="text-amber-300 text-xs tracking-widest mb-1" x-text="char.desc"></div>
-                                            <div class="text-3xl font-extrabold text-white gowun-batang drop-shadow-sm" x-text="char.name"></div>
-                                            <div class="text-slate-400 text-sm font-mono mt-1">Lv. 30 (Max)</div>
-                                        </div>
-                                    </div>
-                                </template>
-                                
-                                <!-- 캐릭터가 빈 슬롯일 때 -->
-                                <template x-if="char === null">
-                                    <div class="text-center">
-                                        <i data-lucide="plus" class="w-16 h-16 mx-auto mb-4 opacity-70"></i>
-                                        <p class="text-sm font-bold tracking-widest uppercase opacity-70">Select</p>
-                                    </div>
-                                </template>
-                            </div>
-                        </template>
-                    </div>
-                    
-                    <div class="mt-8 flex justify-center">
-                        <button class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-4 px-16 rounded-full shadow-lg text-lg tracking-widest uppercase transition transform hover:scale-105">
-                            저장 및 뒤로가기
-                        </button>
-                    </div>
-                </div>
-            </template>
-
-            <!-- 2. 기타 로비 메뉴용 디폴트 뷰 -->
-            <template x-if="currentModal !== 'PARTY' && currentModal !== null">
-                <div @click.away="closeModal()" class="bg-slate-800 border border-slate-600 rounded-xl max-w-xl w-full text-white overflow-hidden shadow-2xl flex flex-col" style="height: 50vh;">
-                    <div class="p-5 border-b border-slate-600 flex justify-between items-center bg-slate-900">
-                        <h3 class="text-xl font-bold gowun-batang text-amber-500" x-text="modalTitle"></h3>
-                        <button @click="closeModal()" class="text-slate-400 hover:text-white p-1 rounded-full transition bg-slate-800 hover:bg-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
-                    </div>
-                    <div class="flex-1 p-8 flex flex-col items-center justify-center">
-                        <i data-lucide="ghost" class="text-slate-500 w-20 h-20 mb-6"></i>
-                        <h4 class="text-xl font-bold mb-2 tracking-wide text-slate-100">공사 중</h4>
-                        <p class="text-slate-400 font-mono text-sm text-center" x-text="`[ ${modalTitle} ] 공간을 현재 구축하고 있습니다.`"></p>
-                    </div>
-                </div>
-            </template>
-        </div>
+        </button>
     </div>
 
-    <script src="/js/lobby.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-        });
-    </script>
+    <!-- 모달 영역 -->
+    <div x-show="currentModal" style="display:none"
+         class="absolute inset-0 z-50 flex items-center justify-center pointer-events-auto"
+         :class="currentModal==='PARTY' ? 'bg-[#060a12]/97 p-6' : 'bg-black/80 p-4'"
+         x-transition.opacity.duration.200ms>
+
+        <!-- 편성창 -->
+        <template x-if="currentModal==='PARTY'">
+            <div class="w-full h-full flex flex-col pt-8 px-8">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-3xl font-bold serif">출진 편성</h2>
+                        <p class="text-amber-300/60 text-xs tracking-widest mt-1 uppercase">Formation Setup</p>
+                    </div>
+                    <button @click="closeModal()" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div class="flex-1 flex gap-5">
+                    <template x-for="(char, i) in currentParty" :key="i">
+                        <div class="r-card" :class="!char && 'r-empty'" style="height:72vh">
+                            <template x-if="char">
+                                <div class="w-full h-full relative">
+                                    <div class="absolute top-3 left-3 z-10 px-2.5 py-0.5 rounded text-[11px] font-bold text-white" :class="char.color" x-text="char.role"></div>
+                                    <img :src="char.src" :alt="char.name" loading="lazy">
+                                    <div class="r-card-info">
+                                        <div class="text-amber-300 text-[11px] tracking-widest mb-0.5" x-text="char.desc"></div>
+                                        <div class="text-2xl font-extrabold serif" x-text="char.name"></div>
+                                        <div class="text-slate-400 text-xs font-mono mt-0.5" x-text="'Lv. '+char.level"></div>
+                                    </div>
+                                </div>
+                            </template>
+                            <template x-if="!char">
+                                <div class="text-center">
+                                    <i data-lucide="plus" class="w-12 h-12 mx-auto mb-3 opacity-60"></i>
+                                    <p class="text-xs font-bold tracking-widest uppercase opacity-60">Select</p>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+                <div class="mt-6 flex justify-center">
+                    <button @click="closeModal()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 px-14 rounded-full text-base tracking-widest uppercase transition">
+                        저장 및 뒤로가기
+                    </button>
+                </div>
+            </div>
+        </template>
+
+        <!-- 기타 모달 -->
+        <template x-if="currentModal && currentModal!=='PARTY'">
+            <div @click.away="closeModal()" class="panel-box max-w-md w-full overflow-hidden shadow-xl" style="height:45vh">
+                <div class="p-4 border-b border-white/5 flex justify-between items-center bg-black/30">
+                    <h3 class="text-lg font-bold serif text-amber-500" x-text="modalTitle"></h3>
+                    <button @click="closeModal()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <div class="flex-1 p-6 flex flex-col items-center justify-center h-full">
+                    <i data-lucide="ghost" class="text-slate-600 w-16 h-16 mb-4"></i>
+                    <h4 class="font-bold mb-1">공사 중</h4>
+                    <p class="text-slate-500 text-sm text-center" x-text="'[ '+modalTitle+' ] 구현 예정'"></p>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
+
+<script src="/js/lobby.js"></script>
+<script>document.addEventListener('DOMContentLoaded',()=>lucide.createIcons())</script>
 </body>
 </html>

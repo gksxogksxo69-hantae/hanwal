@@ -10,26 +10,18 @@ document.addEventListener('alpine:init', () => {
         // ── 로비 상태 ──
         currentModal: null,
         modalTitle: '',
+        isLoading: true,
 
-        // ── 보유 캐릭터 리스트 (임시 데이터) ──
-        myCharacters: [
-            { id: 'namgung_cheon', name: '남궁천', src: '/images/namgung_cheon.png', desc: '가문의 수치, 막내아들', role: '전사', color: 'bg-amber-600', textColor: 'text-amber-500' },
-            { id: 'zhuge_ryeong', name: '제갈령', src: '/images/zhuge_ryeong.png', desc: '천재 기관술사', role: '서포터', color: 'bg-green-500', textColor: 'text-green-400' },
-            { id: 'dang_soso', name: '당소소', src: '/images/dang_soso.png', desc: '독련화 (독과 암기의 극의)', role: '암살자', color: 'bg-purple-600', textColor: 'text-purple-500' }
-        ],
+        // ── 캐릭터 (서버에서 로딩) ──
+        myCharacters: [],
         currentCharIndex: 0,
-        
-        // ── 편성 창(Party) 데이터 ──
         currentParty: [null, null, null, null],
 
         // ── 초기화 ──
-        init() {
-            this.loadPlayerInfo();
-            // 기본 파티 세팅
-            this.currentParty[0] = this.myCharacters[0];
-            this.currentParty[1] = this.myCharacters[1];
-            this.currentParty[2] = this.myCharacters[2];
-            // 4번 슬롯은 비어둠
+        async init() {
+            await this.loadPlayerInfo();
+            await this.loadMyCharacters();
+            this.isLoading = false;
         },
 
         async loadPlayerInfo() {
@@ -45,11 +37,59 @@ document.addEventListener('alpine:init', () => {
                 }
             } catch (e) {
                 console.warn('플레이어 정보 로딩 실패:', e);
-                // 모의 데이터
                 this.playerNickname = '테스트유저';
                 this.playerGold = 50000;
                 this.playerGems = 1200;
             }
+        },
+
+        async loadMyCharacters() {
+            try {
+                const res = await fetch('/api/lobby/my-characters');
+                const data = await res.json();
+                if (data.success && data.characters.length > 0) {
+                    this.myCharacters = data.characters.map(c => ({
+                        id: c.id,
+                        name: c.name,
+                        src: c.imagePath,
+                        desc: c.title || c.role,
+                        role: c.role,
+                        level: c.level,
+                        color: this.roleColor(c.role)
+                    }));
+                } else {
+                    // DB에 캐릭터가 없으면 폴백(주인공 초상화)
+                    this.myCharacters = [this.fallbackCharacter()];
+                }
+            } catch (e) {
+                console.warn('캐릭터 목록 로딩 실패, 폴백 사용:', e);
+                this.myCharacters = [this.fallbackCharacter()];
+            }
+            // 파티 초기화: 보유 캐릭터 순서대로 최대 4명 배치
+            for (let i = 0; i < 4; i++) {
+                this.currentParty[i] = this.myCharacters[i] || null;
+            }
+        },
+
+        fallbackCharacter() {
+            return {
+                id: 'protagonist',
+                name: this.playerNickname,
+                src: this.playerGender === 'FEMALE' ? '/images/portrait_female.png' : '/images/portrait_male.png',
+                desc: '여행자',
+                role: '주인공',
+                level: this.playerLevel,
+                color: 'bg-amber-600'
+            };
+        },
+
+        roleColor(role) {
+            const map = {
+                '딜탱': 'bg-red-600', '속도딜러': 'bg-amber-600', '디버퍼': 'bg-purple-600',
+                '전사': 'bg-amber-600', '서포터': 'bg-green-500', '암살자': 'bg-purple-600',
+                '주인공': 'bg-amber-600'
+            };
+            return map[role] || 'bg-slate-600';
         },
 
         get playerPortrait() {
@@ -57,10 +97,12 @@ document.addEventListener('alpine:init', () => {
         },
 
         get currentLobbyCharacter() {
-            return this.myCharacters[this.currentCharIndex];
+            if (this.myCharacters.length === 0) return this.fallbackCharacter();
+            return this.myCharacters[this.currentCharIndex % this.myCharacters.length];
         },
 
         nextCharacter() {
+            if (this.myCharacters.length <= 1) return;
             this.currentCharIndex = (this.currentCharIndex + 1) % this.myCharacters.length;
         },
 
@@ -82,7 +124,6 @@ document.addEventListener('alpine:init', () => {
         },
 
         goToStory() {
-            // 스토리(스테이지 선택) 뷰로 이동 (stage_select.html)
             window.location.href = '/stage-select';
         }
     }));

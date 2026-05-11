@@ -49,10 +49,14 @@ document.addEventListener('alpine:init', () => {
         },
 
         async loadMyCharacters() {
+            // 1. 에러 발생 시 안전하게 기본값을 쓸 수 있도록 함수 최상단에 선언
+            let savedSlots = [null, null, null, null];
+
             try {
                 const res = await fetch('/api/lobby/my-characters');
                 const data = await res.json();
-                if (data.success && data.characters.length > 0) {
+
+                if (data.success && data.characters && data.characters.length > 0) {
                     this.myCharacters = data.characters.map(c => ({
                         id: c.id,
                         name: c.name,
@@ -62,6 +66,11 @@ document.addEventListener('alpine:init', () => {
                         level: c.level,
                         color: this.roleColor(c.role)
                     }));
+
+                    // 서버가 보내준 파티 데이터가 정상적으로 존재할 때만 대입
+                    if (data.party) {
+                        savedSlots = data.party;
+                    }
                 } else {
                     // DB에 캐릭터가 없으면 폴백(주인공 초상화)
                     this.myCharacters = [this.fallbackCharacter()];
@@ -70,14 +79,15 @@ document.addEventListener('alpine:init', () => {
                 console.warn('캐릭터 목록 로딩 실패, 폴백 사용:', e);
                 this.myCharacters = [this.fallbackCharacter()];
             }
-            // 파티 초기화: 보유 캐릭터 순서대로 최대 4명 배치
-            // 파티 설정
-            let savedSlots = data.party || [null, null, null, null];
+
+            // 2. 파티 설정 로직 (try 블록 외부에서도 savedSlots를 안전하게 참조할 수 있음)
             for (let i = 0; i < 4; i++) {
                 if (savedSlots[i]) {
                     this.currentParty[i] = this.myCharacters.find(c => c.id === savedSlots[i]) || null;
                 } else {
-                    this.currentParty[i] = i < this.myCharacters.length && savedSlots.every(s => !s) ? this.myCharacters[i] : null;
+                    this.currentParty[i] = (i < this.myCharacters.length && savedSlots.every(s => !s))
+                        ? this.myCharacters[i]
+                        : null;
                 }
             }
         },
@@ -183,7 +193,7 @@ document.addEventListener('alpine:init', () => {
                     this.playerGems = data.remainingGems;
                     this.gachaResults = data.results;
                     // TODO: myCharacters 목록 갱신을 위해 다시 호출하거나 로컬 상태 업데이트
-                    await this.loadMyCharacters(); 
+                    await this.loadMyCharacters();
                 } else {
                     alert(data.error);
                 }

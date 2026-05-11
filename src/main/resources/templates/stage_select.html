@@ -296,8 +296,9 @@
                 },
 
                 startStage() {
-                    // 실제 전투 시스템으로 진입하는 로직 (기 개발된 battle_tutorial.html 등을 활용)
-                    window.location.href = '/battle/tutorial';
+                    const act = this.currentActIndex + 1;
+                    const stageId = this.selectedStage?.id || 1;
+                    window.location.href = `/battle?act=${act}&stage=${stageId}`;
                 },
 
                 // 두 점(노드) 사이의 거리와 각도를 이용해 선분을 그리는 함수

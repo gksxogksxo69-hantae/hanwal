@@ -278,7 +278,8 @@ document.addEventListener('alpine:init', () => {
             else if (skill.isUltimate) {
                 this.addLog(`[${actor.name}] 이 궁극기 [${skill.name}] 를 해방합니다!!`, 'skill');
                 await this.playUltimateAnimation();
-                await this.playHitAnimation(target, Math.max(9999, dmgAmt) , true); 
+                // 튜토리얼 보스는 체력이 99999이므로 확정 즉사 데미지 부여
+                await this.playHitAnimation(target, 999999, true); 
                 this.endTurn();
             }
             else {
@@ -381,17 +382,29 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
-        handleWin() {
+        async handleWin() {
             this.gameState = 'WIN';
             this.currentActor = null;
-            this.addLog(`👑 전투에서 승리했습니다! 1막으로 이동합니다...`, 'system');
+            this.addLog(`👑 전투에서 승리했습니다!`, 'system');
+
+            // 튜토리얼 전투 완료 → 서버에 알린다 (캐릭터 자동 지급 + 골드 지급)
+            try {
+                await fetch('/api/tutorial/complete-step', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ step: 5 })
+                });
+                this.addLog(`🎁 주인공 캐릭터와 초보자 골드 5,000이 지급되었습니다!`, 'skill');
+            } catch (e) {
+                console.warn('튜토리얼 완료 API 호출 실패:', e);
+            }
             
             setTimeout(() => {
                 document.getElementById('whiteOut').classList.add('active');
                 setTimeout(() => {
                     window.location.href = '/town';
                 }, 2000);
-            }, 1000);
+            }, 1500);
         },
 
         // 궁극기 슬롯 강제 해금 (튜토리얼용)

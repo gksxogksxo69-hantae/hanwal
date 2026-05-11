@@ -30,4 +30,9 @@ public class IndexController {
     public String stageSelect() {
         return "stage_select";
     }
+
+    @GetMapping("/battle")
+    public String battle() {
+        return "battle";
+    }
 }

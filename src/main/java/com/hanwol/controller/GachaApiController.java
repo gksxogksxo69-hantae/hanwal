@@ -2,6 +2,7 @@ package com.hanwol.controller;
 
 import com.hanwol.domain.character.GameCharacter;
 import com.hanwol.domain.character.GameCharacterRepository;
+import com.hanwol.domain.enums.Rarity;
 import com.hanwol.domain.character.UserCharacter;
 import com.hanwol.domain.character.UserCharacterRepository;
 import com.hanwol.domain.user.User;
@@ -60,8 +61,27 @@ public class GachaApiController {
         Random random = new Random();
         List<Map<String, Object>> results = new ArrayList<>();
         
+        // 미리 등급별로 캐릭터를 분류해두되, 가챠 대상인 캐릭터만 포함
+        Map<Rarity, List<GameCharacter>> rarityGroups = new EnumMap<>(Rarity.class);
+        for (GameCharacter gc : pool) {
+            if (gc.isGachaTarget()) {
+                rarityGroups.computeIfAbsent(gc.getRarity(), k -> new ArrayList<>()).add(gc);
+            }
+        }
+
         for (int i = 0; i < count; i++) {
-            GameCharacter drawn = pool.get(random.nextInt(pool.size()));
+            // 1. 등급 결정 (S: 0.2%, A: 5%, B: 30%, C: 64.8%)
+            Rarity rarity = Rarity.getRandomRarity(random.nextDouble());
+            
+            // 2. 해당 등급 내에서 랜덤 선택 (만약 해당 등급에 캐릭터가 없다면 다른 등급 시도)
+            List<GameCharacter> subPool = rarityGroups.get(rarity);
+            if (subPool == null || subPool.isEmpty()) {
+                // 폴백: 해당 등급에 캐릭터가 없으면 C등급에서 뽑거나 전체에서 뽑기
+                subPool = rarityGroups.get(Rarity.C);
+                if (subPool == null || subPool.isEmpty()) subPool = pool;
+            }
+            
+            GameCharacter drawn = subPool.get(random.nextInt(subPool.size()));
             
             // 기존 획득 여부 검사
             Optional<UserCharacter> existingOpt = userCharacterRepository.findByUserIdAndCharacterId(user.getId(), drawn.getId());

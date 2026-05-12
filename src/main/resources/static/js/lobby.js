@@ -104,9 +104,15 @@ document.addEventListener('alpine:init', () => {
                         src: c.imagePath,
                         desc: c.title || c.role,
                         role: c.role,
+                        rarity: c.rarity || 'C',
                         level: c.level,
-                        color: this.roleColor(c.role)
+                        color: this.roleColor(c.role),
+                        rarityColor: this.rarityColor(c.rarity || 'C')
                     }));
+
+                    // 등급 순 정렬 (S -> A -> B -> C)
+                    const rankOrder = { 'S': 4, 'A': 3, 'B': 2, 'C': 1 };
+                    this.myCharacters.sort((a, b) => rankOrder[b.rarity] - rankOrder[a.rarity]);
 
                     // 서버가 보내준 파티 데이터가 정상적으로 존재할 때만 대입
                     if (data.party) {
@@ -149,8 +155,20 @@ document.addEventListener('alpine:init', () => {
                 desc: '여행자',
                 role: '주인공',
                 level: this.playerLevel,
-                color: 'bg-amber-600'
+                color: 'bg-amber-600',
+                rarity: 'S',
+                rarityColor: 'border-amber-500 text-amber-400'
             };
+        },
+
+        rarityColor(rarity) {
+            const map = {
+                'S': 'border-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.4)] text-amber-400',
+                'A': 'border-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.3)] text-purple-400',
+                'B': 'border-blue-500 text-blue-400',
+                'C': 'border-slate-600 text-slate-400'
+            };
+            return map[rarity] || 'border-slate-600 text-slate-400';
         },
 
         roleColor(role) {

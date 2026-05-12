@@ -466,17 +466,23 @@
                 <div class="flex-1 p-6 overflow-y-auto bg-slate-900/50 scrollbar-hide">
                     <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         <template x-for="(char, idx) in myCharacters" :key="idx">
-                            <div class="rounded-xl overflow-hidden border border-slate-700 bg-slate-800 hover:border-amber-500 hover:shadow-[0_0_10px_rgba(245,158,11,0.2)] transition cursor-pointer flex flex-col">
+                            <div class="rounded-xl overflow-hidden border bg-slate-800 transition cursor-pointer flex flex-col group relative"
+                                 :class="char.rarityColor">
                                 <div class="aspect-square w-full relative">
                                     <img :src="char.src" class="w-full h-full object-cover object-top">
-                                    <div class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-white" :class="char.color" x-text="char.role"></div>
+                                    <div class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-black/60" x-text="char.role"></div>
+                                    
+                                    <!-- 등급 배지 -->
+                                    <div class="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 border border-white/20 flex items-center justify-center">
+                                        <span class="text-xs font-black italic" x-text="char.rarity"></span>
+                                    </div>
                                 </div>
                                 <div class="p-3 text-center flex-1 flex flex-col justify-between">
                                     <div>
-                                        <div class="text-xs text-amber-400 font-bold tracking-widest mb-1" x-text="char.desc"></div>
+                                        <div class="text-[10px] opacity-70 font-bold tracking-widest mb-0.5" x-text="char.desc"></div>
                                         <div class="font-bold serif text-base text-white truncate" x-text="char.name"></div>
                                     </div>
-                                    <div class="text-slate-400 text-xs font-mono mt-2 bg-black/30 rounded py-1" x-text="'Lv. ' + char.level"></div>
+                                    <div class="text-slate-400 text-[10px] font-mono mt-2 bg-black/30 rounded py-0.5" x-text="'Lv. ' + char.level"></div>
                                 </div>
                             </div>
                         </template>

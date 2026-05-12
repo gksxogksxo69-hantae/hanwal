@@ -78,6 +78,7 @@ public class LobbyApiController {
         m.put("title", gc.getTitle());
         m.put("role", gc.getRole());
         m.put("element", gc.getElement().name());
+        m.put("rarity", gc.getRarity().name());
         m.put("level", level);
         m.put("imagePath", gc.getImagePath() != null ? gc.getImagePath() : "/images/portrait_male.png");
         return m;

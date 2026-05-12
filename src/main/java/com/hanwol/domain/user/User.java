@@ -77,6 +77,13 @@ public class User {
     @Column
     private LocalDateTime lastSyncTime;
 
+    // --- 프로필 설정 ---
+    @Column
+    private String mainCharacterId; // 로비에 표시될 대표 캐릭터 ID
+
+    @Column
+    private String profileImagePath; // 유저 프로필 이미지 경로
+
     // --- 튜토리얼 ---
     @Column(nullable = false)
     private int tutorialStep = 0;
@@ -181,5 +188,14 @@ public class User {
 
     public void gainGems(long amount) {
         this.premiumCurrency += amount;
+    }
+
+    public void updateProfile(String mainCharacterId, String profileImagePath) {
+        if (mainCharacterId != null) {
+            this.mainCharacterId = mainCharacterId;
+        }
+        if (profileImagePath != null) {
+            this.profileImagePath = profileImagePath;
+        }
     }
 }

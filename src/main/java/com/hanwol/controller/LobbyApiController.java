@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -80,5 +81,41 @@ public class LobbyApiController {
         m.put("level", level);
         m.put("imagePath", gc.getImagePath() != null ? gc.getImagePath() : "/images/portrait_male.png");
         return m;
+    }
+
+    @PostMapping("/profile-image")
+    @Transactional
+    public ResponseEntity<?> updateProfileImage(@AuthenticationPrincipal UserDetails userDetails,
+                                                @RequestBody Map<String, String> request) {
+        if (userDetails == null) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "error", "Unauthorized"));
+        }
+        User user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+        if (user == null) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "User not found"));
+        }
+        String imagePath = request.get("imagePath");
+        if (imagePath != null && !imagePath.isEmpty()) {
+            user.updateProfile(null, imagePath);
+        }
+        return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    @PostMapping("/main-character")
+    @Transactional
+    public ResponseEntity<?> updateMainCharacter(@AuthenticationPrincipal UserDetails userDetails,
+                                                 @RequestBody Map<String, String> request) {
+        if (userDetails == null) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "error", "Unauthorized"));
+        }
+        User user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+        if (user == null) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "User not found"));
+        }
+        String characterId = request.get("characterId");
+        if (characterId != null && !characterId.isEmpty()) {
+            user.updateProfile(characterId, null);
+        }
+        return ResponseEntity.ok(Map.of("success", true));
     }
 }

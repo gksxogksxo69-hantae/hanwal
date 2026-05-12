@@ -201,7 +201,7 @@
                         <h2 class="text-3xl font-bold serif">출진 편성</h2>
                         <p class="text-amber-300/60 text-xs tracking-widest mt-1 uppercase">Formation Setup</p>
                     </div>
-                    <button @click="closeModal()" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
+                    <button @click="closeModal()" class="w-10 h-10 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
@@ -244,7 +244,7 @@
                         <h2 class="text-2xl font-bold serif text-white">유저 프로필 설정</h2>
                         <p class="text-slate-400 text-sm mt-1">대표 캐릭터와 프로필 이미지를 보유한 캐릭터로 변경합니다.</p>
                     </div>
-                    <button @click="closeModal()" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
+                    <button @click="closeModal()" class="w-10 h-10 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
@@ -293,7 +293,7 @@
                         <h2 class="text-3xl font-bold serif text-amber-500">천하객잔 (영입)</h2>
                         <p class="text-slate-400 text-sm mt-1">새로운 동료를 맞이합니다.</p>
                     </div>
-                    <button @click="closeModal()" x-show="!isGachaAnimating" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
+                    <button @click="closeModal()" x-show="!isGachaAnimating" class="w-10 h-10 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
@@ -350,7 +350,7 @@
                         <h2 class="text-3xl font-bold serif text-white">보따리 (캐릭터 목록)</h2>
                         <p class="text-slate-400 text-sm mt-1">획득한 동료들의 세부 정보를 확인합니다.</p>
                     </div>
-                    <button @click="closeModal()" class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
+                    <button @click="closeModal()" class="w-10 h-10 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
@@ -377,12 +377,74 @@
             </div>
         </template>
 
+        <!-- 던전 모달 -->
+        <template x-if="currentModal==='DUNGEON'">
+            <div class="panel-box w-full max-w-4xl flex flex-col overflow-hidden shadow-2xl" @click.away="closeModal()" style="height: 70vh;">
+                <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/40">
+                    <div>
+                        <h2 class="text-3xl font-bold serif text-purple-400">일일 수련: 기억의 전당</h2>
+                        <p class="text-slate-400 text-sm mt-1">강력한 환영을 처치하고 성장 재화를 획득합니다.</p>
+                    </div>
+                    <button @click="closeModal()" class="w-10 h-10 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div class="flex-1 p-8 flex flex-col items-center justify-center bg-slate-900/60">
+                    <div class="grid grid-cols-3 gap-6 w-full max-w-3xl">
+                        <div class="panel p-6 text-center hover:border-purple-500 cursor-pointer transition">
+                            <i data-lucide="sword" class="w-12 h-12 text-red-400 mx-auto mb-3"></i>
+                            <h3 class="font-bold mb-1">무공의 시련</h3>
+                            <p class="text-xs text-slate-400">경험치 두루마리</p>
+                        </div>
+                        <div class="panel p-6 text-center hover:border-purple-500 cursor-pointer transition">
+                            <i data-lucide="shield" class="w-12 h-12 text-blue-400 mx-auto mb-3"></i>
+                            <h3 class="font-bold mb-1">방어의 시련</h3>
+                            <p class="text-xs text-slate-400">강화석</p>
+                        </div>
+                        <div class="panel p-6 text-center hover:border-purple-500 cursor-pointer transition">
+                            <i data-lucide="coins" class="w-12 h-12 text-yellow-400 mx-auto mb-3"></i>
+                            <h3 class="font-bold mb-1">탐욕의 시련</h3>
+                            <p class="text-xs text-slate-400">대량의 금화</p>
+                        </div>
+                    </div>
+                    <button @click="enterDungeon()" class="mt-10 bg-purple-600 hover:bg-purple-500 text-white font-bold py-4 px-16 rounded-full text-lg tracking-widest uppercase transition shadow-[0_0_15px_rgba(147,51,234,0.4)]">
+                        수련 시작 (스태미나 -10)
+                    </button>
+                </div>
+            </div>
+        </template>
+
+        <!-- 문파 모달 -->
+        <template x-if="currentModal==='GUILD'">
+            <div class="panel-box w-full max-w-4xl flex flex-col overflow-hidden shadow-2xl" @click.away="closeModal()" style="height: 70vh;">
+                <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/40">
+                    <div>
+                        <h2 class="text-3xl font-bold serif text-green-400">문파 (길드)</h2>
+                        <p class="text-slate-400 text-sm mt-1">동료들과 힘을 합쳐 무림을 제패하세요.</p>
+                    </div>
+                    <button @click="closeModal()" class="w-10 h-10 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div class="flex-1 flex items-center justify-center bg-slate-900/60 p-8">
+                    <div class="text-center">
+                        <i data-lucide="tent" class="w-20 h-20 text-green-500 mx-auto mb-6 opacity-80"></i>
+                        <h3 class="text-2xl font-bold mb-4">소속된 문파가 없습니다</h3>
+                        <div class="flex justify-center gap-4">
+                            <button class="bg-green-600 hover:bg-green-500 py-3 px-8 rounded-lg font-bold transition">문파 창설</button>
+                            <button class="bg-slate-700 hover:bg-slate-600 py-3 px-8 rounded-lg font-bold transition border border-slate-500">가입 신청</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
         <!-- 기타 모달 -->
-        <template x-if="currentModal && currentModal!=='PARTY' && currentModal!=='PROFILE' && currentModal!=='GACHA' && currentModal!=='INVENTORY'">
+        <template x-if="currentModal && currentModal!=='PARTY' && currentModal!=='PROFILE' && currentModal!=='GACHA' && currentModal!=='INVENTORY' && currentModal!=='DUNGEON' && currentModal!=='GUILD'">
             <div @click.away="closeModal()" class="panel-box max-w-md w-full overflow-hidden shadow-xl" style="height:45vh">
                 <div class="p-4 border-b border-white/5 flex justify-between items-center bg-black/30">
                     <h3 class="text-lg font-bold serif text-amber-500" x-text="modalTitle"></h3>
-                    <button @click="closeModal()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
+                    <button @click="closeModal()" class="w-8 h-8 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
                         <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 </div>

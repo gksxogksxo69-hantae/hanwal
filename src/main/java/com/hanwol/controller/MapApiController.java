@@ -41,7 +41,9 @@ public class MapApiController {
                 "nickname", user.getNickname(),
                 "level", user.getLevel(),
                 "gold", user.getGold(),
-                "premiumCurrency", user.getPremiumCurrency()
+                "premiumCurrency", user.getPremiumCurrency(),
+                "mainCharacterId", user.getMainCharacterId(),
+                "profileImagePath", user.getProfileImagePath()
         ));
     }
 

@@ -39,6 +39,12 @@ document.addEventListener('alpine:init', () => {
                     this.playerLevel = data.level || 1;
                     this.playerGold = data.gold || 0;
                     this.playerGems = data.premiumCurrency || 0;
+                    if (data.profileImagePath) {
+                        this.customPortrait = data.profileImagePath;
+                    }
+                    if (data.mainCharacterId) {
+                        this.serverMainCharacterId = data.mainCharacterId;
+                    }
                 }
             } catch (e) {
                 console.warn('플레이어 정보 로딩 실패:', e);
@@ -70,6 +76,14 @@ document.addEventListener('alpine:init', () => {
                     // 서버가 보내준 파티 데이터가 정상적으로 존재할 때만 대입
                     if (data.party) {
                         savedSlots = data.party;
+                    }
+
+                    // 서버에 저장된 메인 캐릭터 반영
+                    if (this.serverMainCharacterId) {
+                        const mIdx = this.myCharacters.findIndex(c => c.id === this.serverMainCharacterId);
+                        if (mIdx !== -1) {
+                            this.currentCharIndex = mIdx;
+                        }
                     }
                 } else {
                     // DB에 캐릭터가 없으면 폴백(주인공 초상화)
@@ -128,17 +142,33 @@ document.addEventListener('alpine:init', () => {
             this.currentCharIndex = (this.currentCharIndex + 1) % this.myCharacters.length;
         },
 
-        setMainCharacter(index) {
+        async setMainCharacter(index) {
             this.currentCharIndex = index;
-            // 모달을 유지하고 싶다면 closeModal 호출 안함. 피드백을 위해 닫음.
             this.closeModal();
-            // TODO: 필요한 경우 서버에 대표 캐릭터 상태 저장 API 호출 (차후 구현)
+            try {
+                const charId = this.myCharacters[index].id;
+                await fetch('/api/lobby/main-character', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ characterId: charId })
+                });
+            } catch (e) {
+                console.error(e);
+            }
         },
 
-        setProfileImage(src) {
+        async setProfileImage(src) {
             this.customPortrait = src;
             this.closeModal();
-            // TODO: 필요한 경우 서버에 프로필 이미지 저장 API 호출 (차후 구현)
+            try {
+                await fetch('/api/lobby/profile-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imagePath: src })
+                });
+            } catch (e) {
+                console.error(e);
+            }
         },
 
         // ── 액션 ──
@@ -205,6 +235,11 @@ document.addEventListener('alpine:init', () => {
 
         goToStory() {
             window.location.href = '/stage-select';
+        },
+
+        enterDungeon() {
+            alert('기억의 전당 입장 기능은 향후 전투 시스템 완성 시 연동됩니다!');
+            this.closeModal();
         }
     }));
 });

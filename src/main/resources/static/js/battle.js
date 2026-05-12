@@ -82,7 +82,8 @@ document.addEventListener('alpine:init', () => {
                 speed: e.spd || 90,
                 isActive: false,
                 isDead: false,
-                portrait: e.portrait || '/images/enemy_demon_cult_pursuer.png'
+                portrait: e.portrait || '/images/enemy_demon_cult_pursuer.png',
+                element: e.element || 'NONE' // 밸런싱용 속성 데이터 바인딩 추가
             }));
         },
 
@@ -132,7 +133,7 @@ document.addEventListener('alpine:init', () => {
                 });
 
                 this.party[idx] = {
-                    id: charData.id || `party-${idx+1}`,
+                    id: charData.id || `party-${idx + 1}`,
                     type: 'PARTY',
                     name: charData.name,
                     hp: (charData.hp || 100) * 10,
@@ -205,6 +206,10 @@ document.addEventListener('alpine:init', () => {
             if (!enemy.isDead) this.selectedTarget = enemy.id;
         },
 
+        /**
+         * [형이 리팩토링한 공격 핵심 실행 로직]
+         * 무지성 수식 계산 제거 -> 백엔드 컨트롤러 비동기 통신 연동 완료
+         */
         async executeAction(skillIndex) {
             if (this.gameState !== 'WAITING_INPUT') return;
 
@@ -222,6 +227,12 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
+            // 타겟 선정 (선택된 타겟이 없거나 죽었으면 살아있는 첫 번째 적 분기)
+            const target = this.enemies.find(e => e.id === this.selectedTarget && !e.isDead)
+                || this.enemies.find(e => !e.isDead);
+
+            if (!target) { this.endTurn(); return; }
+
             this.gameState = 'ANIMATING';
             this.isPlayerTurn = false;
 
@@ -234,24 +245,66 @@ document.addEventListener('alpine:init', () => {
                 actor.spirit = Math.min(actor.maxSpirit, actor.spirit + 1);
             }
 
-            const target = this.enemies.find(e => e.id === this.selectedTarget && !e.isDead) 
-                         || this.enemies.find(e => !e.isDead);
-
-            if (!target) { this.endTurn(); return; }
-
-            const dmgAmt = Math.floor(actor.atk * (skill.multiplier || 1.0));
-
+            // 버프 스킬일 경우 바로 로그 찍고 패스
             if (skill.type === 'BUFF' || skill.type === 'BATTLE') {
                 this.addLog(`[${actor.name}] ${skill.name}!`, 'player');
                 await this.delay(500);
-            } else if (skill.isUltimate) {
+                this.endTurn();
+                return;
+            }
+
+            // ★ [시니어 디렉터 연동 부분]: 백엔드로 공격 연산 비동기 패치 찌르기
+            let finalDamage = 0;
+            let isCritical = false;
+            let elementEffect = 1.0;
+
+            try {
+                const response = await fetch('/api/battle/attack', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        attackerId: actor.id,                       // 시전 캐릭터 고유 ID
+                        skillId: skill.id,                          // 시전 무공 고유 ID
+                        defenderElement: target.element || 'NONE',  // 피격 몬스터 속성 이넘
+                        defenderDef: target.def                     // 피격 몬스터 방어력
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+
+                // 백엔드의 BattleDamageResult 자바 객체가 JSON으로 수신됨
+                const resultData = await response.json();
+                finalDamage = resultData.finalDamage;
+                isCritical = resultData.isCritical;
+                elementEffect = resultData.elementEffect;
+
+            } catch (err) {
+                console.error("서버 공격 연산 실패, 클라이언트 폴백 가동:", err);
+                // 서버 터졌을 때 전투가 굳어버리는 걸 막기 위한 시니어의 최소 방어선(폴백) 로직
+                finalDamage = Math.floor(actor.atk * (skill.multiplier || 1.0));
+                isCritical = false;
+            }
+
+            // 무공 종류에 따른 화면 이펙트 및 대미지 레이어 노출 분기
+            if (skill.isUltimate) {
                 this.addLog(`[${actor.name}] 궁극기 [${skill.name}] 해방!`, 'skill');
                 await this.playUltEffect(target);
-                await this.playHit(target, dmgAmt, true);
             } else {
                 this.addLog(`[${actor.name}] ${skill.name}!`, 'player');
-                await this.playHit(target, dmgAmt, false);
             }
+
+            // 상성 이펙트 메시지 로그 추가
+            if (elementEffect > 1.0) {
+                this.addLog(`⚡ 효과가 굉장했다! (상성 우위)`, 'system');
+            } else if (elementEffect < 1.0) {
+                this.addLog(`💤 효과가 미미했다... (상성 열세)`, 'system');
+            }
+
+            // 최종 계산된 데미지와 크리티컬 여부를 타격 이펙트 함수로 전달!
+            await this.playHit(target, finalDamage, isCritical);
 
             this.endTurn();
         },
@@ -307,6 +360,7 @@ document.addEventListener('alpine:init', () => {
                     setTimeout(() => dmgEl.remove(), 900);
                 }
 
+                // 크리티컬이 터지면 적을 더 세게 흔드는 '꼴값 연출' 가능구간
                 if (targetEl) targetEl.classList.add('hit-shake');
 
                 target.hp -= damage;

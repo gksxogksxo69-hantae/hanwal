@@ -37,7 +37,10 @@ document.addEventListener('alpine:init', () => {
             targetModal: 'DUNGEON'
         },
 
-        // ── 초기화 ──
+        selectedPartySlot: 0, // 현재 편집 중인 편성 슬롯 (0~3)
+        towerFloor: 1, // 무한의 탑 현재 층
+
+        // ── 퀘스트 상태 ──
         async init() {
             await this.loadPlayerInfo();
             await this.loadMyCharacters();
@@ -239,6 +242,44 @@ document.addEventListener('alpine:init', () => {
             };
             this.modalTitle = titles[type] || '시스템';
             this.currentModal = type;
+        },
+
+        // 캐릭터 편성 토글 logic
+        selectPartySlot(idx) {
+            this.selectedPartySlot = idx;
+        },
+
+        togglePartyMember(char) {
+            // 이미 다른 슬롯에 편성되어 있는지 확인
+            const existingIdx = this.currentParty.findIndex(p => p && p.id === char.id);
+            
+            if (existingIdx !== -1) {
+                // 이미 있으면 해당 슬롯 비우기 (토글)
+                this.currentParty[existingIdx] = null;
+            } else {
+                // 없으면 현재 선택된 슬롯에 넣기
+                this.currentParty[this.selectedPartySlot] = char;
+                // 다음 빈 슬롯이나 다음 번호 슬롯으로 자동 이동 (편의성)
+                this.selectedPartySlot = (this.selectedPartySlot + 1) % 4;
+            }
+        },
+
+        async saveParty() {
+            try {
+                const partyIds = this.currentParty.map(p => p ? p.id : null);
+                const res = await fetch('/api/map/party', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(partyIds)
+                });
+                if (res.ok) {
+                    this.closeModal();
+                } else {
+                    alert('편성 저장에 실패했습니다.');
+                }
+            } catch (e) {
+                console.error(e);
+            }
         },
 
         handleQuestClick() {

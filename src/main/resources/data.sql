@@ -13,12 +13,12 @@ INSERT IGNORE INTO skills (id, name, description, skill_type, target_type, eleme
 (32, '빙백신검 - 천년빙봉', '단일 대상 확정 빙결 + 극딜', 'ULTIMATE', 'SINGLE_ENEMY', 'WATER', 'ATK', 4.00, 0, 0, 6);
 
 -- 2. 신규 캐릭터 마스터 삽입 (characters 테이블)
-INSERT IGNORE INTO characters (id, name, title, element, role, route_type, base_hp, base_atk, base_def, base_spd, base_crit_rate, base_crit_dmg, base_effect_hit_rate, base_effect_resist, hp_growth, atk_growth, def_growth, spd_growth_per_level, ehr_growth_per_level, spirit_bonus_condition, spirit_bonus_amount) VALUES
-(1, '남궁천', '가문의 수치', 'EARTH', '딜탱', 'CHUN', 130, 14, 12, 98, 5.00, 150.00, 10.00, 15.00, 'S', 'B', 'S', 0.20, 0.10, 'ON_HIT', 1),
-(2, '남궁설화', '비명쟁이', 'WATER', '디버퍼', 'SULHWA', 75, 10, 4, 102, 5.00, 150.00, 30.00, 5.00, 'D', 'B', 'D', 0.30, 0.50, 'ON_DEBUFF_LAND', 1),
-(3, '팽아린', '하북의 적련', 'FIRE', '폭딜러', 'CHUN', 100, 18, 8, 105, 15.00, 180.00, 5.00, 5.00, 'B', 'S', 'C', 0.25, 0.10, 'ON_CRIT', 2),
-(4, '당소소', '그림자 독', 'METAL', '암살자', 'SULHWA', 80, 16, 6, 115, 10.00, 200.00, 15.00, 5.00, 'C', 'A', 'D', 0.40, 0.20, 'ON_KILL', 3),
-(5, '남궁현', '가문의 원로', 'VOID', '서포터', NULL, 120, 12, 10, 95, 5.00, 150.00, 5.00, 20.00, 'A', 'C', 'A', 0.15, 0.10, 'ON_ALLY_HIT', 1);
+INSERT IGNORE INTO characters (id, name, title, element, role, route_type, rarity, is_gacha_target, base_hp, base_atk, base_def, base_spd, base_crit_rate, base_crit_dmg, base_effect_hit_rate, base_effect_resist, hp_growth, atk_growth, def_growth, spd_growth_per_level, ehr_growth_per_level, spirit_bonus_condition, spirit_bonus_amount) VALUES
+(1, '남궁천', '가문의 수치', 'EARTH', '딜탱', 'CHUN', 'S', false, 130, 14, 12, 98, 5.00, 150.00, 10.00, 15.00, 'S', 'B', 'S', 0.20, 0.10, 'ON_HIT', 1),
+(2, '남궁설화', '비명쟁이', 'WATER', '디버퍼', 'SULHWA', 'S', false, 75, 10, 4, 102, 5.00, 150.00, 30.00, 5.00, 'D', 'B', 'D', 0.30, 0.50, 'ON_DEBUFF_LAND', 1),
+(3, '팽아린', '하북의 적련', 'FIRE', '폭딜러', 'CHUN', 'A', true, 100, 18, 8, 105, 15.00, 180.00, 5.00, 5.00, 'B', 'S', 'C', 0.25, 0.10, 'ON_CRIT', 2),
+(4, '당소소', '그림자 독', 'METAL', '암살자', 'SULHWA', 'A', true, 80, 16, 6, 115, 10.00, 200.00, 15.00, 5.00, 'C', 'A', 'D', 0.40, 0.20, 'ON_KILL', 3),
+(5, '남궁현', '가문의 원로', 'VOID', '서포터', NULL, 'B', true, 120, 12, 10, 95, 5.00, 150.00, 5.00, 20.00, 'A', 'C', 'A', 0.15, 0.10, 'ON_ALLY_HIT', 1);
 
 -- 3. 캐릭터-스킬 매핑 삽입 (character_skills 테이블)
 INSERT IGNORE INTO character_skills (id, character_id, skill_id, skill_slot, required_gyeongji) VALUES
@@ -43,21 +43,21 @@ INSERT IGNORE INTO combo_skills (id, route_type, char_a_id, char_b_id, combo_nam
 (3, 'SULHWA', 2, 5, '현빙무영 - 한월장막', 'SUB', 4, 4, 2, '절대영도(絕對零度)', '{"damage_type":"AOE","multiplier":4.0}', '설화와 할배의 합벽기');
 
 -- 6. 추가 캐릭터 마스터 삽입 (A~S급 및 잡졸)
-INSERT IGNORE INTO characters (id, name, title, element, role, route_type, base_hp, base_atk, base_def, base_spd, base_crit_rate, base_crit_dmg, base_effect_hit_rate, base_effect_resist, hp_growth, atk_growth, def_growth, spd_growth_per_level, ehr_growth_per_level, spirit_bonus_condition, spirit_bonus_amount) VALUES
-(6, '남궁선', '검신', 'METAL', '물리딜러', NULL, 110, 20, 8, 105, 10.00, 160.00, 5.00, 10.00, 'B', 'S', 'C', 0.25, 0.10, 'ON_CRIT', 2),
-(7, '팽무독', '폭렬천도', 'FIRE', '광역딜러', NULL, 120, 18, 10, 95, 5.00, 150.00, 15.00, 5.00, 'A', 'S', 'B', 0.20, 0.20, 'ON_KILL', 2),
-(8, '팽백호', '광패도선', 'EARTH', '메인탱커', NULL, 150, 12, 15, 85, 5.00, 150.00, 5.00, 25.00, 'S', 'C', 'S', 0.15, 0.10, 'ON_HIT', 1),
-(9, '제갈현', '신기묘산', 'WOOD', '서포터', NULL, 90, 10, 6, 120, 5.00, 150.00, 30.00, 15.00, 'C', 'C', 'C', 0.35, 0.50, 'ON_ALLY_HIT', 1),
-(10, '제갈령', '천기목우', 'METAL', '소환유틸', NULL, 85, 12, 8, 110, 5.00, 150.00, 20.00, 10.00, 'C', 'B', 'B', 0.30, 0.30, 'ON_DEBUFF_LAND', 1),
-(11, '당외', '천수독왕', 'WATER', '디버퍼', NULL, 95, 16, 7, 115, 5.00, 150.00, 40.00, 5.00, 'C', 'A', 'C', 0.35, 0.50, 'ON_DEBUFF_LAND', 2),
-(12, '황보웅', '붕천권마', 'METAL', '제어탱커', NULL, 140, 14, 14, 90, 5.00, 150.00, 15.00, 20.00, 'S', 'A', 'S', 0.15, 0.20, 'ON_HIT', 2),
-(13, '황보위', '태산소권', 'EARTH', '딜탱', NULL, 130, 16, 12, 95, 5.00, 150.00, 10.00, 15.00, 'A', 'A', 'A', 0.20, 0.10, 'ON_HIT', 1),
-(14, '남궁세가 평무사', '남궁철검', 'EARTH', '서브딜러', NULL, 100, 10, 10, 100, 5.00, 150.00, 5.00, 5.00, 'C', 'C', 'C', 0.10, 0.00, 'ON_HIT', 1),
-(15, '하북팽가 예비도수', '팽가돌격대', 'FIRE', '공격탱커', NULL, 110, 12, 8, 90, 5.00, 150.00, 5.00, 5.00, 'B', 'C', 'C', 0.10, 0.00, 'ON_HIT', 1),
-(16, '황보세가 예비권사', '돌덩이 몸통', 'EARTH', '메인탱커', NULL, 120, 8, 12, 85, 5.00, 150.00, 5.00, 5.00, 'A', 'D', 'B', 0.10, 0.00, 'ON_HIT', 1),
-(17, '제갈세가 학도생', '초보학도', 'WOOD', '서포터', NULL, 80, 8, 6, 105, 5.00, 150.00, 10.00, 5.00, 'D', 'D', 'D', 0.20, 0.10, 'ON_ALLY_HIT', 1),
-(18, '사천당가 하급무사', '초보독술사', 'WATER', '디버퍼', NULL, 85, 12, 5, 110, 5.00, 150.00, 15.00, 5.00, 'D', 'C', 'D', 0.25, 0.20, 'ON_DEBUFF_LAND', 1),
-(19, '소림사 예비 행자', '빡빡이 막내', 'METAL', '딜탱', NULL, 115, 10, 10, 95, 5.00, 150.00, 5.00, 10.00, 'B', 'C', 'B', 0.15, 0.00, 'ON_HIT', 1);
+INSERT IGNORE INTO characters (id, name, title, element, role, route_type, rarity, is_gacha_target, base_hp, base_atk, base_def, base_spd, base_crit_rate, base_crit_dmg, base_effect_hit_rate, base_effect_resist, hp_growth, atk_growth, def_growth, spd_growth_per_level, ehr_growth_per_level, spirit_bonus_condition, spirit_bonus_amount) VALUES
+(6, '남궁선', '검신', 'METAL', '물리딜러', NULL, 'S', true, 110, 20, 8, 105, 10.00, 160.00, 5.00, 10.00, 'B', 'S', 'C', 0.25, 0.10, 'ON_CRIT', 2),
+(7, '팽무독', '폭렬천도', 'FIRE', '광역딜러', NULL, 'A', true, 120, 18, 10, 95, 5.00, 150.00, 15.00, 5.00, 'A', 'S', 'B', 0.20, 0.20, 'ON_KILL', 2),
+(8, '팽백호', '광패도선', 'EARTH', '메인탱커', NULL, 'A', true, 150, 12, 15, 85, 5.00, 150.00, 5.00, 25.00, 'S', 'C', 'S', 0.15, 0.10, 'ON_HIT', 1),
+(9, '제갈현', '신기묘산', 'WOOD', '서포터', NULL, 'B', true, 90, 10, 6, 120, 5.00, 150.00, 30.00, 15.00, 'C', 'C', 'C', 0.35, 0.50, 'ON_ALLY_HIT', 1),
+(10, '제갈령', '천기목우', 'METAL', '소환유틸', NULL, 'A', true, 85, 12, 8, 110, 5.00, 150.00, 20.00, 10.00, 'C', 'B', 'B', 0.30, 0.30, 'ON_DEBUFF_LAND', 1),
+(11, '당외', '천수독왕', 'WATER', '디버퍼', NULL, 'B', true, 95, 16, 7, 115, 5.00, 150.00, 40.00, 5.00, 'C', 'A', 'C', 0.35, 0.50, 'ON_DEBUFF_LAND', 2),
+(12, '황보웅', '붕천권마', 'METAL', '제어탱커', NULL, 'S', true, 140, 14, 14, 90, 5.00, 150.00, 15.00, 20.00, 'S', 'A', 'S', 0.15, 0.20, 'ON_HIT', 2),
+(13, '황보위', '태산소권', 'EARTH', '딜탱', NULL, 'B', true, 130, 16, 12, 95, 5.00, 150.00, 10.00, 15.00, 'A', 'A', 'A', 0.20, 0.10, 'ON_HIT', 1),
+(14, '남궁세가 평무사', '남궁철검', 'EARTH', '서브딜러', NULL, 'C', true, 100, 10, 10, 100, 5.00, 150.00, 5.00, 5.00, 'C', 'C', 'C', 0.10, 0.00, 'ON_HIT', 1),
+(15, '하북팽가 예비도수', '팽가돌격대', 'FIRE', '공격탱커', NULL, 'C', true, 110, 12, 8, 90, 5.00, 150.00, 5.00, 5.00, 'B', 'C', 'C', 0.10, 0.00, 'ON_HIT', 1),
+(16, '황보세가 예비권사', '돌덩이 몸통', 'EARTH', '메인탱커', NULL, 'C', true, 120, 8, 12, 85, 5.00, 150.00, 5.00, 5.00, 'A', 'D', 'B', 0.10, 0.00, 'ON_HIT', 1),
+(17, '제갈세가 학도생', '초보학도', 'WOOD', '서포터', NULL, 'C', true, 80, 8, 6, 105, 5.00, 150.00, 10.00, 5.00, 'D', 'D', 'D', 0.20, 0.10, 'ON_ALLY_HIT', 1),
+(18, '사천당가 하급무사', '초보독술사', 'WATER', '디버퍼', NULL, 'C', true, 85, 12, 5, 110, 5.00, 150.00, 15.00, 5.00, 'D', 'C', 'D', 0.25, 0.20, 'ON_DEBUFF_LAND', 1),
+(19, '소림사 예비 행자', '빡빡이 막내', 'METAL', '딜탱', NULL, 'C', true, 115, 10, 10, 95, 5.00, 150.00, 5.00, 10.00, 'B', 'C', 'B', 0.15, 0.00, 'ON_HIT', 1);
 
 -- 7. 추가 스킬 마스터 삽입
 INSERT IGNORE INTO skills (id, name, description, skill_type, target_type, element, scaling_stat, damage_multiplier, energy_cost, spirit_gain, spirit_cost) VALUES
@@ -113,3 +113,10 @@ UPDATE characters SET image_path = '/images/portrait_female.png' WHERE id = 2;
 UPDATE characters SET image_path = '/images/dang_soso.png' WHERE id = 4;
 UPDATE characters SET image_path = '/images/zhuge_ryeong.png' WHERE id = 10;
 UPDATE characters SET image_path = '/images/portrait_male.png' WHERE image_path IS NULL;
+
+-- 10. 캐릭터 등급 및 가챠 상태 강제 업데이트 (기존 데이터 정정)
+UPDATE characters SET rarity = 'S', is_gacha_target = false WHERE id IN (1, 2);
+UPDATE characters SET rarity = 'S', is_gacha_target = true WHERE id IN (6, 12);
+UPDATE characters SET rarity = 'A', is_gacha_target = true WHERE id IN (3, 4, 7, 8, 10);
+UPDATE characters SET rarity = 'B', is_gacha_target = true WHERE id IN (5, 9, 11, 13);
+UPDATE characters SET rarity = 'C', is_gacha_target = true WHERE id IN (14, 15, 16, 17, 18, 19);

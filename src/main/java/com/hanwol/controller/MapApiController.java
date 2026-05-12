@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -72,5 +73,31 @@ public class MapApiController {
         user.updateLocation(request.getX(), request.getY(), LocalDateTime.now());
         
         return ResponseEntity.ok(Map.of("success", true, "rollback", false));
+    }
+
+    /**
+     * 유저의 파티 편성(4개 슬롯)을 저장.
+     */
+    @PostMapping("/party")
+    @Transactional
+    public ResponseEntity<?> updateParty(@AuthenticationPrincipal UserDetails userDetails,
+                                         @RequestBody List<Long> characterIds) {
+        if (userDetails == null) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "error", "Unauthorized"));
+        }
+
+        User user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+        if (user == null) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "User not found"));
+        }
+
+        // 파티 슬롯 업데이트
+        user.setPartySlot1(characterIds.size() > 0 ? characterIds.get(0) : null);
+        user.setPartySlot2(characterIds.size() > 1 ? characterIds.get(1) : null);
+        user.setPartySlot3(characterIds.size() > 2 ? characterIds.get(2) : null);
+        user.setPartySlot4(characterIds.size() > 3 ? characterIds.get(3) : null);
+
+        log.info("유저({})의 파티 편성이 업데이트되었습니다.: {}", user.getNickname(), characterIds);
+        return ResponseEntity.ok(Map.of("success", true));
     }
 }

@@ -211,40 +211,95 @@
          :class="currentModal==='PARTY' ? 'bg-[#060a12]/97 p-6' : 'bg-black/80 p-4'"
          x-transition.opacity.duration.200ms>
 
-        <!-- 편성창 -->
+        <!-- 편성창 개편 -->
         <template x-if="currentModal==='PARTY'">
-            <div class="w-full h-full flex flex-col pt-8 px-8">
-                <div class="flex justify-between items-center mb-6">
+            <div class="w-full h-full flex flex-col pt-4 px-8 overflow-hidden">
+                <div class="flex justify-between items-center mb-4">
                     <div>
-                        <h2 class="text-3xl font-bold serif">출진 편성</h2>
-                        <p class="text-amber-300/60 text-xs tracking-widest mt-1 uppercase">Formation Setup</p>
+                        <h2 class="text-2xl font-bold serif flex items-center gap-2">
+                            <i data-lucide="users" class="text-blue-400"></i> 출진 편성
+                        </h2>
+                        <p class="text-slate-400 text-xs mt-1">모험에 동행할 4명의 동료를 선택하세요.</p>
                     </div>
-                    <button @click="closeModal()" class="w-10 h-10 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                    </button>
+                    <div class="flex gap-4">
+                        <button @click="saveParty()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-8 rounded-lg text-sm shadow-lg transition">편성 확정</button>
+                        <button @click="closeModal()" class="w-10 h-10 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                    </div>
                 </div>
-                <div class="flex-1 flex gap-5">
+
+                <!-- 상단: 현재 편성 슬롯 (4열) -->
+                <div class="grid grid-cols-4 gap-4 mb-8">
                     <template x-for="(char, i) in currentParty" :key="i">
-                        <div class="r-card" :class="!char && 'r-empty'" style="height:72vh">
+                        <div @click="selectPartySlot(i)"
+                             class="aspect-[4/3] rounded-xl border-2 transition-all cursor-pointer flex flex-col items-center justify-center relative overflow-hidden"
+                             :class="selectedPartySlot === i ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'border-white/10 bg-black/40 hover:border-white/30'">
+                            
                             <template x-if="char">
                                 <div class="w-full h-full relative">
-                                    <div class="absolute top-3 left-3 z-10 px-2.5 py-0.5 rounded text-[11px] font-bold text-white" :class="char.color" x-text="char.role"></div>
-                                    <img :src="char.src" :alt="char.name" loading="lazy">
+                                    <img :src="char.src" class="w-full h-full object-cover object-top opacity-80">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                                    <div class="absolute bottom-2 left-0 right-0 text-center">
+                                        <div class="text-[10px] font-bold text-blue-300 uppercase" x-text="'SLOT ' + (i+1)"></div>
+                                        <div class="font-bold serif text-sm text-white" x-text="char.name"></div>
+                                    </div>
+                                    <!-- 해제 버튼 -->
+                                    <button @click.stop="currentParty[i] = null" class="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500/80 text-white flex items-center justify-center hover:bg-red-600 transition">
+                                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                    </button>
                                 </div>
                             </template>
+                            
                             <template x-if="!char">
-                                <div class="text-center">
-                                    <i data-lucide="plus" class="w-12 h-12 mx-auto mb-3 opacity-60"></i>
-                                    <p class="text-xs font-bold tracking-widest uppercase opacity-60">Select</p>
+                                <div class="text-center opacity-40">
+                                    <div class="text-[10px] font-bold text-slate-500 mb-1" x-text="'SLOT ' + (i+1)"></div>
+                                    <i data-lucide="plus" class="w-8 h-8 mx-auto text-slate-500"></i>
+                                    <div class="text-[10px] mt-1 font-bold">대기 중</div>
                                 </div>
                             </template>
+
+                            <!-- 선택 표시기 -->
+                            <div x-show="selectedPartySlot === i" class="absolute inset-0 border-2 border-blue-400 animate-pulse pointer-events-none"></div>
                         </div>
                     </template>
                 </div>
-                <div class="mt-6 flex justify-center">
-                    <button @click="closeModal()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 px-14 rounded-full text-base tracking-widest uppercase transition">
-                        저장 및 뒤로가기
-                    </button>
+
+                <!-- 하단: 보유 캐릭터 리스트 (그리드) -->
+                <div class="flex-1 flex flex-col overflow-hidden bg-black/40 rounded-t-3xl border-t border-x border-white/5">
+                    <div class="p-4 flex items-center justify-between border-b border-white/5">
+                        <span class="text-sm font-bold text-slate-400">보유한 동료 목록</span>
+                        <div class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Select to assign to slot <span x-text="selectedPartySlot + 1"></span></div>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-4 scrollbar-hide">
+                        <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+                            <template x-for="(char, idx) in myCharacters" :key="idx">
+                                <div @click="togglePartyMember(char)"
+                                     class="aspect-square rounded-lg border-2 transition-all cursor-pointer relative overflow-hidden group"
+                                     :class="currentParty.some(p => p && p.id === char.id) 
+                                             ? 'border-blue-500 shadow-lg' 
+                                             : 'border-transparent bg-slate-800 hover:border-white/30'">
+                                    
+                                    <img :src="char.src" class="w-full h-full object-cover object-top" :class="currentParty.some(p => p && p.id === char.id) ? 'opacity-40 grayscale-[0.5]' : 'group-hover:scale-105 transition-transform'">
+                                    
+                                    <!-- 등급 배지 -->
+                                    <div class="absolute top-1 right-1 px-1 rounded bg-black/60 text-[8px] font-bold" :class="char.rarityColor.replace('border-', 'text-')" x-text="char.rarity"></div>
+                                    
+                                    <!-- 편성됨 표시 -->
+                                    <template x-if="currentParty.some(p => p && p.id === char.id)">
+                                        <div class="absolute inset-0 flex items-center justify-center bg-blue-500/20">
+                                            <div class="bg-blue-600 text-[10px] font-bold px-2 py-0.5 rounded shadow-lg text-white">편성됨</div>
+                                        </div>
+                                    </template>
+
+                                    <!-- 이름 -->
+                                    <div class="absolute bottom-0 left-0 right-0 bg-black/70 py-1 text-center">
+                                        <div class="text-[9px] font-bold text-white truncate px-1" x-text="char.name"></div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
                 </div>
             </div>
         </template>
@@ -540,15 +595,52 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                     </button>
                 </div>
-                <div class="flex-1 flex items-center justify-center bg-slate-900/60 p-8">
-                    <div class="text-center">
-                        <i data-lucide="tent" class="w-20 h-20 text-green-500 mx-auto mb-6 opacity-80"></i>
-                        <h3 class="text-2xl font-bold mb-4">소속된 문파가 없습니다</h3>
-                        <div class="flex justify-center gap-4">
-                            <button class="bg-green-600 hover:bg-green-500 py-3 px-8 rounded-lg font-bold transition">문파 창설</button>
-                            <button class="bg-slate-700 hover:bg-slate-600 py-3 px-8 rounded-lg font-bold transition border border-slate-500">가입 신청</button>
-                        </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- 무한의 탑 모달 -->
+        <template x-if="currentModal==='TOWER'">
+            <div class="panel-box w-full max-w-4xl flex flex-col overflow-hidden shadow-2xl" @click.away="closeModal()" style="height: 70vh;">
+                <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/40">
+                    <div>
+                        <h2 class="text-3xl font-bold serif text-cyan-400">무한의 탑 (Infinite Tower)</h2>
+                        <p class="text-slate-400 text-sm mt-1">한계를 시험하고 최고의 보상을 쟁취하세요.</p>
                     </div>
+                    <button @click="closeModal()" class="w-10 h-10 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+                <div class="flex-1 flex flex-col items-center justify-center bg-[#0a0e1a] p-8">
+                    <div class="w-32 h-32 rounded-full bg-cyan-500/10 flex items-center justify-center mb-6 border border-cyan-500/30">
+                        <i data-lucide="castle" class="w-16 h-16 text-cyan-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">현재 <span class="text-cyan-400" x-text="towerFloor"></span>층 도전 가능</h3>
+                    <p class="text-slate-500 text-sm mb-8 text-center">각 층을 클리어할 때마다 대량의 보석과 성장 재료를 얻을 수 있습니다.</p>
+                    <button class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-4 px-16 rounded-full text-lg shadow-lg transition">탑 입장하기</button>
+                </div>
+            </div>
+        </template>
+
+        <!-- 주간 레이드 모달 -->
+        <template x-if="currentModal==='RAID'">
+            <div class="panel-box w-full max-w-4xl flex flex-col overflow-hidden shadow-2xl" @click.away="closeModal()" style="height: 70vh;">
+                <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/40">
+                    <div>
+                        <h2 class="text-3xl font-bold serif text-red-500">주간 레이드 (World Boss)</h2>
+                        <p class="text-slate-400 text-sm mt-1">강대한 보스에 도전하고 전설적인 장비를 획득하세요.</p>
+                    </div>
+                    <button @click="closeModal()" class="w-10 h-10 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+                <div class="flex-1 flex flex-col items-center justify-center bg-[#1a0a0a] p-8">
+                    <div class="w-32 h-32 rounded-full bg-red-500/10 flex items-center justify-center mb-6 border border-red-500/30">
+                        <i data-lucide="flame" class="w-16 h-16 text-red-500"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">시즌 보스: <span class="text-red-500">교룡</span></h3>
+                    <p class="text-slate-500 text-sm mb-8 text-center text-balance">월드 매주 월요일 초기화 | 현재 랭킹: <span class="text-amber-400 font-bold">128위</span></p>
+                    <button class="bg-red-600 hover:bg-red-500 text-white font-bold py-4 px-16 rounded-full text-lg shadow-lg transition">레이드 도전</button>
                 </div>
             </div>
         </template>

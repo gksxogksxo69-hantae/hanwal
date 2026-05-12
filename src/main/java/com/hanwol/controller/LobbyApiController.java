@@ -112,9 +112,14 @@ public class LobbyApiController {
         if (user == null) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "error", "User not found"));
         }
-        String characterId = request.get("characterId");
-        if (characterId != null && !characterId.isEmpty()) {
-            user.updateProfile(characterId, null);
+        Object characterIdObj = request.get("characterId");
+        if (characterIdObj != null) {
+            try {
+                Long characterId = Long.valueOf(String.valueOf(characterIdObj));
+                user.updateProfile(characterId, null);
+            } catch (NumberFormatException e) {
+                log.error("Invalid characterId: {}", characterIdObj);
+            }
         }
         return ResponseEntity.ok(Map.of("success", true));
     }

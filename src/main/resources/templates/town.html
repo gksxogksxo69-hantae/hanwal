@@ -141,6 +141,14 @@
                     <i data-lucide="sparkles" class="w-4 h-4 text-amber-300 group-hover:text-amber-400"></i>
                     <span class="top-nav-label text-amber-100">객잔</span>
                 </button>
+                <button @click="openModal('TOWER')" class="top-nav-btn group">
+                    <i data-lucide="castle" class="w-4 h-4 text-cyan-300 group-hover:text-cyan-400"></i>
+                    <span class="top-nav-label text-cyan-100">무한탑</span>
+                </button>
+                <button @click="openModal('RAID')" class="top-nav-btn group">
+                    <i data-lucide="flame" class="w-4 h-4 text-red-400 group-hover:text-red-500"></i>
+                    <span class="top-nav-label text-red-100">레이드</span>
+                </button>
                 <button @click="openModal('PARTY')" class="top-nav-btn group">
                     <i data-lucide="users" class="w-4 h-4 text-blue-300 group-hover:text-blue-400"></i>
                     <span class="top-nav-label text-blue-100">편성</span>
@@ -153,6 +161,22 @@
                     <i data-lucide="shield" class="w-4 h-4 text-green-300 group-hover:text-green-400"></i>
                     <span class="top-nav-label text-green-100">문파</span>
                 </button>
+            </div>
+
+            <!-- 퀘스트 바 가이드 영역 -->
+            <div @click="handleQuestClick()" class="mt-4 flex flex-col items-end group cursor-pointer pointer-events-auto">
+                <div class="panel-box px-4 py-2 bg-black/60 border-amber-500/30 flex items-center gap-3 hover:bg-black/80 transition-all hover:translate-x-[-4px] shadow-lg">
+                    <div class="flex flex-col text-right">
+                        <div class="flex items-center justify-end gap-1.5 mb-0.5">
+                            <span class="text-[10px] bg-amber-600/20 text-amber-300 px-1.5 rounded font-bold uppercase tracking-widest" x-text="currentQuest.category"></span>
+                            <span class="text-xs font-bold text-slate-400" x-text="currentQuest.title"></span>
+                        </div>
+                        <div class="text-sm font-bold text-white serif tracking-wide group-hover:text-amber-400 transition-colors" x-text="currentQuest.goal"></div>
+                    </div>
+                    <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
+                        <i data-lucide="flag" class="w-4 h-4 text-amber-500"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -274,13 +298,13 @@
                         <!-- 전투력 -->
                         <div class="panel-box p-6 bg-gradient-to-br from-red-900/40 to-slate-800 border-none flex flex-col justify-center">
                             <p class="text-red-300 text-xs tracking-widest font-bold mb-1 flex items-center gap-1.5"><i data-lucide="swords" class="w-4 h-4"></i> 종합 전투력</p>
-                            <div class="text-4xl font-extrabold font-mono text-white tracking-wider">15,400</div>
+                            <div class="text-4xl font-extrabold font-mono text-white tracking-wider" x-text="combatPower.toLocaleString()"></div>
                         </div>
 
                         <!-- 랭킹 -->
                         <div class="panel-box p-6 bg-gradient-to-br from-amber-900/40 to-slate-800 border-none flex flex-col justify-center">
                             <p class="text-amber-300 text-xs tracking-widest font-bold mb-1 flex items-center gap-1.5"><i data-lucide="trophy" class="w-4 h-4"></i> 서버 랭킹</p>
-                            <div class="text-4xl font-extrabold font-mono text-white tracking-wider">12,345<span class="text-lg text-amber-200/60 ml-1">위</span></div>
+                            <div class="text-4xl font-extrabold font-mono text-white tracking-wider"><span x-text="serverRank.toLocaleString()"></span><span class="text-lg text-amber-200/60 ml-1">위</span></div>
                         </div>
 
                         <!-- 진척도 위젯들 (하단 2줄 차지) -->
@@ -293,19 +317,19 @@
                                 <div class="bg-black/30 rounded-lg p-4 flex flex-col justify-center items-center text-center border border-white/5 hover:border-blue-500/50 transition">
                                     <i data-lucide="castle" class="w-10 h-10 text-cyan-400 mb-3"></i>
                                     <h4 class="font-bold text-sm text-slate-200">무한의 탑</h4>
-                                    <p class="text-2xl font-extrabold text-cyan-300 mt-1 font-mono">15<span class="text-xs text-slate-500 ml-1">층</span></p>
+                                    <p class="text-2xl font-extrabold text-cyan-300 mt-1 font-mono"><span x-text="towerFloor"></span><span class="text-xs text-slate-500 ml-1">층</span></p>
                                 </div>
                                 <!-- 던전 -->
                                 <div class="bg-black/30 rounded-lg p-4 flex flex-col justify-center items-center text-center border border-white/5 hover:border-purple-500/50 transition">
                                     <i data-lucide="skull" class="w-10 h-10 text-purple-400 mb-3"></i>
                                     <h4 class="font-bold text-sm text-slate-200">기억의 전당</h4>
-                                    <p class="text-2xl font-extrabold text-purple-300 mt-1 font-mono">3<span class="text-xs text-slate-500 ml-1">단계</span></p>
+                                    <p class="text-2xl font-extrabold text-purple-300 mt-1 font-mono"><span x-text="hallStage"></span><span class="text-xs text-slate-500 ml-1">단계</span></p>
                                 </div>
                                 <!-- 레이드 -->
                                 <div class="bg-black/30 rounded-lg p-4 flex flex-col justify-center items-center text-center border border-white/5 hover:border-red-500/50 transition">
                                     <i data-lucide="flame" class="w-10 h-10 text-red-500 mb-3"></i>
-                                    <h4 class="font-bold text-sm text-slate-200">마왕 토벌(레이드)</h4>
-                                    <p class="text-2xl font-extrabold text-red-400 mt-1 font-mono">1<span class="text-xs text-slate-500 ml-1">단계</span></p>
+                                    <h4 class="font-bold text-sm text-slate-200">주간 레이드</h4>
+                                    <p class="text-2xl font-extrabold text-red-400 mt-1 font-mono"><span x-text="raidStage"></span><span class="text-xs text-slate-500 ml-1">단계</span></p>
                                 </div>
                             </div>
                         </div>
@@ -524,7 +548,7 @@
         </template>
 
         <!-- 기타 모달 -->
-        <template x-if="currentModal && !['PARTY', 'MY_PROFILE', 'PROFILE_EDIT', 'GACHA', 'INVENTORY', 'DUNGEON', 'GUILD'].includes(currentModal)">
+        <template x-if="currentModal && !['PARTY', 'MY_PROFILE', 'PROFILE_EDIT', 'GACHA', 'INVENTORY', 'DUNGEON', 'GUILD', 'TOWER', 'RAID'].includes(currentModal)">
             <div @click.away="closeModal()" class="panel-box max-w-md w-full overflow-hidden shadow-xl" style="height:45vh">
                 <div class="p-4 border-b border-white/5 flex justify-between items-center bg-black/30">
                     <h3 class="text-lg font-bold serif text-amber-500" x-text="modalTitle"></h3>

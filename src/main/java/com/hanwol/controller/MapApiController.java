@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -35,16 +36,17 @@ public class MapApiController {
         if (user == null) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "error", "User not found"));
         }
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "gender", user.getGender() != null ? user.getGender().name() : "MALE",
-                "nickname", user.getNickname(),
-                "level", user.getLevel(),
-                "gold", user.getGold(),
-                "premiumCurrency", user.getPremiumCurrency(),
-                "mainCharacterId", user.getMainCharacterId(),
-                "profileImagePath", user.getProfileImagePath()
-        ));
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("gender", user.getGender() != null ? user.getGender().name() : "MALE");
+        response.put("nickname", user.getNickname());
+        response.put("level", user.getLevel());
+        response.put("gold", user.getGold());
+        response.put("premiumCurrency", user.getPremiumCurrency());
+        response.put("mainCharacterId", user.getMainCharacterId());
+        response.put("profileImagePath", user.getProfileImagePath());
+
+        return ResponseEntity.ok(response);
     }
 
     /**

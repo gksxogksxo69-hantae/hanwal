@@ -22,10 +22,26 @@ document.addEventListener('alpine:init', () => {
         currentCharIndex: 0,
         currentParty: [null, null, null, null],
 
+        // ── 상세 프로필 수치 (더미) ──
+        combatPower: 15400,
+        serverRank: 12345,
+        towerFloor: 15,
+        hallStage: 3,
+        raidStage: 1,
+
+        // ── 퀘스트 상태 ──
+        currentQuest: {
+            title: '무림의 시작',
+            goal: '프롤로그: 기억의 던전 클리어',
+            category: '메인',
+            targetModal: 'DUNGEON'
+        },
+
         // ── 초기화 ──
         async init() {
             await this.loadPlayerInfo();
             await this.loadMyCharacters();
+            this.updateQuestProgression();
             this.isLoading = false;
         },
 
@@ -39,18 +55,37 @@ document.addEventListener('alpine:init', () => {
                     this.playerLevel = data.level || 1;
                     this.playerGold = data.gold || 0;
                     this.playerGems = data.premiumCurrency || 0;
-                    if (data.profileImagePath) {
-                        this.customPortrait = data.profileImagePath;
-                    }
-                    if (data.mainCharacterId) {
+                    if (data.mainCharacterId !== null && data.mainCharacterId !== undefined) {
                         this.serverMainCharacterId = data.mainCharacterId;
                     }
                 }
             } catch (e) {
-                console.warn('플레이어 정보 로딩 실패:', e);
-                this.playerNickname = '테스트유저';
-                this.playerGold = 50000;
-                this.playerGems = 1200;
+                console.warn('플레이어 정보 로딩 실패 (서버 데이터를 확인하세요):', e);
+                // API 실패 시 더미 데이터 (디버깅용으로만 유지)
+                if (!this.playerNickname || this.playerNickname === '모험가') {
+                    this.playerNickname = '연결실패유저';
+                }
+            }
+        },
+
+        updateQuestProgression() {
+            // 스토리 챕터나 레벨에 따라 퀘스트 변경 로직 (향후 확장용)
+            // 프롤로그 클리어 전이라면 (playerLevel이 1이고 초기 상태라고 가정)
+            if (this.playerLevel <= 1) {
+                this.currentQuest = {
+                    title: '무림의 시작',
+                    goal: '프롤로그: 기억의 던전 클리어',
+                    category: '메인',
+                    targetModal: 'DUNGEON'
+                };
+            } else {
+                // 프롤로그 클리어 후라면 초보자 영입 가이드
+                this.currentQuest = {
+                    title: '최초의 영입',
+                    goal: '초보자 영입 진행 (10회)',
+                    category: '메인',
+                    targetModal: 'GACHA'
+                };
             }
         },
 
@@ -80,7 +115,7 @@ document.addEventListener('alpine:init', () => {
 
                     // 서버에 저장된 메인 캐릭터 반영
                     if (this.serverMainCharacterId) {
-                        const mIdx = this.myCharacters.findIndex(c => c.id === this.serverMainCharacterId);
+                        const mIdx = this.myCharacters.findIndex(c => Number(c.id) === Number(this.serverMainCharacterId));
                         if (mIdx !== -1) {
                             this.currentCharIndex = mIdx;
                         }
@@ -178,12 +213,20 @@ document.addEventListener('alpine:init', () => {
                 'PARTY': '편성 (출진)',
                 'INVENTORY': '보따리 (인벤토리)',
                 'GUILD': '문파 (길드)',
-                'DUNGEON': '수련의 탑 (던전)',
+                'DUNGEON': '기억의 전당 (던전)',
+                'TOWER': '무한의 탑',
+                'RAID': '주간 레이드 (토벌)',
                 'MY_PROFILE': '종합 상태창',
                 'PROFILE_EDIT': '유저 프로필 설정'
             };
             this.modalTitle = titles[type] || '시스템';
             this.currentModal = type;
+        },
+
+        handleQuestClick() {
+            if (this.currentQuest.targetModal) {
+                this.openModal(this.currentQuest.targetModal);
+            }
         },
 
         closeModal() {

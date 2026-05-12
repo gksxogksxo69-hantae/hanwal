@@ -79,7 +79,7 @@ public class User {
 
     // --- 프로필 설정 ---
     @Column
-    private String mainCharacterId; // 로비에 표시될 대표 캐릭터 ID
+    private Long mainCharacterId; // 로비에 표시될 대표 캐릭터 ID
 
     @Column
     private String profileImagePath; // 유저 프로필 이미지 경로
@@ -190,7 +190,7 @@ public class User {
         this.premiumCurrency += amount;
     }
 
-    public void updateProfile(String mainCharacterId, String profileImagePath) {
+    public void updateProfile(Long mainCharacterId, String profileImagePath) {
         if (mainCharacterId != null) {
             this.mainCharacterId = mainCharacterId;
         }

@@ -95,20 +95,14 @@
     <img :src="currentLobbyCharacter.src" :alt="currentLobbyCharacter.name" loading="lazy">
 </div>
 
-<!-- 캐릭터 정보 -->
-<div class="absolute left-[8%] top-[38%] z-20 flex items-end gap-4 pointer-events-auto" x-show="!isLoading">
-    <div class="panel-box p-5 border-l-4 border-amber-500">
-        <h1 class="text-3xl font-extrabold serif mb-1" x-text="currentLobbyCharacter.name"></h1>
-        <p class="text-amber-300 text-xs font-bold tracking-widest" x-text="currentLobbyCharacter.desc"></p>
-    </div>
-</div>
+<!-- 캐릭터 정보 (제거됨) -->
 
 <!-- UI 오버레이 -->
 <div class="relative z-10 w-screen h-screen flex flex-col justify-between pointer-events-none" x-show="!isLoading">
 
     <!-- 상단 헤더 -->
     <header class="flex justify-between items-start p-5 pointer-events-auto">
-        <button @click="openModal('PROFILE')" class="panel pr-5 pl-2 py-1.5 flex items-center gap-3 cursor-pointer hover:bg-white/10 transition text-left">
+        <button @click="openModal('MY_PROFILE')" class="panel pr-5 pl-2 py-1.5 flex items-center gap-3 cursor-pointer hover:bg-white/10 transition text-left">
             <div class="w-11 h-11 rounded-full border border-amber-500 overflow-hidden bg-black/60 shrink-0">
                 <img :src="playerPortrait" alt="avatar" class="w-full h-full object-cover">
             </div>
@@ -231,13 +225,108 @@
             </div>
         </template>
 
-        <!-- 프로필 설정창 -->
-        <template x-if="currentModal==='PROFILE'">
-            <div class="panel-box w-full max-w-4xl flex flex-col overflow-hidden shadow-2xl" @click.away="closeModal()" style="height: 70vh;">
+        <!-- 상세 프로필(상태창) 모달 새로 추가 -->
+        <template x-if="currentModal==='MY_PROFILE'">
+            <div class="panel-box w-full max-w-5xl flex flex-col overflow-hidden shadow-2xl" @click.away="closeModal()" style="height: 75vh;">
                 <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/40">
                     <div>
-                        <h2 class="text-2xl font-bold serif text-white">유저 프로필 설정</h2>
-                        <p class="text-slate-400 text-sm mt-1">대표 캐릭터와 프로필 이미지를 보유한 캐릭터로 변경합니다.</p>
+                        <h2 class="text-3xl font-bold serif flex items-center gap-2">
+                            <i data-lucide="award" class="text-amber-400 w-7 h-7"></i> 종합 상태창
+                        </h2>
+                        <p class="text-slate-400 text-sm mt-1">모험가님의 종합 기록과 스탯을 확인합니다.</p>
+                    </div>
+                    <button @click="closeModal()" class="w-10 h-10 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+
+                <div class="flex-1 p-6 overflow-y-auto bg-slate-900/50 flex gap-6">
+                    <!-- 왼쪽 사이드 막대 (개인 정보) -->
+                    <div class="w-1/3 flex flex-col gap-4">
+                        <div class="panel-box p-6 flex flex-col items-center bg-slate-800 border-none relative group">
+                            <!-- 초상화 변경 버튼 영역 -->
+                            <div @click="openModal('PROFILE_EDIT')" class="w-32 h-32 rounded-full border-4 border-amber-500 overflow-hidden bg-black/60 relative cursor-pointer block">
+                                <img :src="playerPortrait" alt="avatar" class="w-full h-full object-cover">
+                                <div class="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <i data-lucide="edit-3" class="text-white w-6 h-6 mb-1"></i>
+                                    <span class="text-xs font-bold text-white tracking-widest">설정 변경</span>
+                                </div>
+                            </div>
+                            <h3 class="text-2xl font-bold serif mt-4" x-text="playerNickname"></h3>
+                            <div class="text-amber-400 text-sm font-bold tracking-widest mt-1">Lv. <span x-text="playerLevel"></span></div>
+                            <div class="text-slate-400 text-xs mt-0.5">UID: 800012345</div>
+                            <div class="w-full h-px bg-white/10 my-4"></div>
+                            <div class="w-full space-y-2">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-slate-400">칭호</span>
+                                    <span class="text-cyan-300 font-bold">초보 무림인</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-slate-400">문파</span>
+                                    <span class="text-slate-500 font-bold">소속 없음</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 오른쪽: Bento Grid 통계 영역 -->
+                    <div class="flex-1 grid grid-cols-2 grid-rows-3 gap-4">
+                        <!-- 전투력 -->
+                        <div class="panel-box p-6 bg-gradient-to-br from-red-900/40 to-slate-800 border-none flex flex-col justify-center">
+                            <p class="text-red-300 text-xs tracking-widest font-bold mb-1 flex items-center gap-1.5"><i data-lucide="swords" class="w-4 h-4"></i> 종합 전투력</p>
+                            <div class="text-4xl font-extrabold font-mono text-white tracking-wider">15,400</div>
+                        </div>
+
+                        <!-- 랭킹 -->
+                        <div class="panel-box p-6 bg-gradient-to-br from-amber-900/40 to-slate-800 border-none flex flex-col justify-center">
+                            <p class="text-amber-300 text-xs tracking-widest font-bold mb-1 flex items-center gap-1.5"><i data-lucide="trophy" class="w-4 h-4"></i> 서버 랭킹</p>
+                            <div class="text-4xl font-extrabold font-mono text-white tracking-wider">12,345<span class="text-lg text-amber-200/60 ml-1">위</span></div>
+                        </div>
+
+                        <!-- 진척도 위젯들 (하단 2줄 차지) -->
+                        <div class="col-span-2 row-span-2 panel-box p-6 bg-slate-800/80 border-none flex flex-col">
+                            <h3 class="text-lg font-bold serif text-white mb-4 flex items-center gap-2">
+                                <i data-lucide="map" class="text-blue-400 w-5 h-5"></i> 모험 진척도
+                            </h3>
+                            <div class="grid grid-cols-3 gap-4 flex-1">
+                                <!-- 무한의 탑 -->
+                                <div class="bg-black/30 rounded-lg p-4 flex flex-col justify-center items-center text-center border border-white/5 hover:border-blue-500/50 transition">
+                                    <i data-lucide="castle" class="w-10 h-10 text-cyan-400 mb-3"></i>
+                                    <h4 class="font-bold text-sm text-slate-200">무한의 탑</h4>
+                                    <p class="text-2xl font-extrabold text-cyan-300 mt-1 font-mono">15<span class="text-xs text-slate-500 ml-1">층</span></p>
+                                </div>
+                                <!-- 던전 -->
+                                <div class="bg-black/30 rounded-lg p-4 flex flex-col justify-center items-center text-center border border-white/5 hover:border-purple-500/50 transition">
+                                    <i data-lucide="skull" class="w-10 h-10 text-purple-400 mb-3"></i>
+                                    <h4 class="font-bold text-sm text-slate-200">기억의 전당</h4>
+                                    <p class="text-2xl font-extrabold text-purple-300 mt-1 font-mono">3<span class="text-xs text-slate-500 ml-1">단계</span></p>
+                                </div>
+                                <!-- 레이드 -->
+                                <div class="bg-black/30 rounded-lg p-4 flex flex-col justify-center items-center text-center border border-white/5 hover:border-red-500/50 transition">
+                                    <i data-lucide="flame" class="w-10 h-10 text-red-500 mb-3"></i>
+                                    <h4 class="font-bold text-sm text-slate-200">마왕 토벌(레이드)</h4>
+                                    <p class="text-2xl font-extrabold text-red-400 mt-1 font-mono">1<span class="text-xs text-slate-500 ml-1">단계</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- 프로필 사진 및 스탠딩 일러스트 설정창 -->
+        <template x-if="currentModal==='PROFILE_EDIT'">
+            <div class="panel-box w-full max-w-4xl flex flex-col overflow-hidden shadow-2xl" @click.away="openModal('MY_PROFILE')" style="height: 70vh;">
+                <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/40">
+                    <div class="flex items-center gap-4">
+                        <button @click="openModal('MY_PROFILE')" class="w-10 h-10 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-slate-700 hover:text-white transition-all shadow-lg">
+                            <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                        </button>
+                        <div>
+                            <h2 class="text-2xl font-bold serif text-white">유저 프로필 이미지 설정</h2>
+                            <p class="text-slate-400 text-sm mt-1">로비 캐릭터와 왼쪽 상단 프로필 이미지를 설정합니다.</p>
+                        </div>
                     </div>
                     <button @click="closeModal()" class="w-10 h-10 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -435,7 +524,7 @@
         </template>
 
         <!-- 기타 모달 -->
-        <template x-if="currentModal && currentModal!=='PARTY' && currentModal!=='PROFILE' && currentModal!=='GACHA' && currentModal!=='INVENTORY' && currentModal!=='DUNGEON' && currentModal!=='GUILD'">
+        <template x-if="currentModal && !['PARTY', 'MY_PROFILE', 'PROFILE_EDIT', 'GACHA', 'INVENTORY', 'DUNGEON', 'GUILD'].includes(currentModal)">
             <div @click.away="closeModal()" class="panel-box max-w-md w-full overflow-hidden shadow-xl" style="height:45vh">
                 <div class="p-4 border-b border-white/5 flex justify-between items-center bg-black/30">
                     <h3 class="text-lg font-bold serif text-amber-500" x-text="modalTitle"></h3>

@@ -179,7 +179,8 @@ document.addEventListener('alpine:init', () => {
                 'INVENTORY': '보따리 (인벤토리)',
                 'GUILD': '문파 (길드)',
                 'DUNGEON': '수련의 탑 (던전)',
-                'PROFILE': '유저 프로필 설정'
+                'MY_PROFILE': '종합 상태창',
+                'PROFILE_EDIT': '유저 프로필 설정'
             };
             this.modalTitle = titles[type] || '시스템';
             this.currentModal = type;

@@ -202,7 +202,7 @@
                         <p class="text-amber-300/60 text-xs tracking-widest mt-1 uppercase">Formation Setup</p>
                     </div>
                     <button @click="closeModal()" class="w-10 h-10 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
-                        <i data-lucide="x" class="w-5 h-5"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                     </button>
                 </div>
                 <div class="flex-1 flex gap-5">
@@ -212,11 +212,6 @@
                                 <div class="w-full h-full relative">
                                     <div class="absolute top-3 left-3 z-10 px-2.5 py-0.5 rounded text-[11px] font-bold text-white" :class="char.color" x-text="char.role"></div>
                                     <img :src="char.src" :alt="char.name" loading="lazy">
-                                    <div class="r-card-info">
-                                        <div class="text-amber-300 text-[11px] tracking-widest mb-0.5" x-text="char.desc"></div>
-                                        <div class="text-2xl font-extrabold serif" x-text="char.name"></div>
-                                        <div class="text-slate-400 text-xs font-mono mt-0.5" x-text="'Lv. '+char.level"></div>
-                                    </div>
                                 </div>
                             </template>
                             <template x-if="!char">
@@ -245,7 +240,7 @@
                         <p class="text-slate-400 text-sm mt-1">대표 캐릭터와 프로필 이미지를 보유한 캐릭터로 변경합니다.</p>
                     </div>
                     <button @click="closeModal()" class="w-10 h-10 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
-                        <i data-lucide="x" class="w-5 h-5"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                     </button>
                 </div>
                 
@@ -294,7 +289,7 @@
                         <p class="text-slate-400 text-sm mt-1">새로운 동료를 맞이합니다.</p>
                     </div>
                     <button @click="closeModal()" x-show="!isGachaAnimating" class="w-10 h-10 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
-                        <i data-lucide="x" class="w-5 h-5"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                     </button>
                 </div>
                 
@@ -351,7 +346,7 @@
                         <p class="text-slate-400 text-sm mt-1">획득한 동료들의 세부 정보를 확인합니다.</p>
                     </div>
                     <button @click="closeModal()" class="w-10 h-10 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
-                        <i data-lucide="x" class="w-5 h-5"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                     </button>
                 </div>
                 
@@ -386,7 +381,7 @@
                         <p class="text-slate-400 text-sm mt-1">강력한 환영을 처치하고 성장 재화를 획득합니다.</p>
                     </div>
                     <button @click="closeModal()" class="w-10 h-10 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
-                        <i data-lucide="x" class="w-5 h-5"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                     </button>
                 </div>
                 <div class="flex-1 p-8 flex flex-col items-center justify-center bg-slate-900/60">
@@ -423,7 +418,7 @@
                         <p class="text-slate-400 text-sm mt-1">동료들과 힘을 합쳐 무림을 제패하세요.</p>
                     </div>
                     <button @click="closeModal()" class="w-10 h-10 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
-                        <i data-lucide="x" class="w-5 h-5"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                     </button>
                 </div>
                 <div class="flex-1 flex items-center justify-center bg-slate-900/60 p-8">
@@ -445,7 +440,7 @@
                 <div class="p-4 border-b border-white/5 flex justify-between items-center bg-black/30">
                     <h3 class="text-lg font-bold serif text-amber-500" x-text="modalTitle"></h3>
                     <button @click="closeModal()" class="w-8 h-8 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
-                        <i data-lucide="x" class="w-4 h-4"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                     </button>
                 </div>
                 <div class="flex-1 p-6 flex flex-col items-center justify-center h-full">

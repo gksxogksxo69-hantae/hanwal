@@ -36,9 +36,11 @@
 <body>
 
 <div x-data="tutorialApp()" 
-     @click="handleClick" 
      @keydown.window="handleKeydown($event)"
      class="tutorial-container">
+
+    <!-- ===== 클릭 캡처 오버레이 ===== -->
+    <div class="absolute inset-0 z-[20] cursor-pointer" @click="handleClick"></div>
 
     <!-- ===== 프로그레스 바 ===== -->
     <div class="progress-bar-container">

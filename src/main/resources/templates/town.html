@@ -73,6 +73,20 @@
             color:rgba(255,255,255,.2);border:2px dashed rgba(255,255,255,.15);
         }
         .r-empty:hover{border-style:solid;color:rgba(255,255,255,.5);background:rgba(255,255,255,.03)}
+
+        /* 가이드라인 펴스/글로우 애니메이션 */
+        @keyframes guidePulse {
+            0% { box-shadow: 0 0 0 0 rgba(59,130,246,0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(59,130,246,0); }
+            100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+        }
+        @keyframes guideGlow {
+            0% { box-shadow: 0 0 0 0 rgba(245,158,11,0.7); }
+            70% { box-shadow: 0 0 0 18px rgba(245,158,11,0); }
+            100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+        }
+        .guide-pulse { animation: guidePulse 1.5s infinite; position: relative; z-index: 60; }
+        .guide-glow { animation: guideGlow 1.5s infinite; position: relative; z-index: 60; }
     </style>
 </head>
 <body x-data="lobbyApp()">
@@ -149,7 +163,8 @@
                     <i data-lucide="flame" class="w-4 h-4 text-red-400 group-hover:text-red-500"></i>
                     <span class="top-nav-label text-red-100">레이드</span>
                 </button>
-                <button @click="openModal('PARTY')" class="top-nav-btn group">
+                <button @click="openModal('PARTY')" class="top-nav-btn group" id="btn-party"
+                        :class="{'guide-pulse': guideStep === 2}">
                     <i data-lucide="users" class="w-4 h-4 text-blue-300 group-hover:text-blue-400"></i>
                     <span class="top-nav-label text-blue-100">편성</span>
                 </button>
@@ -194,7 +209,8 @@
                 <i data-lucide="swords" class="text-purple-400 w-5 h-5"></i>
             </div>
         </button>
-        <button @click="goToStory()" class="skew btn-main w-72 h-20 mr-[-16px] flex items-center justify-end pr-10 cursor-pointer group">
+        <button @click="goToStory(); guideCompleteMissionStep()" class="skew btn-main w-72 h-20 mr-[-16px] flex items-center justify-end pr-10 cursor-pointer group" id="btn-mission"
+                :class="{'guide-glow': guideStep === 3}">
             <div class="skew-inner flex items-center gap-4">
                 <div class="text-right">
                     <div class="text-amber-200 text-[10px] font-bold tracking-[.2em] uppercase">Main Story</div>
@@ -204,6 +220,52 @@
             </div>
         </button>
     </div>
+
+    <!-- ═════ 가이드라인 오버레이 ═════ -->
+
+    <!-- Step 1: 독백 모달 -->
+    <div x-show="guideStep === 1" x-transition.opacity.duration.500ms
+         class="fixed inset-0 z-[80] bg-black/85 flex items-center justify-center pointer-events-auto" @click="advanceGuideMonologue()">
+        <div class="max-w-lg w-full mx-6">
+            <div class="bg-slate-900/90 border border-amber-500/30 rounded-2xl p-8 md:p-10 shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50"></div>
+                <div class="text-center mb-6">
+                    <span class="text-amber-500/60 text-xs tracking-[0.3em] uppercase font-bold">Inner Monologue</span>
+                </div>
+                <div class="min-h-[80px] flex items-center justify-center">
+                    <p class="text-xl md:text-2xl serif text-slate-200 leading-relaxed tracking-wide text-center" x-text="guideMonologueText"></p>
+                    <span class="animate-pulse ml-1 w-0.5 h-6 bg-amber-400 inline-block" x-show="guideTyping"></span>
+                </div>
+                <div class="text-center mt-6">
+                    <span class="text-slate-500 text-xs animate-pulse" x-show="!guideTyping">클릭하여 계속</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: 편성 버튼 하이라이트 툴팁 -->
+    <div x-show="guideStep === 2" x-transition.opacity
+         class="fixed top-[90px] right-[200px] z-[70] pointer-events-none">
+        <div class="bg-slate-900/95 border border-blue-500/50 rounded-xl px-4 py-3 shadow-xl max-w-[200px]">
+            <p class="text-blue-300 text-xs font-bold mb-1">파티 편성</p>
+            <p class="text-slate-300 text-[11px] leading-relaxed">동료를 편성하여 출진 준비를 하세요!</p>
+            <div class="absolute -top-2 right-6 w-4 h-4 bg-slate-900/95 border-l border-t border-blue-500/50 rotate-45"></div>
+        </div>
+    </div>
+
+    <!-- Step 3: 임무 시작 버튼 하이라이트 툴팁 -->
+    <div x-show="guideStep === 3" x-transition.opacity
+         class="fixed bottom-[110px] right-[290px] z-[70] pointer-events-none">
+        <div class="bg-slate-900/95 border border-amber-500/50 rounded-xl px-4 py-3 shadow-xl max-w-[200px]">
+            <p class="text-amber-400 text-xs font-bold mb-1">첫 번째 임무!</p>
+            <p class="text-slate-300 text-[11px] leading-relaxed">클릭하여 첫 번째 임무에 도전해 보세요.</p>
+            <div class="absolute -bottom-2 right-10 w-4 h-4 bg-slate-900/95 border-r border-b border-amber-500/50 rotate-45"></div>
+        </div>
+    </div>
+
+    <!-- 가이드 반투명 오버레이 (Step 2, 3에서 배경 어둡게) -->
+    <div x-show="guideStep === 2 || guideStep === 3" x-transition.opacity
+         class="fixed inset-0 z-[55] bg-black/50 pointer-events-none"></div>
 
     <!-- 모달 영역 -->
     <div x-show="currentModal" style="display:none"

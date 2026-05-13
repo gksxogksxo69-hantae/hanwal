@@ -19,6 +19,7 @@ document.addEventListener('alpine:init', () => {
 
         playerGender: 'MALE',
         playerNickname: '모험가',
+        lastClickTime: 0,
 
         // ── 10단계 시나리오 ──
         get scenes() {
@@ -131,10 +132,20 @@ document.addEventListener('alpine:init', () => {
         },
 
         handleClick() {
-            if (this.isCompleted || this.showTitleDrop || this.showSkipModal) return;
+            const now = Date.now();
+            if (now - this.lastClickTime < 300) return; // 쓰로틀링 (0.3초)
+            this.lastClickTime = now;
+
+            console.log('Click detected, Index:', this.currentSceneIndex);
+
+            if (this.isCompleted || this.showTitleDrop || this.showSkipModal) {
+                console.log('Click ignored due to state:', { comp: this.isCompleted, title: this.showTitleDrop, modal: this.showSkipModal });
+                return;
+            }
 
             if (this.isTyping) {
-                clearInterval(this.typingTimer);
+                console.log('Skipping typing animation');
+                if (this.typingTimer) clearInterval(this.typingTimer);
                 this.typingTimer = null;
                 this.displayedText = this.currentScene.text;
                 this.isTyping = false;
@@ -142,11 +153,15 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
+            // 히스토리에 현재 대사 추가
             this.history.push({ speaker: this.currentScene.speaker, text: this.currentScene.text });
 
             if (this.currentSceneIndex < this.scenes.length - 1) {
                 this.currentSceneIndex++;
+                console.log('Moving to next scene:', this.currentSceneIndex);
                 this.startScene();
+            } else {
+                console.log('End of scenes reached');
             }
         },
 

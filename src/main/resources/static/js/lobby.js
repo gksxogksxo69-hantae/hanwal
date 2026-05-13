@@ -37,8 +37,17 @@ document.addEventListener('alpine:init', () => {
             targetUrl: '/tutorial-cave'
         },
 
-        selectedPartySlot: 0, // 현재 편집 중인 편성 슬롯 (0~3)
-        towerFloor: 1, // 무한의 탑 현재 층
+        selectedPartySlot: 0,
+        towerFloor: 1,
+
+        // ── 가이드라인 엔진 ──
+        guideStep: 0,          // 0=비활성, 1=독백, 2=편성하이라이트, 3=관문하이라이트
+        guideActive: false,
+        guideMonologueLines: [],
+        guideMonologueIndex: 0,
+        guideMonologueText: '',
+        guideTyping: false,
+        guideTypeInterval: null,
 
         // ── 퀘스트 상태 ──
         async init() {
@@ -46,6 +55,8 @@ document.addEventListener('alpine:init', () => {
             await this.loadMyCharacters();
             this.updateQuestProgression();
             this.isLoading = false;
+            // 가이드라인 체크 (튜토리얼 배틀 완료 후 첫 로비 진입)
+            this.checkGuideStart();
         },
 
         async loadPlayerInfo() {
@@ -290,10 +301,6 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        closeModal() {
-            this.currentModal = null;
-        },
-
         async saveParty() {
             const slots = this.currentParty.map(c => c ? c.id : null);
             try {
@@ -339,7 +346,6 @@ document.addEventListener('alpine:init', () => {
         },
 
         goToStory() {
-            // 튜토리얼 퀘스트 중이면 바로 해당 씬으로
             if (this.currentQuest.targetUrl) {
                 window.location.href = this.currentQuest.targetUrl;
             } else {
@@ -350,6 +356,98 @@ document.addEventListener('alpine:init', () => {
         enterDungeon() {
             alert('기억의 전당 입장 기능은 향후 전투 시스템 완성 시 연동됩니다!');
             this.closeModal();
+        },
+
+        // ═══════════════════════════════════
+        //  가이드라인 엔진 (3단계)
+        // ═══════════════════════════════════
+        checkGuideStart() {
+            // localStorage 방어: 이미 완료했으면 실행 안 함
+            if (localStorage.getItem('hanwol_lobby_guide_done') === 'true') return;
+            // 레벨 2 이상 = 튜토리얼 배틀을 클리어한 유저에게만 가이드 표시
+            if (this.playerLevel < 2) return;
+
+            this.guideActive = true;
+            this.guideStep = 1;
+            this.startGuideMonologue();
+        },
+
+        startGuideMonologue() {
+            const isMale = this.playerGender === 'MALE';
+            this.guideMonologueLines = isMale
+                ? [
+                    '"...결국 살아남았군."',
+                    '"허나 아직 아무것도 끝나지 않았다."',
+                    '"천마의 수하들은 중원 곳곳에서 설치고 있고... 형님들의 원수는 아직 살아 숨 쉬고 있다."',
+                    '"이 검을 갈고, 동료를 모으고, 반드시... 피의 대가를 치르게 하리라."'
+                ]
+                : [
+                    '"...살았어. 나... 정말 살아남은 거야."',
+                    '"무서웠어. 죽을 뻔했어. 하지만... 이제 더 이상 도망치지 않을 거야."',
+                    '"오빠들이 지켜주지 못한 이 세상, 이번엔 내가 지켜야 해."',
+                    '"이 차가운 힘으로... 반드시 원수를 갚을 거야."'
+                ];
+            this.guideMonologueIndex = 0;
+            this.typeGuideMonologue();
+        },
+
+        typeGuideMonologue() {
+            if (this.guideMonologueIndex >= this.guideMonologueLines.length) {
+                // 독백 끝 → Step 2로 진행
+                this.guideStep = 2;
+                return;
+            }
+            this.guideTyping = true;
+            const fullText = this.guideMonologueLines[this.guideMonologueIndex];
+            this.guideMonologueText = '';
+            let i = 0;
+            clearInterval(this.guideTypeInterval);
+            this.guideTypeInterval = setInterval(() => {
+                this.guideMonologueText += fullText.charAt(i);
+                i++;
+                if (i >= fullText.length) {
+                    clearInterval(this.guideTypeInterval);
+                    this.guideTyping = false;
+                }
+            }, 50);
+        },
+
+        advanceGuideMonologue() {
+            if (this.guideTyping) {
+                clearInterval(this.guideTypeInterval);
+                this.guideMonologueText = this.guideMonologueLines[this.guideMonologueIndex];
+                this.guideTyping = false;
+            } else {
+                this.guideMonologueIndex++;
+                this.typeGuideMonologue();
+            }
+        },
+
+        guideOpenParty() {
+            this.openModal('PARTY');
+            // 편성 모달을 열면 Step 3으로 진행 대기
+        },
+
+        guideCompletePartyStep() {
+            if (this.guideStep === 2) {
+                this.guideStep = 3;
+            }
+        },
+
+        guideCompleteMissionStep() {
+            if (this.guideStep === 3) {
+                this.guideStep = 0;
+                this.guideActive = false;
+                localStorage.setItem('hanwol_lobby_guide_done', 'true');
+            }
+        },
+
+        // closeModal 오버라이드: 편성 모달 닫을 때 가이드 스텝 진행
+        closeModal() {
+            if (this.guideStep === 2 && this.currentModal === 'PARTY') {
+                this.guideCompletePartyStep();
+            }
+            this.currentModal = null;
         }
     }));
 });

@@ -209,8 +209,9 @@
     <div class="battle-container">
         
         <!-- [Story Mode Overlay] 비주얼 노벨 연출 -->
+        <!-- 비주얼 노벨 (모든 STORY 상태에 대응) -->
         <div class="absolute inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col justify-end pb-12 transition-opacity duration-1000"
-             x-show="gameState === 'STORY'"
+             x-show="['STORY_INTRO','STORY_RESCUE','STORY_PHASE3'].includes(gameState)"
              x-transition:leave="opacity-100"
              x-transition:leave-end="opacity-0"
              @click="nextStory">
@@ -228,6 +229,34 @@
                         클릭하여 진행 
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- 패배 연출 오버레이 -->
+        <div class="absolute inset-0 z-[110] flex flex-col items-center justify-center transition-all duration-1000"
+             x-show="showDefeatOverlay"
+             x-transition:enter="transition ease-out duration-1000"
+             x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+             style="background: linear-gradient(180deg, rgba(50,0,0,0.95), #000 70%);">
+            <p class="gowun-batang text-3xl md:text-5xl text-red-500/80 tracking-[0.3em] mb-6" style="text-shadow: 0 0 30px rgba(220,38,38,0.5);">
+                의식이 흐려진다...
+            </p>
+            <div class="w-32 h-px bg-red-800/50"></div>
+            <p class="text-slate-500 text-sm mt-6 animate-pulse gowun-batang">암전</p>
+        </div>
+
+        <!-- 각성 연출 오버레이 -->
+        <div class="absolute inset-0 z-[110] flex flex-col items-center justify-center"
+             x-show="showAwakeningOverlay"
+             x-transition:enter="transition ease-out duration-500"
+             x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+             style="background: radial-gradient(circle, rgba(245,158,11,0.2) 0%, #000 60%);">
+            <div class="text-center">
+                <p class="text-amber-400 text-lg tracking-[0.5em] uppercase font-bold mb-4 animate-pulse">SKILL EVOLUTION</p>
+                <h2 class="gowun-batang text-4xl md:text-6xl text-white font-bold mb-6 tracking-wider" x-text="awakeningSkillName"
+                    style="text-shadow: 0 0 40px rgba(245,158,11,0.8), 0 0 80px rgba(245,158,11,0.4);"></h2>
+                <div class="w-48 h-px bg-gradient-to-r from-transparent via-amber-500 to-transparent mx-auto mb-6"></div>
+                <p class="text-amber-200/80 text-base md:text-lg gowun-batang max-w-md mx-auto leading-relaxed" x-text="awakeningText"></p>
             </div>
         </div>
 
@@ -337,7 +366,8 @@
             
             <!-- 블로커 (내 턴이 아닐 때) -->
             <div class="absolute inset-0 backdrop-blur-[2px] bg-black/40 z-30 flex items-center justify-center transition-opacity duration-300" 
-                 x-show="!isPlayerTurn || gameState !== 'WAITING_INPUT'">
+                 x-show="!isPlayerTurn || gameState !== 'WAITING_INPUT'"
+                 style="display:none;">
             </div>
 
             <!-- 현재 턴인 아군 캐릭터 상세 프로필 -->

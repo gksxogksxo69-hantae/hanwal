@@ -29,33 +29,25 @@ document.addEventListener('alpine:init', () => {
         hallStage: 3,
         raidStage: 1,
 
-        // ── 퀘스트 상태 ──
-        currentQuest: {
-            title: '무림의 시작',
-            goal: '비경에서의 수련 (1년의 수련)',
-            category: '메인',
-            targetUrl: '/tutorial-cave'
-        },
+        // ── 퀘스트 & 던전 상태 ──
+        currentQuest: { title: '로딩 중...', goalDesc: '데이터 동기화 중...', status: 'IN_PROGRESS' },
+        stages: [],
+        currentChapter: 1,
 
         selectedPartySlot: 0,
         towerFloor: 1,
 
         // ── 가이드라인 엔진 ──
-        guideStep: 0,          // 0=비활성, 1=독백, 2=편성하이라이트, 3=관문하이라이트
+        guideStep: 0,
         guideActive: false,
-        guideMonologueLines: [],
-        guideMonologueIndex: 0,
-        guideMonologueText: '',
-        guideTyping: false,
-        guideTypeInterval: null,
 
-        // ── 퀘스트 상태 ──
         async init() {
             await this.loadPlayerInfo();
             await this.loadMyCharacters();
-            this.updateQuestProgression();
+            if (typeof this.fetchQuestInfo === 'function') {
+                await this.fetchQuestInfo();
+            }
             this.isLoading = false;
-            // 가이드라인 체크 (튜토리얼 배틀 완료 후 첫 로비 진입)
             this.checkGuideStart();
         },
 
@@ -82,25 +74,53 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        updateQuestProgression() {
-            // 스토리 챕터나 레벨에 따라 퀘스트 변경 로직 (향후 확장용)
-            // 프롤로그 클리어 전이라면 (playerLevel이 1이고 초기 상태라고 가정)
-            if (this.playerLevel <= 1) {
-                this.currentQuest = {
-                    title: '무림의 시작',
-                    goal: '비경에서의 수련 (1년의 수련)',
-                    category: '메인',
-                    targetUrl: '/tutorial-cave'
-                };
+        async fetchQuestInfo() {
+            try {
+                const res = await fetch('/api/quest/current');
+                if (res.ok) this.currentQuest = await res.json();
+            } catch (e) { console.error("Quest fetch error:", e); }
+        },
+
+        async fetchStages() {
+            try {
+                const res = await fetch(`/api/dungeon/stages/${this.currentChapter}`);
+                if (res.ok) {
+                    this.stages = await res.json();
+                    this.$nextTick(() => lucide.createIcons());
+                }
+            } catch (e) { console.error("Stages fetch error:", e); }
+        },
+
+        async handleQuestClick() {
+            if (this.currentQuest.status === 'COMPLETED') {
+                await this.claimQuestReward();
             } else {
-                // 프롤로그 클리어 후라면 초보자 영입 가이드
-                this.currentQuest = {
-                    title: '최초의 영입',
-                    goal: '초보자 영입 진행 (10회)',
-                    category: '메인',
-                    targetModal: 'GACHA'
-                };
+                this.openModal('DUNGEON');
             }
+        },
+
+        async claimQuestReward() {
+            try {
+                const res = await fetch('/api/quest/claim', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    alert('보상을 수령했습니다!');
+                    await this.fetchQuestInfo();
+                    await this.loadPlayerInfo();
+                }
+            } catch (e) { alert('보상 수령 실패: ' + e.message); }
+        },
+
+        async enterStage(stage) {
+            try {
+                const res = await fetch(`/api/dungeon/check-story/${stage.id}`);
+                const data = await res.json();
+                if (data.hasStory) {
+                    window.location.href = `/story?id=${data.storyId}&nextStage=${stage.id}`;
+                } else {
+                    window.location.href = `/battle?stageId=${stage.id}`;
+                }
+            } catch (e) { window.location.href = `/battle?stageId=${stage.id}`; }
         },
 
         async loadMyCharacters() {
@@ -272,32 +292,6 @@ document.addEventListener('alpine:init', () => {
                 this.currentParty[this.selectedPartySlot] = char;
                 // 다음 빈 슬롯이나 다음 번호 슬롯으로 자동 이동 (편의성)
                 this.selectedPartySlot = (this.selectedPartySlot + 1) % 4;
-            }
-        },
-
-        async saveParty() {
-            try {
-                const partyIds = this.currentParty.map(p => p ? p.id : null);
-                const res = await fetch('/api/map/party', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(partyIds)
-                });
-                if (res.ok) {
-                    this.closeModal();
-                } else {
-                    alert('편성 저장에 실패했습니다.');
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        },
-
-        handleQuestClick() {
-            if (this.currentQuest.targetUrl) {
-                window.location.href = this.currentQuest.targetUrl;
-            } else if (this.currentQuest.targetModal) {
-                this.openModal(this.currentQuest.targetModal);
             }
         },
 

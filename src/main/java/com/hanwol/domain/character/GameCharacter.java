@@ -30,6 +30,9 @@ public class GameCharacter {
     @Column(nullable = false, length = 100)
     private String name;
 
+    @Column(unique = true, length = 50)
+    private String code; // 예: "CH_NAMGUNG_CHUN"
+
     @Column(length = 200)
     private String title; // 별호
 

@@ -7,13 +7,13 @@ import com.hanwol.dto.battle.BattleDamageResult; // DTO 임포트 추가
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Service
 public class BattleLogicService {
 
-    private final Random random = new Random();
+    // private final Random random = new Random(); // 디렉터님 팩폭: 15년 차 시니어는 Random 대신 스레드 안전한 ThreadLocalRandom을 쓴다!
 
     /**
      * 데미지 계산 공식 (A안 반영: 상세 데이터를 담은 BattleDamageResult 리턴)
@@ -40,13 +40,12 @@ public class BattleLogicService {
         double defenseConstant = 1000.0;
         double defenseMultiplier = defenseConstant / (defenseConstant + defenderDef);
 
-        // 5. 치명타 계산 (BaseCritRate가 퍼센트 단위(예: 30.0 = 30%)로 들어가 있다고 가정)
-        boolean isCrit = (random.nextDouble() * 100.0) < attacker.getCharacter().getBaseCritRate().doubleValue();
+        // 5. 치명타 계산
+        boolean isCrit = (ThreadLocalRandom.current().nextDouble() * 100.0) < attacker.getCharacter().getBaseCritRate().doubleValue();
         double critMultiplier = isCrit ? (attacker.getCharacter().getBaseCritDmg().doubleValue() / 100.0) : 1.0;
 
         // 6. 무협 맛 가미: 데미지 변동폭(Fluctuation) 추가 (95% ~ 105% 사이의 난수 생성)
-        // 매번 똑같은 데미지가 안 나오고 타격감이 살게 만드는 실무 트릭이다.
-        double fluctuation = 0.95 + (random.nextDouble() * 0.10);
+        double fluctuation = 0.95 + (ThreadLocalRandom.current().nextDouble() * 0.10);
 
         // 최종 계산
         int finalDamage = (int) Math

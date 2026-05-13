@@ -205,7 +205,7 @@
 
     <!-- 우하단 메인 버튼 -->
     <div class="absolute bottom-8 right-0 flex flex-col gap-2.5 pointer-events-auto">
-        <button @click="openModal('DUNGEON')" class="skew btn-sub w-64 h-14 mr-[-16px] flex items-center justify-end pr-8 cursor-pointer">
+        <button @click="openModal('DAILY_HALL')" class="skew btn-sub w-64 h-14 mr-[-16px] flex items-center justify-end pr-8 cursor-pointer">
             <div class="skew-inner flex items-center gap-3">
                 <div class="text-right">
                     <div class="text-purple-300 text-[10px] font-bold tracking-widest uppercase">일일 수련</div>
@@ -613,8 +613,8 @@
             </div>
         </template>
 
-        <!-- 던전 모달 -->
-        <template x-if="currentModal==='DUNGEON'">
+        <!-- 일일 던전 (기억의 전당) 모달 -->
+        <template x-if="currentModal==='DAILY_HALL'">
             <div class="panel-box w-full max-w-4xl flex flex-col overflow-hidden shadow-2xl" @click.away="closeModal()" style="height: 70vh;">
                 <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/40">
                     <div>
@@ -689,8 +689,8 @@
             </div>
         </template>
 
-        <!-- 던전 선택 (스토리 스테이지) 모달 -->
-        <template x-if="currentModal==='DUNGEON'">
+        <!-- 메인 스토리 스테이지 선택 모달 -->
+        <template x-if="currentModal==='STORY_SELECT'">
             <div class="panel-box w-full max-w-5xl flex flex-col overflow-hidden shadow-2xl bg-[#0a0e1a]/95 border-amber-500/40" @click.away="closeModal()" style="height: 85vh;">
                 <div class="p-4 border-b border-white/10 flex justify-between items-center bg-black/60 relative">
                     <div class="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
@@ -730,7 +730,7 @@
         </template>
 
         <!-- 기타 모달 -->
-        <template x-if="currentModal && !['PARTY', 'MY_PROFILE', 'PROFILE_EDIT', 'GACHA', 'INVENTORY', 'DUNGEON', 'GUILD', 'TOWER', 'RAID'].includes(currentModal)">
+        <template x-if="currentModal && !['PARTY', 'MY_PROFILE', 'PROFILE_EDIT', 'GACHA', 'INVENTORY', 'DAILY_HALL', 'STORY_SELECT', 'GUILD', 'TOWER', 'RAID'].includes(currentModal)">
             <div @click.away="closeModal()" class="panel-box max-w-md w-full overflow-hidden shadow-xl" style="height:45vh">
                 <div class="p-4 border-b border-white/5 flex justify-between items-center bg-black/30">
                     <h3 class="text-lg font-bold serif text-amber-500" x-text="modalTitle"></h3>

@@ -95,7 +95,7 @@ document.addEventListener('alpine:init', () => {
             if (this.currentQuest.status === 'COMPLETED') {
                 await this.claimQuestReward();
             } else {
-                this.openModal('DUNGEON');
+                this.openModal('STORY_SELECT');
             }
         },
 
@@ -265,12 +265,19 @@ document.addEventListener('alpine:init', () => {
                 'PARTY': '편성 (출진)',
                 'INVENTORY': '보따리 (인벤토리)',
                 'GUILD': '문파 (길드)',
-                'DUNGEON': '기억의 전당 (던전)',
+                'DAILY_HALL': '기억의 전당 (던전)',
+                'STORY_SELECT': '제1막: 남궁의 잔화 (殘花)',
                 'TOWER': '무한의 탑',
                 'RAID': '주간 레이드 (토벌)',
                 'MY_PROFILE': '종합 상태창',
                 'PROFILE_EDIT': '유저 프로필 설정'
             };
+
+            // 스토리 선택 모달 열 때 스테이지 데이터 로드
+            if (type === 'STORY_SELECT') {
+                this.fetchStages();
+            }
+
             this.modalTitle = titles[type] || '시스템';
             this.currentModal = type;
         },
@@ -340,11 +347,8 @@ document.addEventListener('alpine:init', () => {
         },
 
         goToStory() {
-            if (this.currentQuest.targetUrl) {
-                window.location.href = this.currentQuest.targetUrl;
-            } else {
-                window.location.href = '/stage-select';
-            }
+            // 외부 페이지 대신 로비 내 모달로 통합 (UX 개선)
+            this.openModal('STORY_SELECT');
         },
 
         enterDungeon() {

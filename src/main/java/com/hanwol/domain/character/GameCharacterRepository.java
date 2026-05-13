@@ -14,6 +14,8 @@ public interface GameCharacterRepository extends JpaRepository<GameCharacter, Lo
 
     Optional<GameCharacter> findByName(String name);
 
+    Optional<GameCharacter> findByCode(String code);
+
     List<GameCharacter> findByRouteType(RouteType routeType);
 
     /** 공용 캐릭터 + 특정 루트 캐릭터 조회 */

@@ -53,9 +53,9 @@ public class BattleApiController {
             return ResponseEntity.badRequest().body("사용하려는 무공(스킬)을 찾을 수 없습니다. ID: " + request.getSkillId());
         }
 
-        // 3. 기력/투기가 충분한지 서비스에서 검증 (네가 만들어둔 훌륭한 검증 로직 활용!)
-        // 단, 여기서는 예시로 기력과 투기 현재 값을 999로 임시 패스하거나, 원래 세션/전투 상태 객체에서 꺼내와야 함.
-        if (!battleLogicService.canUseSkill(skill, 999, 999)) {
+        // 3. 기력/투기 검증 (클라이언트가 보낸 현재 상태 기반으로 일단 검증)
+        // TODO: 보안을 위해 서버 세션이나 Redis에 저장된 '전투 인스턴스'의 실시간 자원 상태와 대조해야 함! (디렉터님 팩폭 반영 예정)
+        if (!battleLogicService.canUseSkill(skill, request.getCurrentEnergy(), request.getCurrentSpirit())) {
             return ResponseEntity.badRequest().body("기력 또는 투기가 부족하여 무공을 펼칠 수 없습니다.");
         }
 
@@ -75,9 +75,8 @@ public class BattleApiController {
      */
     @GetMapping("/character/{templateId}")
     public ResponseEntity<HeroTemplateDto> getCharacterTemplate(@PathVariable("templateId") String templateId) {
-        Long charId = "CH_NAMGUNG_CHUN".equals(templateId) ? 1L : 2L;
-
-        GameCharacter character = gameCharacterRepository.findById(charId).orElse(null);
+        // Long charId = "CH_NAMGUNG_CHUN".equals(templateId) ? 1L : 2L; <- 디렉터님의 팩폭: 15년 차 시니어는 코드로 긁어온다!
+        GameCharacter character = gameCharacterRepository.findByCode(templateId).orElse(null);
         if (character == null) {
             return ResponseEntity.notFound().build();
         }
@@ -119,6 +118,8 @@ public class BattleApiController {
     public static class BattleAttackRequest {
         private Long attackerId;
         private Long skillId;
+        private int currentEnergy; // 추가됨: 현재 기력
+        private int currentSpirit; // 추가됨: 현재 투기
         private com.hanwol.domain.enums.Element defenderElement;
         private int defenderDef;
     }

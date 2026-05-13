@@ -47,6 +47,18 @@ document.addEventListener('alpine:init', () => {
             if (typeof this.fetchQuestInfo === 'function') {
                 await this.fetchQuestInfo();
             }
+
+            // 대표 캐릭터 이미지(일러스트)가 브라우저에 캐싱될 때까지 로딩 스크린 유지 (FOUC 방지)
+            const mainCharSrc = this.currentLobbyCharacter.src;
+            if (mainCharSrc) {
+                await new Promise(resolve => {
+                    const img = new Image();
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                    img.src = mainCharSrc;
+                });
+            }
+
             this.isLoading = false;
             this.checkGuideStart();
         },

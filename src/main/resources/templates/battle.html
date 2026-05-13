@@ -288,7 +288,7 @@
 
     <!-- 전투 결과 모달 -->
     <div x-show="gameState === 'WIN' || gameState === 'LOSE'" style="display:none;"
-         class="absolute inset-0 z-[100] bg-black/80 flex items-center justify-center"
+         class="absolute inset-0 z-[100] bg-black/80 flex items-center justify-center pointer-events-auto"
          x-transition.opacity>
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-8 text-center shadow-2xl">
             <template x-if="gameState === 'WIN'">

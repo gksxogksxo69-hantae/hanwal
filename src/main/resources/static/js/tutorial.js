@@ -23,14 +23,12 @@ document.addEventListener('alpine:init', () => {
 
         // ── 10단계 시나리오 ──
         get scenes() {
-            const pName = this.playerGender === 'MALE' ? '남궁천' : '남궁설화';
-            
             return [
                 { speaker: '지문', text: '신황력 342년... 무림의 역사상 가장 무겁고 잔혹한 멸망의 밤이 찾아왔다.', effect: 'fade-in-dark', bg: '/images/prologue_bg_estate_fire.png' },
                 { speaker: '지문', text: '부활한 천마(天魔)의 마위 앞에 중원의 산천이 붉게 타들어 갈 때... 무림맹의 모든 명숙들은 절망했다.', effect: 'red-flash' },
                 { speaker: '지문', text: '"중원의 명운을 걸고 출진했던 당대 최강의 \'무림 10대 고수\'. 그 선두에는 검의 종가, 남궁세가의 자랑이자 천재였던 장남 남궁선과 차남 남궁현이 있었다."', effect: 'fade-in' },
                 { speaker: '지문', text: '"...하지만, 결과는 전멸(全滅). 참혹한 살육의 밤 끝에 그들의 부러진 검과 목이 차가운 흑풍곡의 깃대에 걸리던 날, 중원의 전설은 끝이 났다."', effect: 'screen-shake-heavy' },
-                { speaker: '지문', text: `가문의 대들보를 잃은 남궁세가는 한순간에 지옥으로 변했다. 천재들의 그늘 뒤에 가려져 있던 셋째 남궁천과 막내 남궁설화는... 거대한 상실감에 검마저 놓아버린 채 1년을 죽은 듯 보냈다.`, effect: 'bg-dim' },
+                { speaker: '지문', text: '가문의 대들보를 잃은 남궁세가는 한순간에 지옥으로 변했다. 천재들의 그늘 뒤에 가려져 있던 셋째 남궁천과 막내 남궁설화는... 거대한 상실감에 검마저 놓아버린 채 1년을 죽은 듯 보냈다.', effect: 'bg-dim' },
                 { speaker: '지문', text: "그러나 운명은 가혹했다. 형들이 떠난 지 정확히 1년이 되던 날, 천마의 최측근이자 잔혹한 살인귀인 '우호법(右護法)'이 남궁의 씨를 말리기 위해 밤안개를 뚫고 가문을 기습했다!", effect: 'fire-effect-overlay' },
                 { speaker: '남궁천', text: '"선이 형... 현이 형...! 내가 조금만 더 강했어도...! 우호법 이 마두 새끼!!! 내 형들을 찢어발긴 것도 모자라, 이제 가문의 숨통까지 끊으러 왔더냐!!!"', effect: 'shake' },
                 { speaker: '남궁설화', text: '"오빠들... 거짓말이지? 어서 일어나서 저 괴물들 좀 쫓아내 줘... 꺄아아악!! 싫어, 무서워...! 날 만지지 마! 오빠들을 돌려내란 말이야...!!"', effect: 'flash-white' },
@@ -40,14 +38,19 @@ document.addEventListener('alpine:init', () => {
         },
 
         get currentScene() {
-            return this.scenes[this.currentSceneIndex] || { speaker: '', text: '' };
+            if (this.currentSceneIndex >= 0 && this.currentSceneIndex < this.scenes.length) {
+                return this.scenes[this.currentSceneIndex];
+            }
+            return { speaker: '', text: '', effect: '' };
         },
 
         get progress() {
+            if (!this.scenes || this.scenes.length === 0) return 0;
             return Math.floor(((this.currentSceneIndex + 1) / this.scenes.length) * 100);
         },
 
         init() {
+            console.log('[Tutorial] Alpine init started');
             this.loadPlayerInfo();
         },
 
@@ -58,14 +61,23 @@ document.addEventListener('alpine:init', () => {
                 if (data.success) {
                     this.playerGender = data.gender || 'MALE';
                     this.playerNickname = data.nickname || '모험가';
+                    console.log('[Tutorial] Player loaded:', this.playerGender, this.playerNickname);
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[Tutorial] player-info API failed, using defaults');
+            }
+            // API 성공 여부 무관하게 시작
             this.startScene();
         },
 
         startScene() {
             const scene = this.currentScene;
-            if (!scene) return;
+            if (!scene || !scene.text) {
+                console.warn('[Tutorial] No scene found at index:', this.currentSceneIndex);
+                return;
+            }
+
+            console.log('[Tutorial] Starting scene', this.currentSceneIndex, ':', scene.text.substring(0, 30) + '...');
 
             // 배경 전환
             if (scene.bg) {
@@ -82,11 +94,7 @@ document.addEventListener('alpine:init', () => {
                 }
                 
                 // 불꽃 연출 트리거
-                if (scene.effect === 'fire-effect-overlay') {
-                    this.showFireEmbers = true;
-                } else {
-                    this.showFireEmbers = false;
-                }
+                this.showFireEmbers = (scene.effect === 'fire-effect-overlay');
 
                 if (scene.effect === 'bg-dim') {
                     this.bgEffect = 'bg-dim-effect';
@@ -133,18 +141,19 @@ document.addEventListener('alpine:init', () => {
 
         handleClick() {
             const now = Date.now();
-            if (now - this.lastClickTime < 300) return; // 쓰로틀링 (0.3초)
+            if (now - this.lastClickTime < 250) return;
             this.lastClickTime = now;
 
-            console.log('Click detected, Index:', this.currentSceneIndex);
+            console.log('[Tutorial] Click! Index:', this.currentSceneIndex, 'States:', {
+                typing: this.isTyping, completed: this.isCompleted, 
+                titleDrop: this.showTitleDrop, skipModal: this.showSkipModal
+            });
 
-            if (this.isCompleted || this.showTitleDrop || this.showSkipModal) {
-                console.log('Click ignored due to state:', { comp: this.isCompleted, title: this.showTitleDrop, modal: this.showSkipModal });
-                return;
-            }
+            // 블로킹 조건
+            if (this.isCompleted || this.showTitleDrop || this.showSkipModal) return;
 
+            // 타이핑 중이면 즉시 완료
             if (this.isTyping) {
-                console.log('Skipping typing animation');
                 if (this.typingTimer) clearInterval(this.typingTimer);
                 this.typingTimer = null;
                 this.displayedText = this.currentScene.text;
@@ -153,15 +162,12 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            // 히스토리에 현재 대사 추가
+            // 히스토리에 현재 대사 추가 후 다음으로
             this.history.push({ speaker: this.currentScene.speaker, text: this.currentScene.text });
 
             if (this.currentSceneIndex < this.scenes.length - 1) {
                 this.currentSceneIndex++;
-                console.log('Moving to next scene:', this.currentSceneIndex);
                 this.startScene();
-            } else {
-                console.log('End of scenes reached');
             }
         },
 
@@ -176,18 +182,30 @@ document.addEventListener('alpine:init', () => {
         async completeTutorial() {
             if (this.isCompleted) return;
             this.isCompleted = true;
+            console.log('[Tutorial] Completing tutorial, redirecting...');
             try {
                 await fetch('/api/tutorial/complete-step', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ step: 1 }) 
                 });
-            } catch (e) {}
-            window.location.href = '/town';
+            } catch (e) {
+                console.warn('[Tutorial] complete-step API failed:', e);
+            }
+            setTimeout(() => { window.location.href = '/town'; }, 2500);
         },
 
-        openSkipModal() { this.showSkipModal = true; },
-        closeSkipModal() { this.showSkipModal = false; },
-        confirmSkip() { this.completeTutorial(); }
+        openSkipModal() { 
+            console.log('[Tutorial] Opening skip modal');
+            this.showSkipModal = true; 
+        },
+        closeSkipModal() { 
+            console.log('[Tutorial] Closing skip modal');
+            this.showSkipModal = false; 
+        },
+        confirmSkip() { 
+            console.log('[Tutorial] Skip confirmed');
+            this.completeTutorial(); 
+        }
     }));
 });

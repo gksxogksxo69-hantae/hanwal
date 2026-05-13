@@ -13,7 +13,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- 커스텀 CSS -->
     <link rel="stylesheet" href="../static/css/tutorial.css" th:href="@{/css/tutorial.css}">
-    <!-- Alpine.js 로직 -->
+    <!-- Alpine.js 로직 (반드시 Alpine CDN 전에 로드) -->
     <script defer src="../static/js/tutorial.js" th:src="@{/js/tutorial.js}"></script>
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -31,10 +31,13 @@
             overflow: hidden;
         }
         .font-myeongjo { font-family: 'Nanum Myeongjo', serif; }
+        /* Alpine x-cloak: Alpine 초기화 전 깜빡임 방지 */
+        [x-cloak] { display: none !important; }
     </style>
 </head>
 <body>
 
+<!-- ===== Alpine 루트 스코프 시작 ===== -->
 <div x-data="tutorialApp()" 
      @click="handleClick"
      @keydown.window="handleKeydown($event)"
@@ -141,9 +144,7 @@
         </div>
     </template>
 
-    </div>
-
-    <!-- ===== 튜토리얼 완료 오버레이 ===== -->
+    <!-- ===== 튜토리얼 완료 오버레이 (★ Alpine 스코프 안!) ===== -->
     <div x-show="isCompleted" 
          x-transition.opacity.duration.2000ms
          class="absolute inset-0 z-40 flex items-center justify-center bg-black/80"
@@ -157,7 +158,7 @@
         </div>
     </div>
 
-    <!-- ===== 스킵 확인 모달 ===== -->
+    <!-- ===== 스킵 확인 모달 (★ Alpine 스코프 안!) ===== -->
     <div x-show="showSkipModal" x-transition.opacity x-cloak
          class="skip-modal-overlay" @click.stop>
         <div class="skip-modal" @click.stop>
@@ -170,6 +171,8 @@
             </div>
         </div>
     </div>
+
+<!-- ===== Alpine 루트 스코프 끝 ===== -->
 </div>
 
 <!-- Lucide 아이콘 초기화 -->

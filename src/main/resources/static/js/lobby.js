@@ -115,11 +115,14 @@ document.addEventListener('alpine:init', () => {
             try {
                 const res = await fetch(`/api/dungeon/check-story/${stage.id}`);
                 const data = await res.json();
-                if (data.hasStory) {
-                    window.location.href = `/story?id=${data.storyId}&nextStage=${stage.id}`;
-                } else {
-                    window.location.href = `/battle?stageId=${stage.id}`;
-                }
+                // TODO: '스토리 재생창(story.html)' 페이지가 아직 없어서 발생하는 404 에러 방지용 임시 우회
+                // 나중에 스토리 재생 페이지를 만들 때 주석을 풀면 됩니다!
+                // if (data.hasStory) {
+                //     window.location.href = `/story?id=${data.storyId}&nextStage=${stage.id}`;
+                // } else {
+                //     window.location.href = `/battle?stageId=${stage.id}`;
+                // }
+                window.location.href = `/battle?stageId=${stage.id}`;
             } catch (e) { window.location.href = `/battle?stageId=${stage.id}`; }
         },
 

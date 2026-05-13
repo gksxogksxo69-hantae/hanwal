@@ -216,7 +216,17 @@
                     
                     <button @click="startStage()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 rounded-lg shadow-[0_0_15px_rgba(245,158,11,0.3)] transition transform hover:scale-[1.02]">
                         전투 시작
-                    </butto                // 스테이지 데이터
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('stageApp', () => ({
+                // 스테이지 데이터
                 acts: [],
                 maxClearedStageId: 0,
 
@@ -276,7 +286,7 @@
                 startStage() {
                     const act = this.currentActIndex + 1;
                     const stageId = this.selectedStage?.id || 1;
-                    window.location.href = `/battle?act=${act}&stage=${stageId}`;
+                    window.location.href = `/battle?act=${act}&stageId=${stageId}`;
                 },
 
                 // 두 점을 연결하던 구형 함수 삭제.

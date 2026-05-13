@@ -689,45 +689,7 @@
             </div>
         </template>
 
-        <!-- 메인 스토리 스테이지 선택 모달 -->
-        <template x-if="currentModal==='STORY_SELECT'">
-            <div class="panel-box w-full max-w-5xl flex flex-col overflow-hidden shadow-2xl bg-[#0a0e1a]/95 border-amber-500/40" @click.away="closeModal()" style="height: 85vh;">
-                <div class="p-4 border-b border-white/10 flex justify-between items-center bg-black/60 relative">
-                    <div class="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
-                    <div>
-                        <h2 class="text-2xl font-bold serif text-amber-500 tracking-widest px-2">제1막: 남궁의 잔화 (殘花)</h2>
-                    </div>
-                    <button @click="closeModal()" class="w-8 h-8 rounded-full bg-slate-800/80 border border-white/20 text-slate-300 flex items-center justify-center hover:bg-red-500 hover:text-white hover:border-red-500 transition-all z-10 shadow-lg">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                </div>
 
-                <div class="flex-1 overflow-y-auto p-6 bg-repeat">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <template x-for="s in stages" :key="s.stage.id">
-                            <div class="relative group overflow-hidden rounded-xl border transition-all duration-300"
-                                 :class="s.isLocked ? 'grayscale opacity-60 border-white/5 bg-white/5' : 'border-amber-500/20 bg-amber-500/5 hover:border-amber-500/60 hover:bg-amber-500/10 cursor-pointer shadow-lg hover:shadow-amber-500/20'"
-                                 @click="!s.isLocked && enterStage(s.stage)">
-                                
-                                <div class="p-4 flex flex-col h-full">
-                                    <div class="flex justify-between items-center mb-3">
-                                        <div class="w-8 h-8 flex items-center justify-center rounded bg-black/40 text-amber-500 border border-amber-500/30 font-bold"
-                                             x-text="s.stage.stageNum"></div>
-                                        <div x-show="s.isLocked"><i data-lucide="lock" class="w-4 h-4 text-slate-500"></i></div>
-                                        <div x-show="s.isCleared" class="text-[10px] text-amber-500 font-bold">CLEAR</div>
-                                    </div>
-                                    <h4 class="text-base font-bold text-white serif mb-2" x-text="s.stage.title"></h4>
-                                    <div class="flex gap-3 text-[10px] text-slate-500">
-                                        <span x-text="'Gold: ' + s.stage.rewardGold"></span>
-                                        <span x-text="'Exp: ' + s.stage.rewardExp"></span>
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-            </div>
-        </template>
 
         <!-- 기타 모달 -->
         <template x-if="currentModal && !['PARTY', 'MY_PROFILE', 'PROFILE_EDIT', 'GACHA', 'INVENTORY', 'DAILY_HALL', 'STORY_SELECT', 'GUILD', 'TOWER', 'RAID'].includes(currentModal)">

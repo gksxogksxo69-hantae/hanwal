@@ -350,8 +350,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         goToStory() {
-            // 외부 페이지 대신 로비 내 모달로 통합 (UX 개선)
-            this.openModal('STORY_SELECT');
+            window.location.href = '/stage-select';
         },
 
         enterDungeon() {

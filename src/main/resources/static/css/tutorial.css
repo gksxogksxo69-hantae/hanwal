@@ -477,6 +477,7 @@
     overflow-y: auto;
     scrollbar-width: none;
     mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+    pointer-events: none;
 }
 
 .narrative-container::-webkit-scrollbar { display: none; }

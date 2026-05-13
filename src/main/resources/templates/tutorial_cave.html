@@ -13,6 +13,8 @@
     <!-- 커스텀 CSS (프로토타입 스타일 공유) -->
     <link rel="stylesheet" href="/css/tutorial.css">
     
+    <!-- 동굴 로직 JS (맨드시 Alpine.js 전에 로드) -->
+    <script defer src="/js/tutorial_cave.js"></script>
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
@@ -69,7 +71,8 @@
     </div>
 
     <!-- ===== 전환 레이어 ===== -->
-    <div class="scene-transition" x-show="isTransitioning" x-transition.opacity.duration.1500ms>
+    <div class="scene-transition" x-show="isTransitioning" x-transition.opacity.duration.1500ms
+         style="display:none; pointer-events:none;">
         <p class="transition-text font-myeongjo" x-text="transitionText"></p>
     </div>
 
@@ -80,8 +83,6 @@
 
 </div>
 
-<!-- 동굴 로직 JS -->
-<script src="/js/tutorial_cave.js"></script>
 
 </body>
 </html>

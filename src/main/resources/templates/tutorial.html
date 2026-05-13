@@ -36,11 +36,9 @@
 <body>
 
 <div x-data="tutorialApp()" 
+     @click="handleClick"
      @keydown.window="handleKeydown($event)"
      class="tutorial-container">
-
-    <!-- ===== 클릭 캡처 오버레이 ===== -->
-    <div class="absolute inset-0 z-[20] cursor-pointer" @click="handleClick"></div>
 
     <!-- ===== 프로그레스 바 ===== -->
     <div class="progress-bar-container">
@@ -82,7 +80,7 @@
     </div>
 
     <!-- ===== 타이틀 드롭 오버레이 ===== -->
-    <div class="title-drop-overlay absolute inset-0" x-show="showTitleDrop" x-transition.opacity.duration.3000ms>
+    <div class="title-drop-overlay absolute inset-0" x-show="showTitleDrop" x-transition.opacity.duration.3000ms style="display:none">
         <h1 class="title-text font-myeongjo text-center">[한월(Hanwol) — 복수의 서막]</h1>
     </div>
 
@@ -121,7 +119,8 @@
     <div class="scene-transition"
          :class="{ 'hidden': !isTransitioning }"
          x-show="isTransitioning"
-         x-transition.opacity.duration.1000ms>
+         x-transition.opacity.duration.1000ms
+         style="display:none; pointer-events:none;">
         <p class="transition-text font-myeongjo" x-text="transitionText"></p>
     </div>
 
@@ -147,7 +146,8 @@
     <!-- ===== 튜토리얼 완료 오버레이 ===== -->
     <div x-show="isCompleted" 
          x-transition.opacity.duration.2000ms
-         class="absolute inset-0 z-40 flex items-center justify-center bg-black/80">
+         class="absolute inset-0 z-40 flex items-center justify-center bg-black/80"
+         style="display:none">
         <div class="text-center">
             <p class="font-myeongjo text-2xl text-amber-500 mb-4 tracking-widest" 
                style="text-shadow: 0 0 20px rgba(245,158,11,0.5)">

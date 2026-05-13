@@ -234,6 +234,7 @@
                     <div class="contents">
                         <template x-for="(skill, idx) in currentActor.skills" :key="idx">
                             <div class="h-14 md:h-18 relative group">
+                                <!-- 무공 버튼 -->
                                 <template x-if="!skill.isLock">
                                     <button @click="executeAction(idx)"
                                             :class="skill.isUltimate ? 'bg-gradient-to-br from-amber-700 to-amber-900 border-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.3)] pulse-ult border-2' : 'bg-slate-800/80 hover:bg-slate-700 border border-slate-600'"
@@ -241,10 +242,36 @@
                                         <span class="text-[9px] md:text-xs" :class="{'gowun-batang text-amber-200': skill.isUltimate}" x-text="skill.name"></span>
                                     </button>
                                 </template>
+                                <!-- 잠긴 슬롯 -->
                                 <template x-if="skill.isLock">
                                     <button disabled class="w-full h-full bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center opacity-40 cursor-not-allowed">
                                         <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg>
                                     </button>
+                                </template>
+                                
+                                <!-- 무공 툴팁 (마우스 오버 시 표시) -->
+                                <template x-if="!skill.isLock">
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-48 md:w-56 bg-slate-900/95 border-amber-500/50 border rounded-lg p-3 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[100] pointer-events-none flex flex-col gap-1.5 backdrop-blur-sm">
+                                        <div class="font-bold gowun-batang text-base" :class="skill.isUltimate ? 'text-amber-400' : 'text-sky-300'" x-text="skill.name"></div>
+                                        <div class="text-[11px] md:text-sm text-slate-300 leading-snug break-words" x-text="skill.description || '이름 없는 초식입니다.'"></div>
+                                        
+                                        <!-- 기력 & 투기 수치창 -->
+                                        <div class="flex flex-col gap-1 mt-1 pt-2 border-t border-slate-700/50 text-[11px] font-bold">
+                                            <template x-if="skill.energyCost > 0">
+                                                <div class="text-yellow-400">⚡ 기력 소모: <span x-text="skill.energyCost"></span></div>
+                                            </template>
+                                            <template x-if="skill.energyCost < 0">
+                                                <div class="text-emerald-400">🍃 기력 회복: <span x-text="Math.abs(skill.energyCost)"></span></div>
+                                            </template>
+                                            <template x-if="skill.energyCost === 0">
+                                                <div class="text-slate-400">💨 기력 소모 없음</div>
+                                            </template>
+                                            
+                                            <template x-if="skill.spiritCost > 0">
+                                                <div class="text-fuchsia-400">🔥 투기 소모: <span x-text="skill.spiritCost"></span></div>
+                                            </template>
+                                        </div>
+                                    </div>
                                 </template>
                             </div>
                         </template>

@@ -26,19 +26,42 @@ public class QuestService {
     /**
      * 현재 진행 중인 퀘스트 정보 조회
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public Map<String, Object> getCurrentQuestInfo(Long userId) {
-        UserProgress progress = progressRepository.findById(userId).orElseThrow();
-        MainQuest quest = questRepository.findById(progress.getCurrentQuestId()).orElseThrow();
+        UserProgress progress = getOrCreateProgress(userId);
         
+        Optional<MainQuest> questOpt = questRepository.findById(progress.getCurrentQuestId());
+        
+        if (questOpt.isEmpty()) {
+            return Map.of(
+                "title", "진행 가능한 퀘스트 없음",
+                "goalDesc", "모든 시련을 극복하셨습니다.",
+                "status", "CLAIMED"
+            );
+        }
+
+        MainQuest quest = questOpt.get();
         return Map.of(
             "id", quest.getId(),
             "title", quest.getTitle(),
             "goalDesc", quest.getGoalDesc(),
-            "status", progress.getQuestStatus(), // IN_PROGRESS, COMPLETED, CLAIMED
+            "status", progress.getQuestStatus(),
             "rewardGold", quest.getRewardGold(),
             "rewardGems", quest.getRewardGems()
         );
+    }
+
+    private UserProgress getOrCreateProgress(Long userId) {
+        return progressRepository.findById(userId)
+                .orElseGet(() -> {
+                    UserProgress newProgress = UserProgress.builder()
+                            .userId(userId)
+                            .maxClearedStageId(0)
+                            .currentQuestId(1) // 1번 퀘스트부터 시작
+                            .questStatus(UserProgress.STATUS_IN_PROGRESS)
+                            .build();
+                    return progressRepository.save(newProgress);
+                });
     }
 
     /**
@@ -46,7 +69,7 @@ public class QuestService {
      */
     @Transactional
     public void checkQuestProgress(Long userId, Integer clearedStageId) {
-        UserProgress progress = progressRepository.findById(userId).orElseThrow();
+        UserProgress progress = getOrCreateProgress(userId);
         
         // 최고 클리어 기록 갱신
         if (clearedStageId > progress.getMaxClearedStageId()) {
@@ -70,7 +93,7 @@ public class QuestService {
      */
     @Transactional
     public QuestClaimResponse claimReward(Long userId) {
-        UserProgress progress = progressRepository.findById(userId).orElseThrow();
+        UserProgress progress = getOrCreateProgress(userId);
         
         if (!UserProgress.STATUS_COMPLETED.equals(progress.getQuestStatus())) {
             throw new IllegalStateException("보상을 수령할 수 있는 상태가 아닙니다.");

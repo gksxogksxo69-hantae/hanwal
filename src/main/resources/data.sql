@@ -122,3 +122,15 @@ UPDATE characters SET rarity = 'S', is_gacha_target = true WHERE id IN (6, 12);
 UPDATE characters SET rarity = 'A', is_gacha_target = true WHERE id IN (3, 4, 7, 8, 10);
 UPDATE characters SET rarity = 'B', is_gacha_target = true WHERE id IN (5, 9, 11, 13);
 UPDATE characters SET rarity = 'C', is_gacha_target = true WHERE id IN (14, 15, 16, 17, 18, 19);
+
+-- 11. 메인 퀘스트 마스터 테이블 데이터 삽입 (mst_main_quest)
+INSERT IGNORE INTO mst_main_quest (id, chapter_id, target_stage_id, title, goal_desc, reward_gold, reward_gems) VALUES
+(1, 1, 1, '혈겁의 시작', '스테이지 1-1 클리어', 500, 50),
+(2, 1, 2, '불타는 장저', '스테이지 1-2 클리어', 600, 50),
+(3, 1, 3, '가문의 생존자', '스테이지 1-3 클리어', 700, 100),
+(4, 1, 4, '포위망 돌파', '스테이지 1-4 클리어', 800, 50),
+(5, 1, 5, '협객의 등장', '스테이지 1-5 클리어', 1000, 100);
+
+-- 12. 테스트용 유저 진행도 초기화 (유저 ID 1 전용)
+INSERT IGNORE INTO user_progress (user_id, max_cleared_stage_id, current_quest_id, quest_status) VALUES
+(1, 0, 1, 'IN_PROGRESS');

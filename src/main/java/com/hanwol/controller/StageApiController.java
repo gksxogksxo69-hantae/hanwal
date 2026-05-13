@@ -25,6 +25,8 @@ public class StageApiController {
     private final UserRepository userRepository;
     private final UserCharacterRepository userCharacterRepository;
     private final CharacterGrowthService growthService;
+    private final com.hanwol.domain.story.StageRepository stageRepository;
+    private final com.hanwol.service.QuestService questService;
 
     /**
      * 스테이지 진입 시 적 구성/보상 데이터를 내려줌
@@ -32,10 +34,25 @@ public class StageApiController {
      */
     @GetMapping("/data")
     public ResponseEntity<?> getStageData(
-            @RequestParam int act,
-            @RequestParam int stage) {
+            @RequestParam(required = false, defaultValue = "0") Integer stageId,
+            @RequestParam(required = false, defaultValue = "1") int act,
+            @RequestParam(required = false, defaultValue = "1") int stage) {
 
-        // 스테이지별 적 구성 (하드코딩 → 추후 DB 이관)
+        if (stageId != null && stageId > 0) {
+            Optional<com.hanwol.domain.story.Stage> dbStageOpt = stageRepository.findById(stageId);
+            if (dbStageOpt.isPresent()) {
+                com.hanwol.domain.story.Stage dbStage = dbStageOpt.get();
+                Map<String, Object> data = buildStageData(dbStage.getChapterId(), dbStage.getStageNum());
+                data.put("title", dbStage.getTitle());
+                data.put("id", dbStage.getId());
+                // 보상은 result API에서 다시 DB에서 꺼내 쓰겠지만 클라이언트에 참고용으로 보낼 수도 있음
+                data.put("rewardGold", dbStage.getRewardGold());
+                data.put("rewardExp", dbStage.getRewardExp());
+                return ResponseEntity.ok(Map.of("success", true, "stage", data));
+            }
+        }
+
+        // stageId가 없거나 DB에서 못 찾으면 기존 하드코딩 로직(안전망)
         Map<String, Object> data = buildStageData(act, stage);
         return ResponseEntity.ok(Map.of("success", true, "stage", data));
     }
@@ -57,6 +74,7 @@ public class StageApiController {
             return ResponseEntity.badRequest().body(Map.of("success", false));
         }
 
+        int stageId = (int) body.getOrDefault("stageId", 0);
         int act = (int) body.getOrDefault("act", 1);
         int stageNum = (int) body.getOrDefault("stage", 1);
         boolean win = (boolean) body.getOrDefault("win", false);
@@ -66,9 +84,22 @@ public class StageApiController {
             return ResponseEntity.ok(Map.of("success", true, "win", false, "message", "패배..."));
         }
 
-        // 보상 계산
+        // 보상 계산 (DB 기준 우선, 없으면 하드코딩 수식)
         int baseGold = 200 + (act * 150) + (stageNum * 50);
         long baseExp = 50L + (act * 30L) + (stageNum * 15L);
+
+        Optional<com.hanwol.domain.story.Stage> stageOpt = stageId > 0 
+                ? stageRepository.findById(stageId) 
+                : stageRepository.findByChapterIdAndStageNum(act, stageNum);
+
+        com.hanwol.domain.story.Stage dbStage = stageOpt.orElse(null);
+        if (dbStage != null) {
+            baseGold = dbStage.getRewardGold() != null ? dbStage.getRewardGold() : baseGold;
+            baseExp = dbStage.getRewardExp() != null ? dbStage.getRewardExp() : baseExp;
+            act = dbStage.getChapterId();
+            stageNum = dbStage.getStageNum();
+        }
+
         baseGold *= stars; // 별점 보너스
         baseExp *= stars;
 
@@ -82,14 +113,18 @@ public class StageApiController {
             growthService.gainExp(uc.getId(), baseExp);
         }
 
-        // 스토리 진행 체크 (해당 막의 마지막 스테이지 클리어 시)
-        Map<String, Object> stageData = buildStageData(act, stageNum);
-        boolean isBoss = "boss".equals(stageData.get("type"));
-        if (isBoss && user.getStoryChapter() < act) {
-            try {
+        boolean isBoss = false;
+        if (dbStage != null) {
+            // DB에 데이터가 있으면 DB 기반으로 퀘스트 등 진행 업데이트
+            questService.checkQuestProgress(user.getId(), dbStage.getId());
+            
+            // 스토리 챕터 업데이트 로직 (간단히 각 막의 마지막 스테이지면 다음 막으로 넘기기)
+            // 임시로 하드코딩된 보스 스테이지 번호 사용: 1막=9, 2막=8 등. 여긴 더 개선 가능
+            int[] bossStages = {5, 8, 8, 9, 8}; // 1막을 5스테이지로 임시 변경 (data.sql 기준)
+            isBoss = act >= 1 && act <= bossStages.length && stageNum == bossStages[act - 1];
+            if (isBoss && user.getStoryChapter() < act) {
                 user.advanceStoryChapter();
-                log.info("스토리 챕터 진행! 유저: {}, {} → {}막", user.getNickname(), act - 1, act);
-            } catch (Exception ignored) {}
+            }
         }
 
         userRepository.save(user);

@@ -134,3 +134,11 @@ INSERT IGNORE INTO mst_main_quest (id, chapter_id, target_stage_id, title, goal_
 -- 12. 테스트용 유저 진행도 초기화 (유저 ID 1 전용)
 INSERT IGNORE INTO user_progress (user_id, max_cleared_stage_id, current_quest_id, quest_status) VALUES
 (1, 0, 1, 'IN_PROGRESS');
+
+-- 13. 메인 스토리 스테이지 마스터 테이블 데이터 삽입 (mst_stage)
+INSERT IGNORE INTO mst_stage (id, chapter_id, stage_num, title, story_before_id, story_after_id, monster_group_id, reward_gold, reward_exp) VALUES
+(1, 1, 1, '타오르는 장원', 1, 0, 101, 100, 50),
+(2, 1, 2, '혈교의 습격자', 0, 0, 102, 150, 60),
+(3, 1, 3, '무너진 정문', 0, 2, 103, 200, 80),
+(4, 1, 4, '피로 물든 길', 0, 0, 104, 250, 100),
+(5, 1, 5, '혈교 선봉장', 3, 4, 105, 500, 300);

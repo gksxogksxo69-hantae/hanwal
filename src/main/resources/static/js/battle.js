@@ -6,6 +6,7 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('battleApp', () => ({
         // URL 파라미터
+        stageId: 1,
         actNum: 1,
         stageNum: 1,
         bgImage: '/images/bg_estate_fire.png',
@@ -29,8 +30,9 @@ document.addEventListener('alpine:init', () => {
         rewardExp: 0,
 
         async init() {
-            // URL에서 act, stage 파싱
+            // URL에서 파라미터 파싱
             const params = new URLSearchParams(window.location.search);
+            this.stageId = parseInt(params.get('stageId') || '1');
             this.actNum = parseInt(params.get('act') || '1');
             this.stageNum = parseInt(params.get('stage') || '1');
 
@@ -41,7 +43,7 @@ document.addEventListener('alpine:init', () => {
             try {
                 // 스테이지 데이터 + 파티 데이터 동시 로딩
                 const [stageRes, partyRes] = await Promise.all([
-                    fetch(`/api/stage/data?act=${this.actNum}&stage=${this.stageNum}`),
+                    fetch(`/api/stage/data?stageId=${this.stageId}`),
                     fetch('/api/stage/party')
                 ]);
 
@@ -55,11 +57,14 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 this.bgImage = stageData.stage.bgImage || '/images/bg_main.png';
+                this.actNum = stageData.stage.act || this.actNum;
+                this.stageNum = stageData.stage.stage || this.stageNum;
+                
                 this.setupEnemies(stageData.stage.enemies);
                 this.setupParty(partyData.party, partyData.nickname, partyData.gender);
                 this.buildTurnQueue();
 
-                this.addLog(`${this.actNum}막 ${this.stageNum}관문 — 전투 개시!`, 'system');
+                this.addLog(stageData.stage.title ? `${stageData.stage.title} — 전투 개시!` : `${this.actNum}막 ${this.stageNum}관문 — 전투 개시!`, 'system');
                 this.gameState = 'START';
 
                 setTimeout(() => this.nextTurn(), 1000);
@@ -403,6 +408,7 @@ document.addEventListener('alpine:init', () => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
+                        stageId: this.stageId,
                         act: this.actNum,
                         stage: this.stageNum,
                         win: true,

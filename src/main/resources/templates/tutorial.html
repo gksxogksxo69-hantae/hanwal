@@ -45,31 +45,49 @@
         <div class="progress-bar-fill" :style="'width: ' + progress + '%'"></div>
     </div>
 
-    <!-- ===== 스킵 버튼 ===== -->
-    <button @click.stop="openSkipModal" class="skip-btn" id="skip-btn"
-            x-show="!isTransitioning && currentSceneIndex > 0" x-cloak>
-        SKIP ▸
-    </button>
-
     <!-- ===== 배경 레이어들 ===== -->
-    <div class="bg-layer ken-burns"
-         :class="{ 'active': currentBg === '/images/bg_estate_peace.png' }"
-         style="background-image: url('/images/bg_estate_peace.png')"></div>
-    <div class="bg-layer ken-burns"
-         :class="{ 'active': currentBg === '/images/bg_estate_fire.png' }"
-         style="background-image: url('/images/bg_estate_fire.png')"></div>
-    <div class="bg-layer ken-burns"
-         :class="{ 'active': currentBg === '/images/bg_cliff.png' }"
-         style="background-image: url('/images/bg_cliff.png')"></div>
-
-    <!-- ===== 비네팅 오버레이 ===== -->
-    <div class="screen-overlay vignette"></div>
+    <div class="bg-layer active"
+         id="mainBg"
+         :style="`background-image: url(${currentBg})`"
+         :class="bgEffect"></div>
 
     <!-- ===== 화면 효과 오버레이 ===== -->
     <div class="screen-overlay"
          :class="screenEffect"
          x-show="screenEffect"
          x-transition></div>
+
+    <!-- ===== 나레이션 스택 (소설 스타일) ===== -->
+    <div class="narrative-container" id="narrativeContainer">
+        <template x-for="(item, idx) in history" :key="idx">
+            <div class="narrative-item">
+                <div x-show="item.speaker !== '지문'" class="narrative-speaker" x-text="item.speaker"></div>
+                <div class="narrative-text font-myeongjo" 
+                     :class="{'ji-mun': item.speaker === '지문'}"
+                     x-text="item.text"></div>
+            </div>
+        </template>
+        
+        <!-- 현재 출력 중인 텍스트 -->
+        <div class="narrative-item" x-show="isTyping || (!isTransitioning && currentSceneIndex < scenes.length)">
+            <div x-show="currentScene.speaker !== '지문'" class="narrative-speaker" x-text="currentScene.speaker"></div>
+            <div class="narrative-text font-myeongjo" 
+                 :class="{'ji-mun': currentScene.speaker === '지문'}">
+                <span x-text="displayedText"></span>
+                <span class="typing-cursor" x-show="isTyping"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 타이틀 드롭 오버레이 ===== -->
+    <div class="title-drop-overlay absolute inset-0" x-show="showTitleDrop" x-transition.opacity.duration.3000ms>
+        <h1 class="title-text font-myeongjo text-center">[한월(Hanwol) — 복수의 서막]</h1>
+    </div>
+
+    <!-- ===== 스킵 버튼 ===== -->
+    <button @click.stop="openSkipModal" class="skip-btn" x-show="!isCompleted" x-cloak>
+        SKIP ▸
+    </button>
 
     <!-- ===== 불꽃 파티클 (습격 씬) ===== -->
     <template x-if="showFireEmbers">
@@ -122,30 +140,6 @@
         </div>
     </template>
 
-    <!-- ===== 텍스트 박스 ===== -->
-    <div class="text-box" 
-         x-show="!isTransitioning && !isCompleted && currentScene.text" 
-         x-transition.opacity.duration.500ms>
-        <div class="text-box-inner">
-            <!-- 화자 이름 -->
-            <div x-show="currentScene.speaker" class="mb-2">
-                <span class="speaker-name font-myeongjo"
-                      :class="{ 'narrator': currentScene.speaker === '나레이션' }"
-                      x-text="currentScene.speaker"></span>
-            </div>
-
-            <!-- 대사 텍스트 -->
-            <p class="dialogue-text font-myeongjo">
-                <span x-text="displayedText"></span>
-                <span class="typing-cursor" x-show="isTyping"></span>
-            </p>
-
-            <!-- 다음 클릭 유도 -->
-            <div class="next-indicator" x-show="!isTyping">
-                <span>클릭하여 계속</span>
-                <i data-lucide="chevron-down" style="width:14px; height:14px; display:inline-block;"></i>
-            </div>
-        </div>
     </div>
 
     <!-- ===== 튜토리얼 완료 오버레이 ===== -->

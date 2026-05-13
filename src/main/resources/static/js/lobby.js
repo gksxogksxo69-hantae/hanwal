@@ -32,9 +32,9 @@ document.addEventListener('alpine:init', () => {
         // ── 퀘스트 상태 ──
         currentQuest: {
             title: '무림의 시작',
-            goal: '프롤로그: 기억의 던전 클리어',
+            goal: '비경에서의 수련 (1년의 수련)',
             category: '메인',
-            targetModal: 'DUNGEON'
+            targetUrl: '/tutorial-cave'
         },
 
         selectedPartySlot: 0, // 현재 편집 중인 편성 슬롯 (0~3)
@@ -77,9 +77,9 @@ document.addEventListener('alpine:init', () => {
             if (this.playerLevel <= 1) {
                 this.currentQuest = {
                     title: '무림의 시작',
-                    goal: '프롤로그: 기억의 던전 클리어',
+                    goal: '비경에서의 수련 (1년의 수련)',
                     category: '메인',
-                    targetModal: 'DUNGEON'
+                    targetUrl: '/tutorial-cave'
                 };
             } else {
                 // 프롤로그 클리어 후라면 초보자 영입 가이드
@@ -283,7 +283,9 @@ document.addEventListener('alpine:init', () => {
         },
 
         handleQuestClick() {
-            if (this.currentQuest.targetModal) {
+            if (this.currentQuest.targetUrl) {
+                window.location.href = this.currentQuest.targetUrl;
+            } else if (this.currentQuest.targetModal) {
                 this.openModal(this.currentQuest.targetModal);
             }
         },
@@ -337,7 +339,12 @@ document.addEventListener('alpine:init', () => {
         },
 
         goToStory() {
-            window.location.href = '/stage-select';
+            // 튜토리얼 퀘스트 중이면 바로 해당 씬으로
+            if (this.currentQuest.targetUrl) {
+                window.location.href = this.currentQuest.targetUrl;
+            } else {
+                window.location.href = '/stage-select';
+            }
         },
 
         enterDungeon() {

@@ -117,45 +117,66 @@ public class StageApiController {
             return ResponseEntity.badRequest().body(Map.of("success", false));
         }
 
-        List<UserCharacter> userChars = userCharacterRepository.findByUserIdOrderByLevelDesc(user.getId());
-        
-        // 최대 4명까지
-        List<Map<String, Object>> partyList = userChars.stream()
-                .limit(4)
-                .map(uc -> {
-                    GameCharacter gc = uc.getCharacter();
-                    Map<String, Object> m = new LinkedHashMap<>();
-                    m.put("id", "party-" + gc.getId());
-                    m.put("charId", gc.getId());
-                    m.put("name", gc.getName());
-                    m.put("title", gc.getTitle());
-                    m.put("role", gc.getRole());
-                    m.put("level", uc.getLevel());
-                    m.put("hp", uc.getEffectiveHp());
-                    m.put("atk", uc.getEffectiveAtk());
-                    m.put("def", uc.getEffectiveDef());
-                    m.put("spd", uc.getEffectiveSpd());
-                    m.put("imagePath", gc.getImagePath() != null ? gc.getImagePath() : "/images/portrait_male.png");
-                    
-                    // 스킬 목록
-                    List<Map<String, Object>> skills = gc.getCharacterSkills().stream()
-                            .map(cs -> {
-                                var skill = cs.getSkill();
-                                Map<String, Object> sm = new LinkedHashMap<>();
-                                sm.put("id", skill.getId());
-                                sm.put("name", skill.getName());
-                                sm.put("description", skill.getDescription());
-                                sm.put("type", skill.getSkillType().name());
-                                sm.put("target", skill.getTargetType().name());
-                                sm.put("isUltimate", "ULTIMATE".equals(cs.getSkillSlot()));
-                                sm.put("multiplier", skill.getDamageMultiplier().doubleValue());
-                                sm.put("energyCost", skill.getEnergyCost());
-                                sm.put("spiritCost", skill.getSpiritCost());
-                                return sm;
-                            }).collect(Collectors.toList());
-                    m.put("skills", skills);
-                    return m;
-                }).collect(Collectors.toList());
+        // 1. 유저가 설정한 4개 슬롯의 캐릭터ID 수집
+        List<Long> slotIds = Arrays.asList(
+                user.getPartySlot1(),
+                user.getPartySlot2(),
+                user.getPartySlot3(),
+                user.getPartySlot4()
+        );
+
+        // 2. 각 슬롯에 해당하는 UserCharacter 정보를 가져옴
+        List<Map<String, Object>> partyList = new ArrayList<>();
+        for (int i = 0; i < slotIds.size(); i++) {
+            Long charId = slotIds.get(i);
+            if (charId == null) continue;
+
+            Optional<UserCharacter> ucOpt = userCharacterRepository.findByUserIdAndCharacterId(user.getId(), charId);
+            if (ucOpt.isPresent()) {
+                UserCharacter uc = ucOpt.get();
+                GameCharacter gc = uc.getCharacter();
+                
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("id", uc.getId()); // UserCharacter ID (공격 연산용 고유 ID)
+                m.put("charId", gc.getId());
+                m.put("name", gc.getName());
+                m.put("title", gc.getTitle());
+                m.put("role", gc.getRole());
+                m.put("level", uc.getLevel());
+                m.put("hp", uc.getEffectiveHp());
+                m.put("atk", uc.getEffectiveAtk());
+                m.put("def", uc.getEffectiveDef());
+                m.put("spd", uc.getEffectiveSpd());
+                m.put("imagePath", gc.getImagePath() != null ? gc.getImagePath() : "/images/portrait_male.png");
+
+                // 스킬 목록
+                List<Map<String, Object>> skills = gc.getCharacterSkills().stream()
+                        .map(cs -> {
+                            var skill = cs.getSkill();
+                            Map<String, Object> sm = new LinkedHashMap<>();
+                            sm.put("id", skill.getId());
+                            sm.put("name", skill.getName());
+                            sm.put("description", skill.getDescription());
+                            sm.put("type", skill.getSkillType().name());
+                            sm.put("target", skill.getTargetType().name());
+                            sm.put("isUltimate", "ULTIMATE".equals(cs.getSkillSlot()));
+                            sm.put("multiplier", skill.getDamageMultiplier().doubleValue());
+                            sm.put("energyCost", skill.getEnergyCost());
+                            sm.put("spiritCost", skill.getSpiritCost());
+                            return sm;
+                        }).collect(Collectors.toList());
+                m.put("skills", skills);
+                partyList.add(m);
+            }
+        }
+
+        // 파티가 아예 비어있으면 로비와 동일하게 레벨 높은 순 4명으로 폴백 (안전장치)
+        if (partyList.isEmpty()) {
+            List<UserCharacter> fallbackChars = userCharacterRepository.findByUserIdOrderByLevelDesc(user.getId());
+            for (int i = 0; i < Math.min(4, fallbackChars.size()); i++) {
+                partyList.add(buildCharMap(fallbackChars.get(i)));
+            }
+        }
 
         return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -163,6 +184,40 @@ public class StageApiController {
                 "nickname", user.getNickname(),
                 "gender", user.getGender() != null ? user.getGender().name() : "MALE"
         ));
+    }
+
+    private Map<String, Object> buildCharMap(UserCharacter uc) {
+        GameCharacter gc = uc.getCharacter();
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", uc.getId()); // UserCharacter ID
+        m.put("charId", gc.getId());
+        m.put("name", gc.getName());
+        m.put("title", gc.getTitle());
+        m.put("role", gc.getRole());
+        m.put("level", uc.getLevel());
+        m.put("hp", uc.getEffectiveHp());
+        m.put("atk", uc.getEffectiveAtk());
+        m.put("def", uc.getEffectiveDef());
+        m.put("spd", uc.getEffectiveSpd());
+        m.put("imagePath", gc.getImagePath() != null ? gc.getImagePath() : "/images/portrait_male.png");
+
+        List<Map<String, Object>> skills = gc.getCharacterSkills().stream()
+                .map(cs -> {
+                    var skill = cs.getSkill();
+                    Map<String, Object> sm = new LinkedHashMap<>();
+                    sm.put("id", skill.getId());
+                    sm.put("name", skill.getName());
+                    sm.put("description", skill.getDescription());
+                    sm.put("type", skill.getSkillType().name());
+                    sm.put("target", skill.getTargetType().name());
+                    sm.put("isUltimate", "ULTIMATE".equals(cs.getSkillSlot()));
+                    sm.put("multiplier", skill.getDamageMultiplier().doubleValue());
+                    sm.put("energyCost", skill.getEnergyCost());
+                    sm.put("spiritCost", skill.getSpiritCost());
+                    return sm;
+                }).collect(Collectors.toList());
+        m.put("skills", skills);
+        return m;
     }
 
     // ─────────────── 스테이지 데이터 빌더 (추후 DB 이관 예정) ───────────────

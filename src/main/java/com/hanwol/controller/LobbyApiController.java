@@ -51,11 +51,25 @@ public class LobbyApiController {
                 return buildCharMap(gc, uc.getLevel());
             }).collect(Collectors.toList());
 
-            List<Long> partySlots = Arrays.asList(user.getPartySlot1(), user.getPartySlot2(), user.getPartySlot3(), user.getPartySlot4());
+            // 3. 현재 편성 중인 캐릭터 ID (없으면 레벨 높은 순 4명 기본 자동 저장)
+            List<Long> partyIds = Arrays.asList(user.getPartySlot1(), user.getPartySlot2(), user.getPartySlot3(), user.getPartySlot4());
+            
+            if (partyIds.stream().allMatch(Objects::isNull)) {
+                // 기본 파티 자동 구성 및 저장
+                List<Long> defaultParty = userChars.stream().limit(4).map(uc -> uc.getCharacter().getId()).collect(Collectors.toList());
+                user.setPartySlot1(defaultParty.size() > 0 ? defaultParty.get(0) : null);
+                user.setPartySlot2(defaultParty.size() > 1 ? defaultParty.get(1) : null);
+                user.setPartySlot3(defaultParty.size() > 2 ? defaultParty.get(2) : null);
+                user.setPartySlot4(defaultParty.size() > 3 ? defaultParty.get(3) : null);
+                userRepository.save(user); // DB에 강제 저장
+                partyIds = defaultParty;
+                log.info("유저({})의 기본 파티가 자동으로 구성 및 저장되었습니다.", user.getNickname());
+            }
+
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "characters", charList,
-                "party", partySlots
+                "party", partyIds
             ));
         }
 

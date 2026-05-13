@@ -13,6 +13,9 @@ document.addEventListener('alpine:init', () => {
         screenEffect: '',
         showTitleDrop: false,
         isCompleted: false,
+        showFireEmbers: false,
+        showQiParticles: false,
+        transitionText: '',
 
         playerGender: 'MALE',
         playerNickname: '모험가',
@@ -20,7 +23,6 @@ document.addEventListener('alpine:init', () => {
         // ── 10단계 시나리오 ──
         get scenes() {
             const pName = this.playerGender === 'MALE' ? '남궁천' : '남궁설화';
-            const sName = this.playerGender === 'MALE' ? '남궁설화' : '남궁천'; // Sibling name
             
             return [
                 { speaker: '지문', text: '신황력 342년... 무림의 역사상 가장 무겁고 잔혹한 멸망의 밤이 찾아왔다.', effect: 'fade-in-dark', bg: '/images/prologue_bg_estate_fire.png' },
@@ -38,6 +40,10 @@ document.addEventListener('alpine:init', () => {
 
         get currentScene() {
             return this.scenes[this.currentSceneIndex] || { speaker: '', text: '' };
+        },
+
+        get progress() {
+            return Math.floor(((this.currentSceneIndex + 1) / this.scenes.length) * 100);
         },
 
         init() {
@@ -73,6 +79,14 @@ document.addEventListener('alpine:init', () => {
                     setTimeout(() => { this.completeTutorial(); }, 5000);
                     return;
                 }
+                
+                // 불꽃 연출 트리거
+                if (scene.effect === 'fire-effect-overlay') {
+                    this.showFireEmbers = true;
+                } else {
+                    this.showFireEmbers = false;
+                }
+
                 if (scene.effect === 'bg-dim') {
                     this.bgEffect = 'bg-dim-effect';
                 } else if (scene.effect === 'fade-in-dark') {
@@ -117,7 +131,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         handleClick() {
-            if (this.isCompleted || this.showTitleDrop) return;
+            if (this.isCompleted || this.showTitleDrop || this.showSkipModal) return;
 
             if (this.isTyping) {
                 clearInterval(this.typingTimer);
@@ -151,10 +165,14 @@ document.addEventListener('alpine:init', () => {
                 await fetch('/api/tutorial/complete-step', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ step: 1 }) // 프롤로그 단계
+                    body: JSON.stringify({ step: 1 }) 
                 });
             } catch (e) {}
             window.location.href = '/town';
-        }
+        },
+
+        openSkipModal() { this.showSkipModal = true; },
+        closeSkipModal() { this.showSkipModal = false; },
+        confirmSkip() { this.completeTutorial(); }
     }));
 });

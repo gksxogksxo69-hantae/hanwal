@@ -4,6 +4,8 @@ import com.hanwol.domain.character.GameCharacter;
 import com.hanwol.domain.character.UserCharacter;
 import com.hanwol.domain.character.UserCharacterRepository;
 import com.hanwol.domain.user.User;
+import com.hanwol.domain.user.UserProgress;
+import com.hanwol.domain.user.UserProgressRepository;
 import com.hanwol.domain.user.UserRepository;
 import com.hanwol.service.CharacterGrowthService;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,76 @@ public class StageApiController {
     private final CharacterGrowthService growthService;
     private final com.hanwol.domain.story.StageRepository stageRepository;
     private final com.hanwol.service.QuestService questService;
+    private final UserProgressRepository userProgressRepository;
+
+    /**
+     * 전체 막/스테이지 목록 및 유저 진행도 조회
+     * GET /api/stage/list
+     */
+    @GetMapping("/list")
+    public ResponseEntity<?> getStageList(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "error", "Unauthorized"));
+        }
+        User user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+        if (user == null) {
+            return ResponseEntity.badRequest().body(Map.of("success", false));
+        }
+
+        UserProgress progress = userProgressRepository.findById(user.getId()).orElse(null);
+        int maxClearedStageId = (progress != null && progress.getMaxClearedStageId() != null) ? progress.getMaxClearedStageId() : 0;
+
+        List<com.hanwol.domain.story.Stage> allStages = stageRepository.findAll();
+        // 삭제: sorting directly since they might be unsorted. Sort by chapterId then stageNum
+        allStages.sort(Comparator.comparing(com.hanwol.domain.story.Stage::getChapterId)
+                .thenComparing(com.hanwol.domain.story.Stage::getStageNum));
+
+        // 챕터별로 묶기
+        Map<Integer, Map<String, Object>> actsMap = new LinkedHashMap<>();
+        
+        for (com.hanwol.domain.story.Stage s : allStages) {
+            int chapter = s.getChapterId();
+            actsMap.putIfAbsent(chapter, new LinkedHashMap<>());
+            Map<String, Object> actData = actsMap.get(chapter);
+            
+            actData.putIfAbsent("title", "제 " + chapter + " 막");
+            actData.putIfAbsent("bg", getBgImage(chapter));
+            actData.putIfAbsent("stages", new ArrayList<Map<String, Object>>());
+            
+            List<Map<String, Object>> stagesList = (List<Map<String, Object>>) actData.get("stages");
+            
+            Map<String, Object> stg = new LinkedHashMap<>();
+            stg.put("id", s.getId());
+            stg.put("name", s.getTitle());
+            stg.put("desc", "권장 레벨의 적과 조우합니다.");
+            stg.put("rewardGold", s.getRewardGold());
+            stg.put("rewardExp", s.getRewardExp());
+            
+            // 상태 결정
+            if (s.getId() <= maxClearedStageId) {
+                stg.put("status", "cleared");
+            } else if (s.getId() == maxClearedStageId + 1) {
+                stg.put("status", "current");
+            } else {
+                stg.put("status", "locked");
+            }
+
+            // 임시 보스 판정: 1막 5, 2막 8 등
+            int[] bossStages = {5, 8, 8, 9, 8}; // data.sql 기준
+            boolean isBoss = chapter <= bossStages.length && s.getStageNum() == bossStages[chapter - 1];
+            stg.put("type", isBoss ? "boss" : "normal");
+
+            stagesList.add(stg);
+        }
+
+        List<Map<String, Object>> actsResponse = new ArrayList<>(actsMap.values());
+        
+        return ResponseEntity.ok(Map.of(
+            "success", true,
+            "acts", actsResponse,
+            "maxClearedStageId", maxClearedStageId
+        ));
+    }
 
     /**
      * 스테이지 진입 시 적 구성/보상 데이터를 내려줌

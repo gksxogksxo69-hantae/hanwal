@@ -66,10 +66,9 @@ public class BattleLogicService {
      * SP(기력) 및 투기 체크 후 스킬 사용 가능 여부 검증
      */
     public boolean canUseSkill(Skill skill, int currentPartyEnergy, int currentSpirit) {
-        if (skill.getEnergyCost() < 0 && currentPartyEnergy < Math.abs(skill.getEnergyCost())) { // cite:
-                                                                                                 // uploaded:src/main/java/com/hanwol/service/BattleLogicService.java
-            log.warn("파티 기력이 부족합니다."); // cite: uploaded:src/main/java/com/hanwol/service/BattleLogicService.java
-            return false; // cite: uploaded:src/main/java/com/hanwol/service/BattleLogicService.java
+        if (skill.getEnergyCost() > 0 && currentPartyEnergy < skill.getEnergyCost()) {
+            log.warn("파티 기력이 부족합니다. (필요:{}, 현재:{})", skill.getEnergyCost(), currentPartyEnergy);
+            return false;
         }
         if (skill.getSpiritCost() > currentSpirit) { // cite:
                                                      // uploaded:src/main/java/com/hanwol/service/BattleLogicService.java

@@ -23,6 +23,9 @@ document.addEventListener('alpine:init', () => {
         gameState: 'LOADING', // LOADING, WAITING_INPUT, ANIMATING, ENEMY_TURN, WIN, LOSE
         isPlayerTurn: false,
         turnCount: 0,
+        teamEnergy: 3,        // 팀 공용 스킬 포인트 (기력) 시작값 3
+        teamMaxEnergy: 5,     // 팀 공용 스킬 포인트 최대값 5
+
 
         // 보상
         battleStars: 0,
@@ -97,7 +100,7 @@ document.addEventListener('alpine:init', () => {
                 // 파티 데이터가 없으면 폴백 (기본 캐릭터)
                 const fallback = {
                     id: 'party-1', type: 'PARTY', name: nickname || '모험가',
-                    hp: 1200, maxHp: 1200, energy: 0, maxEnergy: 5, spirit: 0, maxSpirit: 6,
+                    hp: 1200, maxHp: 1200, spirit: 0, maxSpirit: 6,
                     atk: 150, def: 75, speed: 100, isActive: false, isDead: false,
                     standing: gender === 'FEMALE' ? '/images/char_sprite_female.png' : '/images/char_sprite.png',
                     portrait: gender === 'FEMALE' ? '/images/portrait_female.png' : '/images/portrait_male.png',
@@ -143,7 +146,6 @@ document.addEventListener('alpine:init', () => {
                     name: charData.name,
                     hp: (charData.hp || 100) * 10,
                     maxHp: (charData.hp || 100) * 10,
-                    energy: 0, maxEnergy: 5,
                     spirit: 0, maxSpirit: 6,
                     atk: (charData.atk || 15) * 5,
                     def: (charData.def || 10) * 5,
@@ -223,8 +225,8 @@ document.addEventListener('alpine:init', () => {
             if (skill.isLock) return;
 
             // 자원 체크
-            if (skill.energyCost > 0 && actor.energy < skill.energyCost) {
-                this.addLog(`기력 부족! (필요: ${skill.energyCost})`, 'system');
+            if (skill.energyCost > 0 && this.teamEnergy < skill.energyCost) {
+                this.addLog(`팀 기력 불충분! (필요: ${skill.energyCost}, 현재: ${this.teamEnergy})`, 'system');
                 return;
             }
             if (skill.spiritCost > 0 && actor.spirit < skill.spiritCost) {
@@ -241,8 +243,11 @@ document.addEventListener('alpine:init', () => {
             this.gameState = 'ANIMATING';
             this.isPlayerTurn = false;
 
+            const preEnergy = this.teamEnergy;
+            const preSpirit = actor.spirit;
+
             // 자원 소모/회복
-            if (skill.energyCost !== 0) actor.energy = Math.max(0, Math.min(actor.maxEnergy, actor.energy - skill.energyCost));
+            if (skill.energyCost !== 0) this.teamEnergy = Math.max(0, Math.min(this.teamMaxEnergy, this.teamEnergy - skill.energyCost));
             if (skill.spiritCost !== 0) actor.spirit = Math.max(0, Math.min(actor.maxSpirit, actor.spirit - skill.spiritCost));
 
             // 투기 자동 회복 (공격 시 1 회복)
@@ -271,7 +276,9 @@ document.addEventListener('alpine:init', () => {
                         attackerId: actor.id,                       // 시전 캐릭터 고유 ID
                         skillId: skill.id,                          // 시전 무공 고유 ID
                         defenderElement: target.element || 'NONE',  // 피격 몬스터 속성 이넘
-                        defenderDef: target.def                     // 피격 몬스터 방어력
+                        defenderDef: target.def,                    // 피격 몬스터 방어력
+                        currentEnergy: preEnergy,                   // 소모 전 기준 파티 기력
+                        currentSpirit: preSpirit                    // 소모 전 기준 개인 투기
                     })
                 });
 

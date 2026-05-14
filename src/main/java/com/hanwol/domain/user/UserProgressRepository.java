@@ -5,5 +5,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserProgressRepository extends JpaRepository<UserProgress, Long> {
-    // 기본 CRUD만으로도 충분함
+    java.util.List<UserProgress> findAllByOrderByTotalPowerDesc();
+    java.util.List<UserProgress> findTop100ByOrderByTotalPowerDesc();
 }

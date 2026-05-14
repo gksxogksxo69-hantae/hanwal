@@ -51,6 +51,17 @@ public class QuestService {
         );
     }
 
+    @Transactional
+    public boolean claimRewards(Long userId) {
+        UserProgress progress = progressRepository.findById(userId).orElse(null);
+        if (progress == null) return false;
+        
+        Integer qId = progress.getCurrentQuestId();
+        if (qId == null) return false;
+        
+        return true;
+    }
+
     private UserProgress getOrCreateProgress(Long userId) {
         UserProgress progress = progressRepository.findById(userId).orElse(null);
         if (progress != null) return progress;

@@ -25,6 +25,8 @@ public class MapApiController {
     private final UserRepository userRepository;
     private final com.hanwol.domain.user.UserProgressRepository userProgressRepository;
     private final com.hanwol.domain.character.UserCharacterRepository userCharacterRepository;
+    private final com.hanwol.service.CombatPowerService combatPowerService;
+    private final com.hanwol.service.RankingService rankingService;
 
     /**
      * town 진입 시 플레이어 정보(성별, 닉네임, 레벨, 재화)를 내려줌.
@@ -53,32 +55,18 @@ public class MapApiController {
             return userProgressRepository.save(newProgress);
         });
         
-        // 전투력 계산 로직
+        // 1. 전투력 계산 (CombatPowerService 활용)
         List<com.hanwol.domain.character.UserCharacter> allChars = userCharacterRepository.findByUserId(user.getId());
+        long totalPower = combatPowerService.calculateTotalAccountPower(allChars);
         
-        // 캐릭터가 하나도 없으면 보정 로직 (나중에 튜토리얼에서 강제 지급 보장되므로 로깅만 유지)
-        if (allChars.isEmpty()) {
-            log.warn("유저({})의 캐릭터가 없습니다. 편성 데이터 확인이 필요합니다.", user.getNickname());
-        }
-
-        long totalPower = 0;
-        long partyPower = 0;
-        
+        // 2. 파티 전투력 계산
         List<Long> partySlotIds = java.util.Arrays.asList(
             user.getPartySlot1(), user.getPartySlot2(), user.getPartySlot3(), user.getPartySlot4()
         );
-
-        for (com.hanwol.domain.character.UserCharacter uc : allChars) {
-            // Stats가 0인 경우를 대비해 스탯 계산 재검증
-            long p = uc.getEffectiveAtk() + (uc.getEffectiveHp() / 10) + uc.getEffectiveDef() + uc.getEffectiveSpd();
-            if (p == 0) {
-               // 만약 0이라면 레벨 1 기본 스탯이라도 나오게 보정 (이미 calcHpAtLevel에서 처리되지만 안전빵)
-            }
-            totalPower += p;
-            if (partySlotIds.contains(uc.getCharacter().getId())) {
-                partyPower += p;
-            }
-        }
+        long partyPower = allChars.stream()
+                .filter(uc -> partySlotIds.contains(uc.getId())) // ID 비교로 수정 (성능 및 정확도)
+                .mapToLong(combatPowerService::calculateCharacterPower)
+                .sum();
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
@@ -103,9 +91,18 @@ public class MapApiController {
         response.put("claimedActRewards", progress.getClaimedActRewards());
         response.put("totalPower", totalPower);
         response.put("partyPower", partyPower);
-        response.put("serverRank", "--");
+        response.put("serverRank", progress.getCurrentRank() > 0 ? progress.getCurrentRank() : "--");
 
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 상위 100명의 서열 정보를 조회
+     */
+    @GetMapping("/ranking")
+    public ResponseEntity<?> getRanking() {
+        List<com.hanwol.service.RankingService.RankingDto> ranking = rankingService.getTop100();
+        return ResponseEntity.ok(Map.of("success", true, "ranking", ranking));
     }
 
     /**

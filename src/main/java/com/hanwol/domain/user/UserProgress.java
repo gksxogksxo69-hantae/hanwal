@@ -57,12 +57,20 @@ public class UserProgress {
     private int skillLevelUltimate = 1;
 
     @Builder.Default
-    @Column(length = 500)
+    @Column(length = 500, columnDefinition = "varchar(500) default ''")
     private String claimedActRewards = ""; // "1,2,3" 형태
 
     @Builder.Default
     @Column
     private Integer lastEventRewardStageId = 0; // 기존 15스테이지 배수 보상용
+
+    @Builder.Default
+    @Column(columnDefinition = "bigint default 0")
+    private Long totalPower = 0L; // 전 계정 캐릭터 종합 전투력
+
+    @Builder.Default
+    @Column(columnDefinition = "int default 0")
+    private Integer currentRank = 0; // 현재 서버 순위 (0은 순위권 밖)
 
     public static final String STATUS_IN_PROGRESS = "IN_PROGRESS";
     public static final String STATUS_COMPLETED = "COMPLETED";

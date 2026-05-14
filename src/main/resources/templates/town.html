@@ -67,6 +67,13 @@
             currentQuest: { id: 0, title: '로딩 중...', goalDesc: '데이터 동기화 중...', status: 'IN_PROGRESS' },
             stages: [], currentChapter: 1, selectedPartySlot: 0,
             ranking: [], // 서열 데이터
+            guideStep: 0, guideActive: false, guideMonologueText: '', // 가이드 관련 변수
+            
+            advanceGuideMonologue() {
+                // 가이드 대사 진행 로직 (필요 시 채워 넣을 수 있음)
+                console.log("Guide advanced");
+                this.guideActive = false;
+            },
 
             async init() {
                 await this.loadPlayerInfo();
@@ -151,7 +158,52 @@
                 this.$nextTick(() => lucide.createIcons());
             },
             closeModal() { this.currentModal = null; },
-            handleQuestClick() { if (this.currentQuest.status === 'COMPLETED') this.openModal('QUEST_REWARD'); else window.location.href = '/stage-select'; }
+            handleQuestClick() { if (this.currentQuest.status === 'COMPLETED') this.openModal('QUEST_REWARD'); else window.location.href = '/stage-select'; },
+            
+            togglePartyMember(char) {
+                const idx = this.currentParty.findIndex(p => p && p.id === char.id);
+                if (idx !== -1) {
+                    this.currentParty[idx] = null;
+                } else {
+                    const emptySlot = this.currentParty.findIndex(p => p === null);
+                    if (emptySlot !== -1) this.currentParty[emptySlot] = char;
+                }
+            },
+
+            async saveParty() {
+                const ids = this.currentParty.map(p => p ? p.id : null);
+                try {
+                    const res = await fetch('/api/lobby/save-party', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ partyIds: ids })
+                    });
+                    if (res.ok) alert("편성이 저장되었습니다.");
+                } catch (e) { console.error(e); }
+            },
+
+            async drawGacha(count) {
+                this.isGachaAnimating = true;
+                this.gachaResults = [];
+                try {
+                    const res = await fetch('/api/gacha/draw?count=' + count, { method: 'POST' });
+                    const data = await res.json();
+                    if (data.success) {
+                        setTimeout(() => {
+                            this.gachaResults = data.results;
+                            this.isGachaAnimating = false;
+                            this.loadPlayerInfo();
+                            this.loadMyCharacters();
+                        }, 1500);
+                    } else {
+                        alert(data.message || "영입 실패");
+                        this.isGachaAnimating = false;
+                    }
+                } catch (e) { 
+                    console.error(e);
+                    this.isGachaAnimating = false;
+                }
+            }
         }));
     });
     </script>
@@ -327,7 +379,14 @@
         </div>
     </div>
     <div x-show="guideStep === 3" class="fixed bottom-[110px] right-[290px] z-[70] pointer-events-none text-white">
-         <!-- 모달 부모 컨테이너 -->
+        <div class="bg-amber-900/90 border border-amber-400 rounded-xl px-4 py-3 shadow-xl">
+            <p class="text-amber-300 text-xs font-bold serif">새로운 임무!</p>
+            <p class="text-[11px]">임무 시작 버튼을 눌러 모험을 떠나세요.</p>
+            <div class="absolute -bottom-2 right-10 w-4 h-4 bg-amber-900 border-r border-b border-amber-400 rotate-45"></div>
+        </div>
+    </div>
+
+    <!-- 모달 부모 컨테이너 -->
     <div id="DIV_MODAL_ROOT" class="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
         <div x-show="currentModal" x-transition.opacity class="absolute inset-0 bg-black/75 pointer-events-auto" @click="closeModal()"></div>
 
@@ -455,20 +514,6 @@
                     <h3 class="text-xl font-bold text-white mb-2 serif">수련 환경 정비 중</h3>
                     <p class="text-slate-500 text-sm leading-relaxed">대협, 이곳은 현재 수련 환경 개선 중입니다. 곧 새로운 모습으로 찾아뵙겠습니다.</p>
                     <button @click="closeModal()" class="mt-8 glass-button px-10 py-2 rounded-full text-xs">로비로 원복</button>
-                </div>
-            </template>
-        </div>
-    </div>
-</body>
-</html>
-
-            <!-- [LEVEL_REWARDS] 성장 보상 -->
-            <template x-if="currentModal==='LEVEL_REWARDS'">
-                                    </template>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
                 </div>
             </template>
         </div>

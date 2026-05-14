@@ -22,8 +22,5 @@ WORKDIR /app
 # 빌드 스테이지에서 생성된 jar 파일만 가져오기
 COPY --from=build /app/build/libs/*.jar app.jar
 
-# Railway에서 지정해주는 포트로 오픈
-EXPOSE 8080
-
 # 앱 실행 - Railway의 $PORT 환경변수 사용
-ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8080} -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "java -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Dserver.port=${PORT:-8080} -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} -jar app.jar"]

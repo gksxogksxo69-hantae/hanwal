@@ -46,34 +46,38 @@ public class StageApiController {
         }
 
         UserProgress progress = userProgressRepository.findById(user.getId()).orElse(null);
-        int maxClearedStageId = (progress != null && progress.getMaxClearedStageId() != null) ? progress.getMaxClearedStageId() : 0;
+        int maxClearedStageId = (progress != null && progress.getMaxClearedStageId() != null)
+                ? progress.getMaxClearedStageId()
+                : 0;
 
         List<com.hanwol.domain.story.Stage> allStages = stageRepository.findAll();
-        // 삭제: sorting directly since they might be unsorted. Sort by chapterId then stageNum
+        // 삭제: sorting directly since they might be unsorted. Sort by chapterId then
+        // stageNum
         allStages.sort(Comparator.comparing(com.hanwol.domain.story.Stage::getChapterId)
                 .thenComparing(com.hanwol.domain.story.Stage::getStageNum));
 
         // 챕터별로 묶기
-        Map<Integer, Map<String, Object>> actsMap = new LinkedHashMap<>();
-        
+        Map<Long, Map<String, Object>> actsMap = new LinkedHashMap<>();
+
         for (com.hanwol.domain.story.Stage s : allStages) {
-            int chapter = s.getChapterId();
+            long chapter = s.getChapterId();
             actsMap.putIfAbsent(chapter, new LinkedHashMap<>());
             Map<String, Object> actData = actsMap.get(chapter);
-            
+
             actData.putIfAbsent("title", "제 " + chapter + " 막");
             actData.putIfAbsent("bg", getBgImage(chapter));
             actData.putIfAbsent("stages", new ArrayList<Map<String, Object>>());
-            
+
+            @SuppressWarnings("unchecked")
             List<Map<String, Object>> stagesList = (List<Map<String, Object>>) actData.get("stages");
-            
+
             Map<String, Object> stg = new LinkedHashMap<>();
             stg.put("id", s.getId());
             stg.put("name", s.getTitle());
             stg.put("desc", "권장 레벨의 적과 조우합니다.");
             stg.put("rewardGold", s.getRewardGold());
             stg.put("rewardExp", s.getRewardExp());
-            
+
             // 상태 결정
             if (s.getId() <= maxClearedStageId) {
                 stg.put("status", "cleared");
@@ -84,20 +88,19 @@ public class StageApiController {
             }
 
             // 임시 보스 판정: 1막 5, 2막 8 등
-            int[] bossStages = {5, 8, 8, 9, 8}; // data.sql 기준
-            boolean isBoss = chapter <= bossStages.length && s.getStageNum() == bossStages[chapter - 1];
+            int[] bossStages = { 5, 8, 8, 9, 8 }; // data.sql 기준
+            boolean isBoss = chapter <= bossStages.length && s.getStageNum() == bossStages[(int) chapter - 1];
             stg.put("type", isBoss ? "boss" : "normal");
 
             stagesList.add(stg);
         }
 
         List<Map<String, Object>> actsResponse = new ArrayList<>(actsMap.values());
-        
+
         return ResponseEntity.ok(Map.of(
-            "success", true,
-            "acts", actsResponse,
-            "maxClearedStageId", maxClearedStageId
-        ));
+                "success", true,
+                "acts", actsResponse,
+                "maxClearedStageId", maxClearedStageId));
     }
 
     /**
@@ -106,8 +109,8 @@ public class StageApiController {
      */
     @GetMapping("/data")
     public ResponseEntity<?> getStageData(
-            @RequestParam(required = false, defaultValue = "0") Integer stageId,
-            @RequestParam(required = false, defaultValue = "1") int act,
+            @RequestParam(required = false, defaultValue = "0") Long stageId,
+            @RequestParam(required = false, defaultValue = "1") long act,
             @RequestParam(required = false, defaultValue = "1") int stage) {
 
         if (stageId != null && stageId > 0) {
@@ -146,22 +149,22 @@ public class StageApiController {
             return ResponseEntity.badRequest().body(Map.of("success", false));
         }
 
-        int stageId = (int) body.getOrDefault("stageId", 0);
-        int act = (int) body.getOrDefault("act", 1);
-        int stageNum = (int) body.getOrDefault("stage", 1);
+        long stageId = ((Number) body.getOrDefault("stageId", 0)).longValue();
+        long act = ((Number) body.getOrDefault("act", 1)).longValue();
+        int stageNum = ((Number) body.getOrDefault("stage", 1)).intValue();
         boolean win = (boolean) body.getOrDefault("win", false);
-        int stars = (int) body.getOrDefault("stars", 1);
+        int stars = ((Number) body.getOrDefault("stars", 1)).intValue();
 
         if (!win) {
             return ResponseEntity.ok(Map.of("success", true, "win", false, "message", "패배..."));
         }
 
         // 보상 계산 (DB 기준 우선, 없으면 하드코딩 수식)
-        int baseGold = 200 + (act * 150) + (stageNum * 50);
+        int baseGold = (int) (200 + (act * 150) + (stageNum * 50));
         long baseExp = 50L + (act * 30L) + (stageNum * 15L);
 
-        Optional<com.hanwol.domain.story.Stage> stageOpt = stageId > 0 
-                ? stageRepository.findById(stageId) 
+        Optional<com.hanwol.domain.story.Stage> stageOpt = stageId > 0
+                ? stageRepository.findById(stageId)
                 : stageRepository.findByChapterIdAndStageNum(act, stageNum);
 
         com.hanwol.domain.story.Stage dbStage = stageOpt.orElse(null);
@@ -188,12 +191,12 @@ public class StageApiController {
         boolean isBoss = false;
         if (dbStage != null) {
             // DB에 데이터가 있으면 DB 기반으로 퀘스트 등 진행 업데이트
-            questService.checkQuestProgress(user.getId(), dbStage.getId());
-            
+            questService.checkQuestProgress(user.getId(), dbStage.getId().intValue());
+
             // 스토리 챕터 업데이트 로직 (간단히 각 막의 마지막 스테이지면 다음 막으로 넘기기)
             // 임시로 하드코딩된 보스 스테이지 번호 사용: 1막=9, 2막=8 등. 여긴 더 개선 가능
-            int[] bossStages = {5, 8, 8, 9, 8}; // 1막을 5스테이지로 임시 변경 (data.sql 기준)
-            isBoss = act >= 1 && act <= bossStages.length && stageNum == bossStages[act - 1];
+            int[] bossStages = { 5, 8, 8, 9, 8 }; // 1막을 5스테이지로 임시 변경 (data.sql 기준)
+            isBoss = act >= 1 && act <= bossStages.length && stageNum == bossStages[(int) act - 1];
             if (isBoss && user.getStoryChapter() < act) {
                 user.advanceStoryChapter();
             }
@@ -229,20 +232,20 @@ public class StageApiController {
                 user.getPartySlot1(),
                 user.getPartySlot2(),
                 user.getPartySlot3(),
-                user.getPartySlot4()
-        );
+                user.getPartySlot4());
 
         // 2. 각 슬롯에 해당하는 UserCharacter 정보를 가져옴
         List<Map<String, Object>> partyList = new ArrayList<>();
         for (int i = 0; i < slotIds.size(); i++) {
             Long charId = slotIds.get(i);
-            if (charId == null) continue;
+            if (charId == null)
+                continue;
 
             Optional<UserCharacter> ucOpt = userCharacterRepository.findByUserIdAndCharacterId(user.getId(), charId);
             if (ucOpt.isPresent()) {
                 UserCharacter uc = ucOpt.get();
                 GameCharacter gc = uc.getCharacter();
-                
+
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("id", uc.getId()); // UserCharacter ID (공격 연산용 고유 ID)
                 m.put("charId", gc.getId());
@@ -289,8 +292,7 @@ public class StageApiController {
                 "success", true,
                 "party", partyList,
                 "nickname", user.getNickname(),
-                "gender", user.getGender() != null ? user.getGender().name() : "MALE"
-        ));
+                "gender", user.getGender() != null ? user.getGender().name() : "MALE"));
     }
 
     private Map<String, Object> buildCharMap(UserCharacter uc) {
@@ -329,47 +331,47 @@ public class StageApiController {
 
     // ─────────────── 스테이지 데이터 빌더 (추후 DB 이관 예정) ───────────────
 
-    private Map<String, Object> buildStageData(int act, int stage) {
+    private Map<String, Object> buildStageData(long act, int stage) {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("act", act);
         data.put("stage", stage);
 
         // 보스 판정 (각 막의 마지막 스테이지)
-        int[] bossStages = {9, 8, 8, 9, 8}; // 1~5막 보스 스테이지 번호
-        boolean isBoss = act >= 1 && act <= 5 && stage == bossStages[act - 1];
+        int[] bossStages = { 9, 8, 8, 9, 8 }; // 1~5막 보스 스테이지 번호
+        boolean isBoss = act >= 1 && act <= 5 && stage == bossStages[(int) act - 1];
         data.put("type", isBoss ? "boss" : "normal");
 
         // 적 수 / 레벨 스케일링
         int enemyCount = isBoss ? 1 : Math.min(3, 1 + (stage / 3));
-        int enemyLevel = (act - 1) * 10 + stage * 2;
+        int enemyLevel = (int) ((act - 1) * 10 + stage * 2);
 
         List<Map<String, Object>> enemies = new ArrayList<>();
-        
+
         // 스테이지별 적 이름/스탯 생성
-        String[] normalNames = {"혈교 하급무사", "혈교 수련생", "혈교 도적", "산적 낭인", "현상금 사냥꾼", "무림맹 포졸"};
-        String[] bossNames = {"혈교 선봉장", "석수(石獸)", "현상금 사냥꾼 수장", "무림맹 호법", "혈교 부교주"};
+        String[] normalNames = { "혈교 하급무사", "혈교 수련생", "혈교 도적", "산적 낭인", "현상금 사냥꾼", "무림맹 포졸" };
+        String[] bossNames = { "혈교 선봉장", "석수(石獸)", "현상금 사냥꾼 수장", "무림맹 호법", "혈교 부교주" };
 
         if (isBoss) {
-            String bossName = act <= bossNames.length ? bossNames[act - 1] : "혈교 교주";
+            String bossName = act <= bossNames.length ? bossNames[(int) act - 1] : "혈교 교주";
             Map<String, Object> boss = new LinkedHashMap<>();
             boss.put("id", "enemy-1");
             boss.put("name", bossName);
             boss.put("level", enemyLevel + 5);
-            boss.put("hp", 500 + (act * 400) + (stage * 100));
-            boss.put("atk", 30 + (act * 15) + (stage * 5));
-            boss.put("def", 20 + (act * 10));
-            boss.put("spd", 85 + (act * 5));
+            boss.put("hp", (int) (500 + (act * 400) + (stage * 100)));
+            boss.put("atk", (int) (30 + (act * 15) + (stage * 5)));
+            boss.put("def", (int) (20 + (act * 10)));
+            boss.put("spd", (int) (85 + (act * 5)));
             boss.put("portrait", "/images/enemy_demon_cult_pursuer.png");
             enemies.add(boss);
         } else {
             for (int i = 0; i < enemyCount; i++) {
                 Map<String, Object> enemy = new LinkedHashMap<>();
                 enemy.put("id", "enemy-" + (i + 1));
-                enemy.put("name", normalNames[(act + stage + i) % normalNames.length]);
+                enemy.put("name", normalNames[(int) ((act + stage + i) % normalNames.length)]);
                 enemy.put("level", enemyLevel);
-                enemy.put("hp", 150 + (act * 80) + (stage * 30));
-                enemy.put("atk", 15 + (act * 8) + (stage * 3));
-                enemy.put("def", 10 + (act * 5));
+                enemy.put("hp", (int) (150 + (act * 80) + (stage * 30)));
+                enemy.put("atk", (int) (15 + (act * 8) + (stage * 3)));
+                enemy.put("def", (int) (10 + (act * 5)));
                 enemy.put("spd", 80 + (stage * 2));
                 enemy.put("portrait", "/images/enemy_demon_cult_pursuer.png");
                 enemies.add(enemy);
@@ -383,8 +385,9 @@ public class StageApiController {
         return data;
     }
 
-    private String getBgImage(int act) {
-        return switch (act) {
+    private String getBgImage(long act) {
+        int actInt = (int) act;
+        return switch (actInt) {
             case 1 -> "/images/bg_estate_fire.png";
             case 2 -> "/images/bg_cliff.png";
             case 3 -> "/images/bg_estate_peace.png";

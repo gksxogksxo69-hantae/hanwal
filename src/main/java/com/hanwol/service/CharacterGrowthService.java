@@ -2,7 +2,6 @@ package com.hanwol.service;
 
 import com.hanwol.domain.character.Affinity;
 import com.hanwol.domain.character.AffinityRepository;
-import com.hanwol.domain.character.GameCharacter;
 import com.hanwol.domain.character.UserCharacter;
 import com.hanwol.domain.character.UserCharacterRepository;
 import com.hanwol.domain.enums.GyeongjiTier;

@@ -21,7 +21,7 @@ public class DungeonApiController {
      * 특정 막의 스테이지 목록 조회
      */
     @GetMapping("/stages/{chapterId}")
-    public ResponseEntity<?> getStages(@PathVariable Integer chapterId) {
+    public ResponseEntity<?> getStages(@PathVariable Long chapterId) {
         // TODO: 세션에서 실제 로그인 유저 ID 가져오기 (현재는 테스트용 1L)
         Long userId = 1L; 
         List<StageService.StageResponse> stages = stageService.getStagesByChapter(userId, chapterId);
@@ -32,7 +32,7 @@ public class DungeonApiController {
      * 스테이지 진입 전 스토리 확인
      */
     @GetMapping("/check-story/{stageId}")
-    public ResponseEntity<?> checkStory(@PathVariable Integer stageId) {
+    public ResponseEntity<?> checkStory(@PathVariable Long stageId) {
         Long userId = 1L;
         return stageService.getBeforeStoryId(stageId, userId)
                 .map(storyId -> ResponseEntity.ok(Map.of("hasStory", true, "storyId", storyId)))
@@ -43,10 +43,10 @@ public class DungeonApiController {
      * 스테이지 클리어 처리
      */
     @PostMapping("/clear/{stageId}")
-    public ResponseEntity<?> clearStage(@PathVariable Integer stageId) {
+    public ResponseEntity<?> clearStage(@PathVariable Long stageId) {
         Long userId = 1L;
         // 1. 스테이지 클리어 및 퀘스트 체크
-        questService.checkQuestProgress(userId, stageId);
+        questService.checkQuestProgress(userId, stageId.intValue());
         return ResponseEntity.ok(Map.of("success", true, "clearedStageId", stageId));
     }
 }

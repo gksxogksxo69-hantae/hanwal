@@ -1,5 +1,22 @@
+-- ====================================================================
+-- [기존 마스터 데이터 완전 초기화]
+-- 연관 관계 자식 테이블부터 순서대로 싹 밀어버려야 외래키(FK) 에러 안 터진다!
+-- ====================================================================
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE combo_skills;
+TRUNCATE TABLE skill_evolutions;
+TRUNCATE TABLE character_skills;
+TRUNCATE TABLE skills;
+TRUNCATE TABLE characters;
+TRUNCATE TABLE mst_main_quest;
+TRUNCATE TABLE mst_stage;
+SET FOREIGN_KEY_CHECKS = 1;
+
+
+-- ====================================================================
 -- 1. 신규 스킬 마스터 삽입 (skills 테이블)
-INSERT IGNORE INTO skills (id, name, description, skill_type, target_type, element, scaling_stat, damage_multiplier, energy_cost, spirit_gain, spirit_cost) VALUES
+-- ====================================================================
+INSERT INTO skills (id, name, description, skill_type, target_type, element, scaling_stat, damage_multiplier, energy_cost, spirit_gain, spirit_cost) VALUES
 (1, '36계 줄랑랑', '행동 게이지를 30% 당기고 2턴 방어력 증가', 'BATTLE', 'SELF', 'VOID', 'ATK', 0.00, 1, 2, 0),
 (2, '흙 뿌리기', '적 단일 소량 피해 + 2턴 실명(명중률 50% 감소)', 'NORMAL', 'SINGLE_ENEMY', 'EARTH', 'ATK', 0.50, -1, 1, 0),
 (10, '창궁대연보', '행동 게이지 40% 상승 + 3턴 회피율 급증', 'BATTLE', 'SELF', 'VOID', 'ATK', 0.00, 1, 2, 0),
@@ -10,57 +27,8 @@ INSERT IGNORE INTO skills (id, name, description, skill_type, target_type, eleme
 (21, '짱돌 투척', '적 단일 피해 + 30% 확률 기절(1턴)', 'NORMAL', 'SINGLE_ENEMY', 'EARTH', 'ATK', 0.50, -1, 1, 0),
 (30, '빙백한풍', '적 전체 속도 감소 + 빙결 유도(50% 확률)', 'BATTLE', 'ALL_ENEMY', 'WATER', 'ATK', 1.50, 1, 2, 0),
 (31, '빙백투창', '단일 극딜 + 확정 빙결 1턴', 'NORMAL', 'SINGLE_ENEMY', 'WATER', 'ATK', 1.20, -1, 1, 0),
-(32, '빙백신검 - 천년빙봉', '단일 대상 확정 빙결 + 극딜', 'ULTIMATE', 'SINGLE_ENEMY', 'WATER', 'ATK', 4.00, 0, 0, 6);
+(32, '빙백신검 - 천년빙봉', '단일 대상 확정 빙결 + 극딜', 'ULTIMATE', 'SINGLE_ENEMY', 'WATER', 'ATK', 4.00, 0, 0, 6),
 
--- 2. 신규 캐릭터 마스터 삽입 (characters 테이블)
-INSERT IGNORE INTO characters (id, name, title, element, role, route_type, rarity, is_gacha_target, base_hp, base_atk, base_def, base_spd, base_crit_rate, base_crit_dmg, base_effect_hit_rate, base_effect_resist, hp_growth, atk_growth, def_growth, spd_growth_per_level, ehr_growth_per_level, spirit_bonus_condition, spirit_bonus_amount) VALUES
-(1, '남궁천', '가문의 수치', 'EARTH', '딜탱', 'CHUN', 'S', false, 130, 14, 12, 98, 5.00, 150.00, 10.00, 15.00, 'S', 'B', 'S', 0.20, 0.10, 'ON_HIT', 1),
-(2, '남궁설화', '비명쟁이', 'WATER', '디버퍼', 'SULHWA', 'S', false, 75, 10, 4, 102, 5.00, 150.00, 30.00, 5.00, 'D', 'B', 'D', 0.30, 0.50, 'ON_DEBUFF_LAND', 1),
-(3, '팽아린', '하북의 적련', 'FIRE', '폭딜러', 'CHUN', 'A', true, 100, 18, 8, 105, 15.00, 180.00, 5.00, 5.00, 'B', 'S', 'C', 0.25, 0.10, 'ON_CRIT', 2),
-(4, '당소소', '그림자 독', 'METAL', '암살자', 'SULHWA', 'A', true, 80, 16, 6, 115, 10.00, 200.00, 15.00, 5.00, 'C', 'A', 'D', 0.40, 0.20, 'ON_KILL', 3),
-(5, '남궁현', '가문의 원로', 'VOID', '서포터', NULL, 'S', true, 120, 12, 10, 95, 5.00, 150.00, 5.00, 20.00, 'A', 'C', 'A', 0.15, 0.10, 'ON_ALLY_HIT', 1);
-
--- 3. 캐릭터-스킬 매핑 삽입 (character_skills 테이블)
-INSERT IGNORE INTO character_skills (id, character_id, skill_id, skill_slot, required_gyeongji) VALUES
-(1, 1, 2, 'NORMAL', NULL),
-(2, 1, 1, 'BATTLE', NULL),
-(3, 1, 12, 'ULTIMATE', 'CHOILRYU'),
-(4, 2, 21, 'NORMAL', NULL),
-(5, 2, 20, 'BATTLE', NULL),
-(6, 2, 32, 'ULTIMATE', 'CHOILRYU');
-
--- 4. 스킬 진화 매핑 삽입 (skill_evolutions 테이블)
-INSERT IGNORE INTO skill_evolutions (id, before_skill_id, after_skill_id, required_chapter, route_type, event_description) VALUES
-(1, 1, 10, 1, 'CHUN', '36계 줄랑랑 -> 창궁대연보'),
-(2, 2, 11, 1, 'CHUN', '흙 뿌리기 -> 창궁일송'),
-(3, 20, 30, 1, 'SULHWA', '꺄악! 비명지르기 -> 빙백한풍'),
-(4, 21, 31, 1, 'SULHWA', '짱돌 투척 -> 빙백투창');
-
--- 5. 합벽기 매핑 삽입 (combo_skills 테이블)
-INSERT IGNORE INTO combo_skills (id, route_type, char_a_id, char_b_id, combo_name, combo_rank, spirit_cost_a, spirit_cost_b, required_chapter, element_fusion, effect_json, description) VALUES
-(1, 'CHUN', 1, 3, '염토쌍무 - 폭염지진', 'MAIN', 6, 6, 3, '용암(熔岩)', '{"damage_type":"AOE","scaling":"DEF","multiplier":4.5}', '천과 아린의 합벽기'),
-(2, 'SULHWA', 2, 4, '빙독쌍련 - 극한독화', 'MAIN', 6, 6, 3, '동결독(凍結毒)', '{"damage_type":"AOE","multiplier":3.8}', '설화와 소소의 합벽기'),
-(3, 'SULHWA', 2, 5, '현빙무영 - 한월장막', 'SUB', 4, 4, 2, '절대영도(絕對零度)', '{"damage_type":"AOE","multiplier":4.0}', '설화와 할배의 합벽기');
-
--- 6. 추가 캐릭터 마스터 삽입 (A~S급 및 잡졸)
-INSERT IGNORE INTO characters (id, name, title, element, role, route_type, rarity, is_gacha_target, base_hp, base_atk, base_def, base_spd, base_crit_rate, base_crit_dmg, base_effect_hit_rate, base_effect_resist, hp_growth, atk_growth, def_growth, spd_growth_per_level, ehr_growth_per_level, spirit_bonus_condition, spirit_bonus_amount) VALUES
-(6, '남궁선', '검신', 'METAL', '물리딜러', NULL, 'S', true, 110, 20, 8, 105, 10.00, 160.00, 5.00, 10.00, 'B', 'S', 'C', 0.25, 0.10, 'ON_CRIT', 2),
-(7, '팽무독', '폭렬천도', 'FIRE', '광역딜러', NULL, 'S', true, 120, 18, 10, 95, 5.00, 150.00, 15.00, 5.00, 'A', 'S', 'B', 0.20, 0.20, 'ON_KILL', 2),
-(8, '팽백호', '광패도선', 'EARTH', '메인탱커', NULL, 'A', true, 150, 12, 15, 85, 5.00, 150.00, 5.00, 25.00, 'S', 'C', 'S', 0.15, 0.10, 'ON_HIT', 1),
-(9, '제갈현', '신기묘산', 'WOOD', '서포터', NULL, 'S', true, 90, 10, 6, 120, 5.00, 150.00, 30.00, 15.00, 'C', 'C', 'C', 0.35, 0.50, 'ON_ALLY_HIT', 1),
-(10, '제갈령', '천기목우', 'METAL', '소환유틸', NULL, 'A', true, 85, 12, 8, 110, 5.00, 150.00, 20.00, 10.00, 'C', 'B', 'B', 0.30, 0.30, 'ON_DEBUFF_LAND', 1),
-(11, '당외', '천수독왕', 'WATER', '디버퍼', NULL, 'S', true, 95, 16, 7, 115, 5.00, 150.00, 40.00, 5.00, 'C', 'A', 'C', 0.35, 0.50, 'ON_DEBUFF_LAND', 2),
-(12, '황보웅', '붕천권마', 'METAL', '제어탱커', NULL, 'S', true, 140, 14, 14, 90, 5.00, 150.00, 15.00, 20.00, 'S', 'A', 'S', 0.15, 0.20, 'ON_HIT', 2),
-(13, '황보위', '태산소권', 'EARTH', '딜탱', NULL, 'A', true, 130, 16, 12, 95, 5.00, 150.00, 10.00, 15.00, 'A', 'A', 'A', 0.20, 0.10, 'ON_HIT', 1),
-(14, '남궁세가 평무사', '남궁철검', 'EARTH', '서브딜러', NULL, 'C', true, 100, 10, 10, 100, 5.00, 150.00, 5.00, 5.00, 'C', 'C', 'C', 0.10, 0.00, 'ON_HIT', 1),
-(15, '하북팽가 예비도수', '팽가돌격대', 'FIRE', '공격탱커', NULL, 'C', true, 110, 12, 8, 90, 5.00, 150.00, 5.00, 5.00, 'B', 'C', 'C', 0.10, 0.00, 'ON_HIT', 1),
-(16, '황보세가 예비권사', '돌덩이 몸통', 'EARTH', '메인탱커', NULL, 'C', true, 120, 8, 12, 85, 5.00, 150.00, 5.00, 5.00, 'A', 'D', 'B', 0.10, 0.00, 'ON_HIT', 1),
-(17, '제갈세가 학도생', '초보학도', 'WOOD', '서포터', NULL, 'C', true, 80, 8, 6, 105, 5.00, 150.00, 10.00, 5.00, 'D', 'D', 'D', 0.20, 0.10, 'ON_ALLY_HIT', 1),
-(18, '사천당가 하급무사', '초보독술사', 'WATER', '디버퍼', NULL, 'C', true, 85, 12, 5, 110, 5.00, 150.00, 15.00, 5.00, 'D', 'C', 'D', 0.25, 0.20, 'ON_DEBUFF_LAND', 1),
-(19, '소림사 예비 행자', '빡빡이 막내', 'METAL', '딜탱', NULL, 'C', true, 115, 10, 10, 95, 5.00, 150.00, 5.00, 10.00, 'B', 'C', 'B', 0.15, 0.00, 'ON_HIT', 1);
-
--- 7. 추가 스킬 마스터 삽입
-INSERT IGNORE INTO skills (id, name, description, skill_type, target_type, element, scaling_stat, damage_multiplier, energy_cost, spirit_gain, spirit_cost) VALUES
 (40, '천뢰섬격', '물리 피해 + 80% 확률 감전', 'NORMAL', 'SINGLE_ENEMY', 'METAL', 'ATK', 1.20, -1, 1, 0),
 (41, '제황자색검', '광역 피해 + 버프 1개 해제', 'BATTLE', 'ALL_ENEMY', 'METAL', 'ATK', 2.00, 1, 2, 0),
 (42, '벽력일도', '단일 피해 (출혈 대상에게 피해 증가)', 'NORMAL', 'SINGLE_ENEMY', 'FIRE', 'ATK', 1.30, -1, 1, 0),
@@ -82,33 +50,64 @@ INSERT IGNORE INTO skills (id, name, description, skill_type, target_type, eleme
 (58, '몸통 박치기', '단일 피해 + 30% 기절', 'NORMAL', 'SINGLE_ENEMY', 'EARTH', 'DEF', 0.70, -1, 1, 0),
 (59, '기본 공격', '단일 기본 피해', 'NORMAL', 'SINGLE_ENEMY', 'VOID', 'ATK', 1.00, -1, 1, 0),
 
--- 팽아린 (3번, 폭딜러) 스킬
 (60, '적련분쇄', '적 단일에게 강력한 화염 피해', 'NORMAL', 'SINGLE_ENEMY', 'FIRE', 'ATK', 1.20, -1, 1, 0),
 (61, '홍련지화', '적 전체에게 화염 피해 및 2턴 화상', 'BATTLE', 'ALL_ENEMY', 'FIRE', 'ATK', 1.50, 2, 1, 0),
 (62, '적련참 - 염왕강림', '적 단일 방어력 무시 극딜 + 치명타', 'ULTIMATE', 'SINGLE_ENEMY', 'FIRE', 'ATK', 3.80, 0, 0, 6),
 
--- 당소소 (4번, 암살자) 스킬
 (63, '유영독침', '적 단일에게 독침 투척 + 중독 2턴', 'NORMAL', 'SINGLE_ENEMY', 'METAL', 'ATK', 0.80, -1, 1, 0),
 (64, '칠보추혼', '적 단일의 등 뒤를 노려 피해 (중독 시 추뎀)', 'BATTLE', 'SINGLE_ENEMY', 'METAL', 'ATK', 2.00, 1, 2, 0),
 (65, '만천화우 - 흑살', '적 전체에게 치명적인 독비', 'ULTIMATE', 'ALL_ENEMY', 'METAL', 'ATK', 2.50, 0, 0, 5),
 
--- 남궁현 (5번, 화경(化境) 고수) 스킬
 (66, '창궁무애검 - 천류(天流)', '현경의 기운을 담은 검풍으로 적 전체를 휩쓰는 광역 딜', 'NORMAL', 'ALL_ENEMY', 'VOID', 'ATK', 0.80, -1, 1, 0),
 (67, '화경(化境) - 무원(無元)', '자신을 무(無)로 돌려 2턴간 어떤 공격도 받지 않는 절대 회피 상태 부여', 'BATTLE', 'SELF', 'VOID', 'DEF', 0.00, 2, 2, 0),
-(68, '제황검형 오의 - 이기어검(以氣御劍)', '현경의 경지에서만 가능한 이기어검술. 수많은 검기를 허공에 띄워 적 전체에게 파멸적인 피해', 'ULTIMATE', 'ALL_ENEMY', 'VOID', 'ATK', 4.00, 0, 0, 6),
+(68, '제황검형 오의 - 이기어검(以氣御劍)', '수많은 검기를 허공에 띄워 적 전체에게 파멸적인 피해', 'ULTIMATE', 'ALL_ENEMY', 'VOID', 'ATK', 4.00, 0, 0, 6),
 
--- 다른 캐릭터 궁극기 추가 (6번~13번)
 (70, '천뢰강림(天雷降臨)', '검신의 벼락이 내리쳐 은빛 섬광으로 단일 극딜', 'ULTIMATE', 'SINGLE_ENEMY', 'METAL', 'ATK', 4.00, 0, 0, 6),
 (71, '폭렬천도 오의 - 홍련지옥(紅蓮地獄)', '거대한 화염 폭풍으로 적 전체를 불태움', 'ULTIMATE', 'ALL_ENEMY', 'FIRE', 'ATK', 3.50, 0, 0, 6),
 (72, '혼원신공 - 태산압정(泰山壓頂)', '태산과 같은 무거운 기운으로 적 단일 압살', 'ULTIMATE', 'SINGLE_ENEMY', 'EARTH', 'DEF', 3.50, 0, 0, 5),
 (73, '천지팔진도 - 사문개방(死門開放)', '지맥을 비틀어 적 전체 행동불가 및 대량의 피해', 'ULTIMATE', 'ALL_ENEMY', 'WOOD', 'ATK', 2.80, 0, 0, 6),
 (74, '기문기관술 - 거대목우참', '웅이(거대목우)가 전장을 휩쓸어 적 전체 피해', 'ULTIMATE', 'ALL_ENEMY', 'METAL', 'ATK', 2.50, 0, 0, 5),
 (75, '십독신공 극 - 무형맹독(無形猛毒)', '적 단일에게 해제 불가능한 죽음의 독을 주입', 'ULTIMATE', 'SINGLE_ENEMY', 'WATER', 'ATK', 3.80, 0, 0, 6),
-(76, '붕천권마 - 천지진동(天地震動)', '대지를 붕괴시켜 적 전체 기절 및 파멸적 피해', 'ULTIMATE', 'ALL_ENEMY', 'METAL', 'ATK', 2.80, 0, 0, 6),
+(76, '붕천권마 - 천지진동(天地震동)', '대지를 붕괴시켜 적 전체 기절 및 파멸적 피해', 'ULTIMATE', 'ALL_ENEMY', 'METAL', 'ATK', 2.80, 0, 0, 6),
 (77, '벽력권법 극 - 암석분쇄(岩石粉碎)', '바위조차 가루로 만드는 태산소권의 비기', 'ULTIMATE', 'SINGLE_ENEMY', 'EARTH', 'ATK', 3.50, 0, 0, 5);
 
--- 8. 추가 캐릭터-스킬 매핑 삽입
-INSERT IGNORE INTO character_skills (id, character_id, skill_id, skill_slot, required_gyeongji) VALUES
+
+-- ====================================================================
+-- 2. 신규 캐릭터 마스터 삽입 (characters 테이블)
+-- 백엔드와 맞추기 위해 'code' 컬럼 데이터를 맨 앞에 매핑 정렬함!
+-- ====================================================================
+INSERT INTO characters (id, code, name, title, element, role, route_type, rarity, is_gacha_target, base_hp, base_atk, base_def, base_spd, base_crit_rate, base_crit_dmg, base_effect_hit_rate, base_effect_resist, hp_growth, atk_growth, def_growth, spd_growth_per_level, ehr_growth_per_level, spirit_bonus_condition, spirit_bonus_amount) VALUES
+(1, 'CH_NAMGUNG_CHUN', '남궁천', '가문의 수치', 'EARTH', '딜탱', 'CHUN', 'S', false, 130, 14, 12, 98, 5.00, 150.00, 10.00, 15.00, 'S', 'B', 'S', 0.20, 0.10, 'ON_HIT', 1),
+(2, 'CH_NAMGUNG_SEOLHWA', '남궁설화', '비명쟁이', 'WATER', '디버퍼', 'SULHWA', 'S', false, 75, 10, 4, 102, 5.00, 150.00, 30.00, 5.00, 'D', 'B', 'D', 0.30, 0.50, 'ON_DEBUFF_LAND', 1),
+(3, 'CH_PAENG_ARIN', '팽아린', '하북의 적련', 'FIRE', '폭딜러', 'CHUN', 'A', true, 100, 18, 8, 105, 15.00, 180.00, 5.00, 5.00, 'B', 'S', 'C', 0.25, 0.10, 'ON_CRIT', 2),
+(4, 'CH_DANG_SOSO', '당소소', '그림자 독', 'METAL', '암살자', 'SULHWA', 'A', true, 80, 16, 6, 115, 10.00, 200.00, 15.00, 5.00, 'C', 'A', 'D', 0.40, 0.20, 'ON_KILL', 3),
+(5, 'CH_NAMGUNG_HYUN', '남궁현', '천검선', 'VOID', '광역딜러', NULL, 'S', true, 120, 12, 10, 95, 5.00, 150.00, 5.00, 20.00, 'A', 'C', 'A', 0.15, 0.10, 'ON_ALLY_HIT', 1),
+(6, 'CH_NAMGUNG_SUN', '남궁선', '검신', 'METAL', '물리딜러', NULL, 'S', true, 110, 20, 8, 105, 10.00, 160.00, 5.00, 10.00, 'B', 'S', 'C', 0.25, 0.10, 'ON_CRIT', 2),
+(7, 'CH_PAENG_MUDOK', '팽무독', '폭렬천도', 'FIRE', '광역딜러', NULL, 'S', true, 120, 18, 10, 95, 5.00, 150.00, 15.00, 5.00, 'A', 'S', 'B', 0.20, 0.20, 'ON_KILL', 2),
+(8, 'CH_PAENG_BAEKHO', '팽백호', '광패도선', 'EARTH', '메인탱커', NULL, 'A', true, 150, 12, 15, 85, 5.00, 150.00, 5.00, 25.00, 'S', 'C', 'S', 0.15, 0.10, 'ON_HIT', 1),
+(9, 'CH_JEGAL_HYUN', '제갈현', '신기묘산', 'WOOD', '서포터', NULL, 'S', true, 90, 10, 6, 120, 5.00, 150.00, 30.00, 15.00, 'C', 'C', 'C', 0.35, 0.50, 'ON_ALLY_HIT', 1),
+(10, 'CH_JEGAL_RYEONG', '제갈령', '천기목우', 'METAL', '소환유틸', NULL, 'A', true, 85, 12, 8, 110, 5.00, 150.00, 20.00, 10.00, 'C', 'B', 'B', 0.30, 0.30, 'ON_DEBUFF_LAND', 1),
+(11, 'CH_DANG_외', '당외', '천수독왕', 'WATER', '디버퍼', NULL, 'S', true, 95, 16, 7, 115, 5.00, 150.00, 40.00, 5.00, 'C', 'A', 'C', 0.35, 0.50, 'ON_DEBUFF_LAND', 2),
+(12, 'CH_HWANGBO_WOONG', '황보웅', '붕천권마', 'METAL', '제어탱커', NULL, 'S', true, 140, 14, 14, 90, 5.00, 150.00, 15.00, 20.00, 'S', 'A', 'S', 0.15, 0.20, 'ON_HIT', 2),
+(13, 'CH_HWANGBO_WI', '황보위', '태산소권', 'EARTH', '딜탱', NULL, 'A', true, 130, 16, 12, 95, 5.00, 150.00, 10.00, 15.00, 'A', 'A', 'A', 0.20, 0.10, 'ON_HIT', 1),
+(14, 'CH_NAMGUNG_COMMON', '남궁세가 평무사', '남궁철검', 'EARTH', '서브딜러', NULL, 'C', true, 100, 10, 10, 100, 5.00, 150.00, 5.00, 5.00, 'C', 'C', 'C', 0.10, 0.00, 'ON_HIT', 1),
+(15, 'CH_PAENG_COMMON', '하북팽가 예비도수', '팽가돌격대', 'FIRE', '공격탱커', NULL, 'C', true, 110, 12, 8, 90, 5.00, 150.00, 5.00, 5.00, 'B', 'C', 'C', 0.10, 0.00, 'ON_HIT', 1),
+(16, 'CH_HWANGBO_COMMON', '황보세가 예비권사', '돌덩이 몸통', 'EARTH', '메인탱커', NULL, 'C', true, 120, 8, 12, 85, 5.00, 150.00, 5.00, 5.00, 'A', 'D', 'B', 0.10, 0.00, 'ON_HIT', 1),
+(17, 'CH_JEGAL_COMMON', '제갈세가 학도생', '초보학도', 'WOOD', '서포터', NULL, 'C', true, 80, 8, 6, 105, 5.00, 150.00, 10.00, 5.00, 'D', 'D', 'D', 0.20, 0.10, 'ON_ALLY_HIT', 1),
+(18, 'CH_DANG_COMMON', '사천당가 하급무사', '초보독술사', 'WATER', '디버퍼', NULL, 'C', true, 85, 12, 5, 110, 5.00, 150.00, 15.00, 5.00, 'D', 'C', 'D', 0.25, 0.20, 'ON_DEBUFF_LAND', 1),
+(19, 'CH_SOLIM_COMMON', '소림사 예비 행자', '빡빡이 막내', 'METAL', '딜탱', NULL, 'C', true, 115, 10, 10, 95, 5.00, 150.00, 5.00, 10.00, 'B', 'C', 'B', 0.15, 0.00, 'ON_HIT', 1);
+
+
+-- ====================================================================
+-- 3. 캐릭터-스킬 매핑 삽입 (character_skills 테이블)
+-- ====================================================================
+INSERT INTO character_skills (id, character_id, skill_id, skill_slot, required_gyeongji) VALUES
+(1, 1, 2, 'NORMAL', NULL),
+(2, 1, 1, 'BATTLE', NULL),
+(3, 1, 12, 'ULTIMATE', 'CHOILRYU'),
+(4, 2, 21, 'NORMAL', NULL),
+(5, 2, 20, 'BATTLE', NULL),
+(6, 2, 32, 'ULTIMATE', 'CHOILRYU'),
 (7, 6, 40, 'NORMAL', NULL),
 (8, 6, 41, 'BATTLE', NULL),
 (38, 6, 70, 'ULTIMATE', 'CHOILRYU'),
@@ -139,8 +138,6 @@ INSERT IGNORE INTO character_skills (id, character_id, skill_id, skill_slot, req
 (26, 17, 59, 'NORMAL', NULL),
 (27, 18, 59, 'NORMAL', NULL),
 (28, 19, 59, 'NORMAL', NULL),
-
--- 팽아린, 당소소, 남궁현 매핑
 (29, 3, 60, 'NORMAL', NULL),
 (30, 3, 61, 'BATTLE', NULL),
 (31, 3, 62, 'ULTIMATE', 'CHOILRYU'),
@@ -152,7 +149,28 @@ INSERT IGNORE INTO character_skills (id, character_id, skill_id, skill_slot, req
 (37, 5, 68, 'ULTIMATE', 'CHOILRYU');
 
 
--- 9. 캐릭터 image_path 매핑 (실제 보유 이미지 연결)
+-- ====================================================================
+-- 4. 스킬 진화 매핑 삽입 (skill_evolutions 테이블)
+-- ====================================================================
+INSERT INTO skill_evolutions (id, before_skill_id, after_skill_id, required_chapter, route_type, event_description) VALUES
+(1, 1, 10, 1, 'CHUN', '36계 줄랑랑 -> 창궁대연보'),
+(2, 2, 11, 1, 'CHUN', '흙 뿌리기 -> 창궁일송'),
+(3, 20, 30, 1, 'SULHWA', '꺄악! 비명지르기 -> 빙백한풍'),
+(4, 21, 31, 1, 'SULHWA', '짱돌 투척 -> 빙백투창');
+
+
+-- ====================================================================
+-- 5. 합벽기 매핑 삽입 (combo_skills 테이블)
+-- ====================================================================
+INSERT INTO combo_skills (id, route_type, char_a_id, char_b_id, combo_name, combo_rank, spirit_cost_a, spirit_cost_b, required_chapter, element_fusion, effect_json, description) VALUES
+(1, 'CHUN', 1, 3, '염토쌍무 - 폭염지진', 'MAIN', 6, 6, 3, '용암(熔岩)', '{"damage_type":"AOE","scaling":"DEF","multiplier":4.5}', '천과 아린의 합벽기'),
+(2, 'SULHWA', 2, 4, '빙독쌍련 - 극한독화', 'MAIN', 6, 6, 3, '동결독(凍結毒)', '{"damage_type":"AOE","multiplier":3.8}', '설화와 소소의 합벽기'),
+(3, 'SULHWA', 2, 5, '현빙무영 - 한월장막', 'SUB', 4, 4, 2, '절대영도(絕對零度)', '{"damage_type":"AOE","multiplier":4.0}', '설화와 할배의 합벽기');
+
+
+-- ====================================================================
+-- 6. 캐릭터 추가 업데이트 (이미지 경로 설정)
+-- ====================================================================
 UPDATE characters SET image_path = '/images/남궁천.png' WHERE id = 1;
 UPDATE characters SET image_path = '/images/남궁설화.jpg' WHERE id = 2;
 UPDATE characters SET image_path = '/images/dang_soso.png' WHERE id = 4;
@@ -161,27 +179,31 @@ UPDATE characters SET image_path = '/images/남궁선.png' WHERE id = 6;
 UPDATE characters SET image_path = '/images/zhuge_ryeong.png' WHERE id = 10;
 UPDATE characters SET image_path = '/images/portrait_male.png' WHERE image_path IS NULL;
 
--- 10. 캐릭터 등급 및 가챠 상태 강제 업데이트 (기존 데이터 정정)
+
+-- ====================================================================
+-- 7. 가챠 등급 규칙에 따른 타겟 캐릭터 상태 업데이트
+-- ====================================================================
 UPDATE characters SET rarity = 'S', is_gacha_target = false WHERE id IN (1, 2);
 UPDATE characters SET rarity = 'S', is_gacha_target = true WHERE id IN (6, 12);
 UPDATE characters SET rarity = 'A', is_gacha_target = true WHERE id IN (3, 4, 7, 8, 10);
 UPDATE characters SET rarity = 'B', is_gacha_target = true WHERE id IN (5, 9, 11, 13);
 UPDATE characters SET rarity = 'C', is_gacha_target = true WHERE id IN (14, 15, 16, 17, 18, 19);
 
--- 11. 메인 퀘스트 마스터 테이블 데이터 삽입 (mst_main_quest)
-INSERT IGNORE INTO mst_main_quest (id, chapter_id, target_stage_id, title, goal_desc, reward_gold, reward_gems) VALUES
+
+-- ====================================================================
+-- 8. 퀘스트 및 스테이지 진행도 마스터 셋업
+-- ====================================================================
+INSERT INTO mst_main_quest (id, chapter_id, target_stage_id, title, goal_desc, reward_gold, reward_gems) VALUES
 (1, 1, 1, '혈겁의 시작', '스테이지 1-1 클리어', 500, 50),
 (2, 1, 2, '불타는 장저', '스테이지 1-2 클리어', 600, 50),
 (3, 1, 3, '가문의 생존자', '스테이지 1-3 클리어', 700, 100),
 (4, 1, 4, '포위망 돌파', '스테이지 1-4 클리어', 800, 50),
 (5, 1, 5, '협객의 등장', '스테이지 1-5 클리어', 1000, 100);
 
--- 12. 테스트용 유저 진행도 초기화 (유저 ID 1 전용)
-INSERT IGNORE INTO user_progress (user_id, max_cleared_stage_id, current_quest_id, quest_status) VALUES
+INSERT INTO user_progress (user_id, max_cleared_stage_id, current_quest_id, quest_status) VALUES
 (1, 0, 1, 'IN_PROGRESS');
 
--- 13. 메인 스토리 스테이지 마스터 테이블 데이터 삽입 (mst_stage)
-INSERT IGNORE INTO mst_stage (id, chapter_id, stage_num, title, story_before_id, story_after_id, monster_group_id, reward_gold, reward_exp) VALUES
+INSERT INTO mst_stage (id, chapter_id, stage_num, title, story_before_id, story_after_id, monster_group_id, reward_gold, reward_exp) VALUES
 (1, 1, 1, '타오르는 장원', 1, 0, 101, 100, 50),
 (2, 1, 2, '혈교의 습격자', 0, 0, 102, 150, 60),
 (3, 1, 3, '무너진 정문', 0, 2, 103, 200, 80),

@@ -212,8 +212,7 @@ INSERT INTO mst_main_quest (id, chapter_id, target_stage_id, title, goal_desc, r
 (4, 1, 4, '포위망 돌파', '스테이지 1-4 클리어', 800, 50),
 (5, 1, 5, '협객의 등장', '스테이지 1-5 클리어', 1000, 100);
 
-INSERT INTO user_progress (user_id, max_cleared_stage_id, current_quest_id, quest_status) VALUES
-(1, 0, 1, 'IN_PROGRESS');
+-- user_progress는 트랜잭션 데이터이므로 마스터 스크립트에서 자동 생성하지 않음. (서비스 단에서 동적 생성됨)
 
 INSERT INTO mst_stage (id, chapter_id, stage_num, title, story_before_id, story_after_id, monster_group_id, reward_gold, reward_exp) VALUES
 (1, 1, 1, '타오르는 장원', 1, 0, 101, 100, 50),

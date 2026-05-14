@@ -100,8 +100,8 @@
                         this.hallStage = data.hallStage;
                         this.raidStage = data.raidStage;
                         this.maxClearedStageId = data.maxClearedStageId;
-                        this.claimedActRewards = data.claimedActRewards;
-                        this.claimedLevelRewards = data.claimedLevelRewards;
+                        this.claimedActRewards = data.claimedActRewards || "";
+                        this.claimedLevelRewards = data.claimedLevelRewards || "";
                         this.storyChapter = data.storyChapter;
                         if (data.profileImagePath) this.customPortrait = data.profileImagePath;
                         if (data.mainCharacterId) this.serverMainCharacterId = data.mainCharacterId;
@@ -578,11 +578,11 @@
 
                                                 <!-- Reward Button -->
                                                 <button @click="claimActReward(i)" 
-                                                        :disabled="storyChapter < i || (claimedActRewards && claimedActRewards.split(',').includes(String(i)))"
+                                                        :disabled="storyChapter < i || ((claimedActRewards || '').split(',').includes(String(i)))"
                                                         class="w-full py-3 rounded-xl font-bold text-xs transition-all shadow-xl active:scale-95 uppercase tracking-widest"
                                                         :class="storyChapter < i ? 'bg-slate-800 text-slate-500' : 
-                                                                (claimedActRewards && claimedActRewards.split(',').includes(String(i)) ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-gradient-to-r from-amber-600 to-amber-500 text-white shadow-amber-900/40')">
-                                                    <span x-text="claimedActRewards && claimedActRewards.split(',').includes(String(i)) ? 'Received' : '1500 GEM'"></span>
+                                                                ((claimedActRewards || '').split(',').includes(String(i)) ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-gradient-to-r from-amber-600 to-amber-500 text-white shadow-amber-900/40')">
+                                                    <span x-text="(claimedActRewards || '').split(',').includes(String(i)) ? 'Received' : '1500 GEM'"></span>
                                                 </button>
                                             </div>
                                         </template>
@@ -640,11 +640,11 @@
                                         </div>
 
                                         <button @click="claimLevelReward(lvl)"
-                                                :disabled="level < lvl || claimedLevelRewards.split(',').includes(String(lvl))"
+                                                :disabled="level < lvl || (claimedLevelRewards || '').split(',').includes(String(lvl))"
                                                 class="px-6 py-2.5 rounded-xl font-bold text-xs transition shadow-lg active:scale-95 uppercase tracking-widest"
                                                 :class="level < lvl ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 
-                                                        (claimedLevelRewards.split(',').includes(String(lvl)) ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-gradient-to-b from-amber-500 to-amber-600 text-white shadow-amber-900/40 hover:from-amber-400 hover:to-amber-500')">
-                                            <span x-text="claimedLevelRewards.split(',').includes(String(lvl)) ? 'Done' : 'Claim'"></span>
+                                                        ((claimedLevelRewards || '').split(',').includes(String(lvl)) ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-gradient-to-b from-amber-500 to-amber-600 text-white shadow-amber-900/40 hover:from-amber-400 hover:to-amber-500')">
+                                            <span x-text="(claimedLevelRewards || '').split(',').includes(String(lvl)) ? 'Done' : 'Claim'"></span>
                                         </button>
                                     </div>
                                 </div>

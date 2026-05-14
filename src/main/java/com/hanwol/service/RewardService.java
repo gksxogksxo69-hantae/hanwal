@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -25,6 +24,7 @@ public class RewardService {
      */
     @Transactional
     public RewardResult claimLevelReward(Long userId, int targetLevel) {
+        if (userId == null) throw new IllegalArgumentException("User ID must not be null");
         User user = userRepository.findById(userId).orElseThrow();
         UserProgress progress = userProgressRepository.findById(userId).orElseThrow();
 
@@ -66,6 +66,7 @@ public class RewardService {
      */
     @Transactional
     public RewardResult claimActReward(Long userId, int act) {
+        if (userId == null) throw new IllegalArgumentException("User ID must not be null");
         User user = userRepository.findById(userId).orElseThrow();
         UserProgress progress = userProgressRepository.findById(userId).orElseThrow();
 

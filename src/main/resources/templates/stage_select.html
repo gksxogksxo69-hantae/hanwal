@@ -229,6 +229,7 @@
                 // 스테이지 데이터
                 acts: [],
                 maxClearedStageId: 0,
+                currentActIndex: 0,
 
                 get currentAct() {
                     return this.acts.length > 0 ? this.acts[this.currentActIndex] : null;

@@ -40,6 +40,11 @@ document.addEventListener('alpine:init', () => {
         // ── 가이드라인 엔진 ──
         guideStep: 0,
         guideActive: false,
+        guideMonologueText: '',
+        guideTyping: false,
+        guideMonologueLines: [],
+        guideMonologueIndex: 0,
+        guideTypeInterval: null,
 
         async init() {
             await this.loadPlayerInfo();
@@ -75,6 +80,10 @@ document.addEventListener('alpine:init', () => {
                     this.playerGems = data.premiumCurrency || 0;
                     if (data.mainCharacterId !== null && data.mainCharacterId !== undefined) {
                         this.serverMainCharacterId = data.mainCharacterId;
+                    }
+                    // 서버에 저장된 프로필 이미지가 있으면 적용
+                    if (data.profileImagePath) {
+                        this.customPortrait = data.profileImagePath;
                     }
                 }
             } catch (e) {

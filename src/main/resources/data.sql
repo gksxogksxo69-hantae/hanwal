@@ -177,7 +177,19 @@ UPDATE characters SET image_path = '/images/dang_soso.png' WHERE id = 4;
 UPDATE characters SET image_path = '/images/남궁현.png' WHERE id = 5;
 UPDATE characters SET image_path = '/images/남궁선.png' WHERE id = 6;
 UPDATE characters SET image_path = '/images/zhuge_ryeong.png' WHERE id = 10;
-UPDATE characters SET image_path = '/images/portrait_male.png' WHERE image_path IS NULL;
+-- 이미지가 아직 없는 캐릭터: 캐릭터 성별/성격에 적합한 기본 초상화 매핑
+-- (추후 전용 일러스트 제작 시 개별 교체)
+UPDATE characters SET image_path = '/images/portrait_female.png' WHERE id = 3 AND image_path IS NULL;   -- 팽아린 (여성)
+UPDATE characters SET image_path = '/images/namgung_cheon.png' WHERE id = 7 AND image_path IS NULL;    -- 팽무독 (남성)
+UPDATE characters SET image_path = '/images/portrait_guard.png' WHERE id = 8 AND image_path IS NULL;   -- 팽백호 (남성/탱커)
+UPDATE characters SET image_path = '/images/portrait_male.png' WHERE id = 9 AND image_path IS NULL;    -- 제갈현 (남성)
+UPDATE characters SET image_path = '/images/portrait_female.png' WHERE id = 11 AND image_path IS NULL; -- 당외 (여성)
+UPDATE characters SET image_path = '/images/portrait_guard.png' WHERE id = 12 AND image_path IS NULL;  -- 황보웅 (남성/탱커)
+UPDATE characters SET image_path = '/images/portrait_male.png' WHERE id = 13 AND image_path IS NULL;   -- 황보위 (남성)
+UPDATE characters SET image_path = '/images/portrait_guard.png' WHERE id IN (14, 15, 16, 19) AND image_path IS NULL; -- C등급 남성 무사들
+UPDATE characters SET image_path = '/images/portrait_male.png' WHERE id = 17 AND image_path IS NULL;   -- 제갈세가 학도생
+UPDATE characters SET image_path = '/images/portrait_female.png' WHERE id = 18 AND image_path IS NULL; -- 사천당가 하급무사
+
 
 
 -- ====================================================================

@@ -122,5 +122,17 @@ public class QuestService {
         return new QuestClaimResponse(true, quest, nextQuestId, hasNext);
     }
 
+    /**
+     * 특정 퀘스트 ID를 강제로 완료 상태로 만듦 (예: 가챠 퀘스트)
+     */
+    @Transactional
+    public void completeQuestById(Long userId, Integer questId) {
+        UserProgress progress = getOrCreateProgress(userId);
+        if (progress.getCurrentQuestId().equals(questId) && UserProgress.STATUS_IN_PROGRESS.equals(progress.getQuestStatus())) {
+            progress.setQuestStatus(UserProgress.STATUS_COMPLETED);
+            progressRepository.save(progress);
+        }
+    }
+
     public record QuestClaimResponse(boolean success, MainQuest completedQuest, Integer nextQuestId, boolean hasNext) {}
 }

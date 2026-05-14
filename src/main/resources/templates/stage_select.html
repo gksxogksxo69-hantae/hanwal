@@ -92,7 +92,7 @@
 <body x-data="stageApp()">
 
     <!-- 전체 배경 (막에 따라 변경됨) -->
-    <div class="bg-layer" :style="`background-image: url(${currentAct.bg})`"></div>
+    <div class="bg-layer" :style="currentAct ? `background-image: url(${currentAct.bg})` : ''"></div>
     <div class="absolute inset-0 bg-gradient-to-r from-slate-900 via-transparent to-slate-900 z-10 pointer-events-none"></div>
 
     <div class="relative z-20 h-screen w-screen flex">
@@ -230,6 +230,7 @@
                 acts: [],
                 maxClearedStageId: 0,
                 currentActIndex: 0,
+                selectedStage: null,
 
                 get currentAct() {
                     return this.acts.length > 0 ? this.acts[this.currentActIndex] : null;
@@ -252,6 +253,8 @@
                                 }
                             }
                             this.currentActIndex = latestChapterIdx;
+                            
+                            this.$nextTick(() => lucide.createIcons());
                         }
                     } catch (e) {
                         console.error("스테이지 목록 로드 실패", e);

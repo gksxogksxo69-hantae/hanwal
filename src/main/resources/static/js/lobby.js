@@ -78,20 +78,24 @@ document.addEventListener('alpine:init', () => {
                     this.playerLevel = data.level || 1;
                     this.playerGold = data.gold || 0;
                     this.playerGems = data.premiumCurrency || 0;
+                    
+                    // 신규 필드 매핑
+                    this.combatPower = data.totalPower || 0;
+                    this.partyCombatPower = data.partyPower || 0; // x-data에는 명시 안되어있지만 Alpine은 동적 할당 가능
+                    this.serverRank = data.serverRank || '--';
+                    this.towerFloor = data.towerFloor || 1;
+                    this.hallStage = data.hallStage || 1;
+                    this.raidStage = data.raidStage || 1;
+
                     if (data.mainCharacterId !== null && data.mainCharacterId !== undefined) {
                         this.serverMainCharacterId = data.mainCharacterId;
                     }
-                    // 서버에 저장된 프로필 이미지가 있으면 적용
                     if (data.profileImagePath) {
                         this.customPortrait = data.profileImagePath;
                     }
                 }
             } catch (e) {
-                console.warn('플레이어 정보 로딩 실패 (서버 데이터를 확인하세요):', e);
-                // API 실패 시 더미 데이터 (디버깅용으로만 유지)
-                if (!this.playerNickname || this.playerNickname === '모험가') {
-                    this.playerNickname = '연결실패유저';
-                }
+                console.warn('플레이어 정보 로딩 실패:', e);
             }
         },
 
@@ -114,9 +118,10 @@ document.addEventListener('alpine:init', () => {
 
         async handleQuestClick() {
             if (this.currentQuest.status === 'COMPLETED') {
-                await this.claimQuestReward();
+                // 수령 모달을 띄우도록 바꿈
+                this.openModal('QUEST_REWARD');
             } else {
-                this.openModal('STORY_SELECT');
+                this.goToStory();
             }
         },
 
@@ -125,11 +130,27 @@ document.addEventListener('alpine:init', () => {
                 const res = await fetch('/api/quest/claim', { method: 'POST' });
                 const data = await res.json();
                 if (data.success) {
-                    alert('보상을 수령했습니다!');
+                    // 성공 시 모달 닫고 정보 갱신
+                    this.closeModal();
                     await this.fetchQuestInfo();
                     await this.loadPlayerInfo();
+                } else {
+                    alert('보상 수령 실패: ' + (data.error || '알 수 없는 오류'));
                 }
             } catch (e) { alert('보상 수령 실패: ' + e.message); }
+        },
+
+        async claimEventReward() {
+            try {
+                const res = await fetch('/api/map/claim-event-reward', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    alert(`이벤트 보상으로 보석 ${data.gems}개를 수령했습니다!`);
+                    await this.loadPlayerInfo();
+                } else {
+                    alert('이벤트 보상 수령 실패: ' + (data.error || '알 수 없는 오류'));
+                }
+            } catch (e) { alert('오류가 발생했습니다: ' + e.message); }
         },
 
         async enterStage(stage) {

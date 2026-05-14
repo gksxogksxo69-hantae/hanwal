@@ -27,6 +27,8 @@ public class GachaApiController {
     private final GameCharacterRepository gameCharacterRepository;
     private final UserCharacterRepository userCharacterRepository;
 
+    private final com.hanwol.service.QuestService questService;
+
     private static final int COST_SINGLE = 150;
     private static final int COST_MULTI = 1500;
     private static final int REWARD_GEM_LIMIT_BREAK = 15; // 6돌 이상 시 보상
@@ -52,6 +54,9 @@ public class GachaApiController {
         }
 
         user.spendGems(cost);
+
+        // 퀘스트 체크: 가챠 완료 (ID: 6)
+        questService.completeQuestById(user.getId(), 6);
 
         List<GameCharacter> pool = gameCharacterRepository.findAll();
         if (pool.isEmpty()) {

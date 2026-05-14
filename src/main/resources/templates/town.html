@@ -371,7 +371,7 @@
             </div>
         </template>
 
-        <!-- 상세 프로필(상태창) 모달 새로 추가 -->
+        <!-- 상세 프로필(상태창) 모달 -->
         <template x-if="currentModal==='MY_PROFILE'">
             <div class="panel-box w-full max-w-5xl flex flex-col overflow-hidden shadow-2xl" @click.away="closeModal()" style="height: 75vh;">
                 <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/40">
@@ -402,13 +402,17 @@
                             <div class="text-amber-400 text-sm font-bold tracking-widest mt-1">Lv. <span x-text="playerLevel"></span></div>
                             <div class="text-slate-400 text-xs mt-0.5">UID: 800012345</div>
                             <div class="w-full h-px bg-white/10 my-4"></div>
-                            <div class="w-full space-y-2">
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-slate-400">칭호</span>
+                            <div class="w-full space-y-4">
+                                <div class="bg-black/40 p-3 rounded-lg border border-white/5">
+                                    <p class="text-slate-500 text-[10px] uppercase font-bold mb-1">파티 전투력</p>
+                                    <p class="text-xl font-mono font-bold text-blue-400" x-text="partyCombatPower.toLocaleString()"></p>
+                                </div>
+                                <div class="flex justify-between text-sm px-1">
+                                    <span class="text-slate-400 font-bold">칭호</span>
                                     <span class="text-cyan-300 font-bold">초보 무림인</span>
                                 </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-slate-400">문파</span>
+                                <div class="flex justify-between text-sm px-1">
+                                    <span class="text-slate-400 font-bold">문파</span>
                                     <span class="text-slate-500 font-bold">소속 없음</span>
                                 </div>
                             </div>
@@ -417,7 +421,7 @@
 
                     <!-- 오른쪽: Bento Grid 통계 영역 -->
                     <div class="flex-1 grid grid-cols-2 grid-rows-3 gap-4">
-                        <!-- 전투력 -->
+                        <!-- 종합 전투력 -->
                         <div class="panel-box p-6 bg-gradient-to-br from-red-900/40 to-slate-800 border-none flex flex-col justify-center">
                             <p class="text-red-300 text-xs tracking-widest font-bold mb-1 flex items-center gap-1.5"><i data-lucide="swords" class="w-4 h-4"></i> 종합 전투력</p>
                             <div class="text-4xl font-extrabold font-mono text-white tracking-wider" x-text="combatPower.toLocaleString()"></div>
@@ -426,13 +430,19 @@
                         <!-- 랭킹 -->
                         <div class="panel-box p-6 bg-gradient-to-br from-amber-900/40 to-slate-800 border-none flex flex-col justify-center">
                             <p class="text-amber-300 text-xs tracking-widest font-bold mb-1 flex items-center gap-1.5"><i data-lucide="trophy" class="w-4 h-4"></i> 서버 랭킹</p>
-                            <div class="text-4xl font-extrabold font-mono text-white tracking-wider"><span x-text="serverRank.toLocaleString()"></span><span class="text-lg text-amber-200/60 ml-1">위</span></div>
+                            <div class="text-4xl font-extrabold font-mono text-white tracking-wider"><span x-text="serverRank"></span><span class="text-lg text-amber-200/60 ml-1" x-show="serverRank !== '--'">위</span></div>
                         </div>
 
                         <!-- 진척도 위젯들 (하단 2줄 차지) -->
                         <div class="col-span-2 row-span-2 panel-box p-6 bg-slate-800/80 border-none flex flex-col">
-                            <h3 class="text-lg font-bold serif text-white mb-4 flex items-center gap-2">
-                                <i data-lucide="map" class="text-blue-400 w-5 h-5"></i> 모험 진척도
+                            <h3 class="text-lg font-bold serif text-white mb-4 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="map" class="text-blue-400 w-5 h-5"></i> 모험 진척도
+                                </div>
+                                <!-- 이벤트 보상 버튼 -->
+                                <button @click="claimEventReward()" class="text-[10px] bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded-full font-bold transition flex items-center gap-1 animate-bounce">
+                                    <i data-lucide="gift" class="w-3 h-3"></i> 1,500 보석 받기
+                                </button>
                             </h3>
                             <div class="grid grid-cols-3 gap-4 flex-1">
                                 <!-- 무한의 탑 -->
@@ -446,6 +456,19 @@
                                     <i data-lucide="skull" class="w-10 h-10 text-purple-400 mb-3"></i>
                                     <h4 class="font-bold text-sm text-slate-200">기억의 전당</h4>
                                     <p class="text-2xl font-extrabold text-purple-300 mt-1 font-mono"><span x-text="hallStage"></span><span class="text-xs text-slate-500 ml-1">단계</span></p>
+                                </div>
+                                <!-- 레이드 -->
+                                <div class="bg-black/30 rounded-lg p-4 flex flex-col justify-center items-center text-center border border-white/5 hover:border-red-500/50 transition">
+                                    <i data-lucide="flame" class="w-10 h-10 text-red-500 mb-3"></i>
+                                    <h4 class="font-bold text-sm text-slate-200">주간 레이드</h4>
+                                    <p class="text-2xl font-extrabold text-red-400 mt-1 font-mono"><span x-text="raidStage"></span><span class="text-xs text-slate-500 ml-1">단계</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>ple-300 mt-1 font-mono"><span x-text="hallStage"></span><span class="text-xs text-slate-500 ml-1">단계</span></p>
                                 </div>
                                 <!-- 레이드 -->
                                 <div class="bg-black/30 rounded-lg p-4 flex flex-col justify-center items-center text-center border border-white/5 hover:border-red-500/50 transition">
@@ -691,8 +714,42 @@
 
 
 
+        <!-- 퀘스트 보상 수령 모달 -->
+        <template x-if="currentModal==='QUEST_REWARD'">
+            <div class="panel-box w-full max-w-md flex flex-col overflow-hidden shadow-2xl animate-bounce-short" @click.away="closeModal()">
+                <div class="p-5 border-b border-white/10 flex justify-between items-center bg-amber-600/20">
+                    <h2 class="text-xl font-bold serif text-amber-400 flex items-center gap-2">
+                        <i data-lucide="gift"></i> 임무 완수 보상
+                    </h2>
+                    <button @click="closeModal()" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+                </div>
+                <div class="p-8 flex flex-col items-center">
+                    <div class="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mb-4 border border-amber-500/30">
+                        <i data-lucide="gem" class="w-10 h-10 text-cyan-400"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1" x-text="currentQuest.title"></h3>
+                    <p class="text-slate-400 text-sm mb-6 text-center">임무를 성공적으로 마쳤습니다!<br>아래 보상을 수령하시겠습니까?</p>
+                    
+                    <div class="w-full bg-black/40 rounded-lg p-4 mb-8 flex justify-center gap-6">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="coins" class="text-yellow-500 w-4 h-4"></i>
+                            <span class="font-mono font-bold" x-text="currentQuest.rewardGold.toLocaleString()"></span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="gem" class="text-cyan-400 w-4 h-4"></i>
+                            <span class="font-mono font-bold" x-text="currentQuest.rewardGems.toLocaleString()"></span>
+                        </div>
+                    </div>
+                    
+                    <button @click="claimQuestReward()" class="w-full py-4 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow-lg transition transform active:scale-95">
+                        보상 수령하기
+                    </button>
+                </div>
+            </div>
+        </template>
+
         <!-- 기타 모달 -->
-        <template x-if="currentModal && !['PARTY', 'MY_PROFILE', 'PROFILE_EDIT', 'GACHA', 'INVENTORY', 'DAILY_HALL', 'STORY_SELECT', 'GUILD', 'TOWER', 'RAID'].includes(currentModal)">
+        <template x-if="currentModal && !['PARTY', 'MY_PROFILE', 'PROFILE_EDIT', 'GACHA', 'INVENTORY', 'DAILY_HALL', 'STORY_SELECT', 'GUILD', 'TOWER', 'RAID', 'QUEST_REWARD'].includes(currentModal)">
             <div @click.away="closeModal()" class="panel-box max-w-md w-full overflow-hidden shadow-xl" style="height:45vh">
                 <div class="p-4 border-b border-white/5 flex justify-between items-center bg-black/30">
                     <h3 class="text-lg font-bold serif text-amber-500" x-text="modalTitle"></h3>

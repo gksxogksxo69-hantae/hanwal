@@ -29,6 +29,18 @@ public class UserProgress {
     @Column(length = 20, columnDefinition = "varchar(20) default 'IN_PROGRESS'")
     private String questStatus;        // IN_PROGRESS, COMPLETED, CLAIMED
 
+    @Column(columnDefinition = "int default 1")
+    private Integer towerFloor;        // 무한의 탑 진행 층수
+
+    @Column(columnDefinition = "int default 1")
+    private Integer hallStage;         // 기억의 전당 진행 단계
+
+    @Column(columnDefinition = "int default 1")
+    private Integer raidStage;         // 주간 레이드 단계
+
+    @Column(columnDefinition = "int default 0")
+    private Integer lastEventRewardStageId; // 마지막으로 1500보석 이벤트 보상을 받은 스테이지 ID
+
     public static final String STATUS_IN_PROGRESS = "IN_PROGRESS";
     public static final String STATUS_COMPLETED = "COMPLETED";
     public static final String STATUS_CLAIMED = "CLAIMED";

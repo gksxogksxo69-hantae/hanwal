@@ -274,11 +274,13 @@
     <div x-show="guideStep === 2 || guideStep === 3" x-transition.opacity
          class="fixed inset-0 z-[55] bg-black/50 pointer-events-none"></div>
 
-    <!-- 모달 영역 -->
-    <div x-show="currentModal" style="display:none"
-         class="absolute inset-0 z-50 flex items-center justify-center pointer-events-auto"
-         :class="currentModal==='PARTY' ? 'bg-[#060a12]/97 p-6' : 'bg-black/80 p-4'"
-         x-transition.opacity.duration.200ms>
+    <!-- ===== 모달 루트 컨테이너 (Alpine x-show) ===== -->
+    <div id="DIV_MODAL_ROOT" 
+         x-show="currentModal" 
+         class="fixed inset-0 z-50 flex items-center justify-center p-4"
+         :class="currentModal==='PARTY' ? 'bg-[#060a12]/97' : 'bg-black/80'"
+         x-transition.opacity.duration.200ms
+         x-cloak>
 
         <!-- 편성창 개편 -->
         <template x-if="currentModal==='PARTY'">
@@ -782,7 +784,7 @@
                                     </div>
                                 </template>
                                 <template x-if="!isLevelRewardClaimed(lv)">
-                                    <button @click="claimLevelReward(lv)"
+                                    <button @click="claimLevelReward(lv); $nextTick(() => lucide.createIcons())"
                                             :disabled="playerLevel < lv"
                                             class="w-full py-2 rounded-lg text-[10px] font-bold transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
                                             :class="{

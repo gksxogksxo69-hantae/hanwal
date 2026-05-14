@@ -38,8 +38,11 @@ public class UserProgress {
     @Column(columnDefinition = "int default 1")
     private Integer raidStage;         // 주간 레이드 단계
 
-    @Column(columnDefinition = "int default 0")
-    private Integer lastEventRewardStageId; // 마지막으로 1500보석 이벤트 보상을 받은 스테이지 ID
+    @Column(length = 500)
+    private String claimedActRewards = ""; // "1,2,3" 형태
+
+    @Column
+    private Integer lastEventRewardStageId = 0; // 기존 15스테이지 배수 보상용
 
     public static final String STATUS_IN_PROGRESS = "IN_PROGRESS";
     public static final String STATUS_COMPLETED = "COMPLETED";
@@ -47,5 +50,18 @@ public class UserProgress {
 
     public boolean isRewardClaimable() {
         return STATUS_COMPLETED.equals(this.questStatus);
+    }
+
+    public boolean isActRewardClaimed(int act) {
+        if (claimedActRewards == null || claimedActRewards.isEmpty()) return false;
+        return java.util.Arrays.asList(claimedActRewards.split(",")).contains(String.valueOf(act));
+    }
+
+    public void claimActReward(int act) {
+        if (claimedActRewards == null || claimedActRewards.isEmpty()) {
+            this.claimedActRewards = String.valueOf(act);
+        } else if (!isActRewardClaimed(act)) {
+            this.claimedActRewards += "," + act;
+        }
     }
 }

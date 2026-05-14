@@ -86,6 +86,8 @@ document.addEventListener('alpine:init', () => {
                     this.towerFloor = data.towerFloor || 1;
                     this.hallStage = data.hallStage || 1;
                     this.raidStage = data.raidStage || 1;
+                    this.maxClearedStageId = data.maxClearedStageId || 0;
+                    this.claimedActRewards = data.claimedActRewards || "";
 
                     if (data.mainCharacterId !== null && data.mainCharacterId !== undefined) {
                         this.serverMainCharacterId = data.mainCharacterId;
@@ -364,6 +366,34 @@ document.addEventListener('alpine:init', () => {
             } catch (e) {
                 console.error(e);
             }
+        },
+
+        async claimActReward(act) {
+            try {
+                const res = await fetch(`/api/map/claim-act-reward?act=${act}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(`${act}막 보상 1,500 보석 수령 완료!`);
+                    this.claimedActRewards = data.claimedActRewards;
+                    await this.loadPlayerInfo();
+                } else {
+                    alert(data.error || "수령 실패");
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        },
+
+        isActClaimed(act) {
+            if (!this.claimedActRewards) return false;
+            return this.claimedActRewards.split(',').includes(act.toString());
+        },
+
+        canClaimAct(act) {
+            return this.maxClearedStageId >= (act * 5);
         },
 
         async drawGacha(count) {

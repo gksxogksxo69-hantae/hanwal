@@ -189,17 +189,18 @@ document.addEventListener('alpine:init', () => {
         async completeTutorial() {
             if (this.isCompleted) return;
             this.isCompleted = true;
-            console.log('[Tutorial] Completing tutorial, redirecting...');
+            console.log('[Tutorial] Completing storyboard, setting step to 2 and redirecting...');
             try {
+                // 프롤로그/시토리보드 종료 시 step 2로 업데이트 (이후 로비 진입 허용)
                 await fetch('/api/tutorial/complete-step', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ step: 1 }) 
+                    body: JSON.stringify({ step: 2 }) 
                 });
             } catch (e) {
                 console.warn('[Tutorial] complete-step API failed:', e);
             }
-            setTimeout(() => { window.location.href = '/town'; }, 2500);
+            setTimeout(() => { window.location.href = '/town'; }, 2000);
         },
 
         openSkipModal() { 
@@ -210,9 +211,18 @@ document.addEventListener('alpine:init', () => {
             console.log('[Tutorial] Closing skip modal');
             this.showSkipModal = false; 
         },
-        confirmSkip() { 
+        async confirmSkip() { 
             console.log('[Tutorial] Skip confirmed');
-            this.completeTutorial(); 
+            this.showSkipModal = false;
+            if (this.isCompleted) return;
+            this.isCompleted = true;
+            
+            try {
+                await fetch('/api/tutorial/skip', { method: 'POST' });
+            } catch (e) {
+                console.warn('[Tutorial] skip API failed:', e);
+            }
+            window.location.href = '/town';
         }
     }));
 });

@@ -562,7 +562,6 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        // closeModal 오버라이드: 편성 모달 닫을 때 가이드 스텝 진행
         closeModal() {
             if (this.guideStep === 2 && this.currentModal === 'PARTY') {
                 this.guideCompletePartyStep();

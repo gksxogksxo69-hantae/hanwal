@@ -6,6 +6,9 @@ import com.hanwol.domain.character.UserCharacter;
 import com.hanwol.domain.character.UserCharacterRepository;
 import com.hanwol.domain.user.User;
 import com.hanwol.domain.user.UserRepository;
+import com.hanwol.domain.user.UserProgress;
+import com.hanwol.domain.user.UserProgressRepository;
+import com.hanwol.service.RewardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -26,11 +29,9 @@ public class LobbyApiController {
     private final UserRepository userRepository;
     private final UserCharacterRepository userCharacterRepository;
     private final GameCharacterRepository gameCharacterRepository;
+    private final UserProgressRepository userProgressRepository;
+    private final RewardService rewardService;
 
-    /**
-     * 로비 진입 시 유저의 보유 캐릭터 목록을 내려줌.
-     * 보유 캐릭터가 없으면 마스터 데이터에서 주요 캐릭터를 내려줌(미리보기 용도).
-     */
     @GetMapping("/my-characters")
     public ResponseEntity<?> getMyCharacters(@AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null) {
@@ -43,46 +44,33 @@ public class LobbyApiController {
         }
 
         List<UserCharacter> userChars = userCharacterRepository.findByUserIdOrderByLevelDesc(user.getId());
+        List<Map<String, Object>> charList;
 
-        // 유저 보유 캐릭터가 있으면 그걸 내려줌
         if (!userChars.isEmpty()) {
-            List<Map<String, Object>> charList = userChars.stream().map(uc -> {
-                GameCharacter gc = uc.getCharacter();
-                return buildCharMap(gc, uc.getLevel());
-            }).collect(Collectors.toList());
-
-            // 3. 현재 편성 중인 캐릭터 ID (없으면 레벨 높은 순 4명 기본 자동 저장)
-            List<Long> partyIds = Arrays.asList(user.getPartySlot1(), user.getPartySlot2(), user.getPartySlot3(), user.getPartySlot4());
-            
-            if (partyIds.stream().allMatch(Objects::isNull)) {
-                // 기본 파티 자동 구성 및 저장
-                List<Long> defaultParty = userChars.stream().limit(4).map(uc -> uc.getCharacter().getId()).collect(Collectors.toList());
-                user.setPartySlot1(defaultParty.size() > 0 ? defaultParty.get(0) : null);
-                user.setPartySlot2(defaultParty.size() > 1 ? defaultParty.get(1) : null);
-                user.setPartySlot3(defaultParty.size() > 2 ? defaultParty.get(2) : null);
-                user.setPartySlot4(defaultParty.size() > 3 ? defaultParty.get(3) : null);
-                userRepository.save(user); // DB에 강제 저장
-                partyIds = defaultParty;
-                log.info("유저({})의 기본 파티가 자동으로 구성 및 저장되었습니다.", user.getNickname());
-            }
-
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "characters", charList,
-                "party", partyIds
-            ));
+            charList = userChars.stream().map(uc -> buildCharMap(uc.getCharacter(), uc.getLevel())).collect(Collectors.toList());
+        } else {
+            charList = gameCharacterRepository.findAll().stream()
+                    .filter(gc -> gc.getImagePath() != null && !gc.getImagePath().contains("portrait_male"))
+                    .limit(5)
+                    .map(gc -> buildCharMap(gc, 1))
+                    .collect(Collectors.toList());
         }
 
-        // 보유 캐릭터 없음 → 마스터 데이터에서 이미지 있는 주요 캐릭터를 내려줌
-        log.info("유저({})에게 보유 캐릭터가 없으므로 마스터 캐릭터 미리보기를 제공합니다.", user.getNickname());
-        List<GameCharacter> allChars = gameCharacterRepository.findAll();
-        List<Map<String, Object>> previewList = allChars.stream()
-                .filter(gc -> gc.getImagePath() != null && !gc.getImagePath().contains("portrait_male"))
-                .limit(5) // 로비 표시용으로 5명만
-                .map(gc -> buildCharMap(gc, 1))
-                .collect(Collectors.toList());
+        List<Long> partyIds = Arrays.asList(user.getPartySlot1(), user.getPartySlot2(), user.getPartySlot3(), user.getPartySlot4());
+        UserProgress progress = userProgressRepository.findById(user.getId()).orElse(new UserProgress());
 
-        return ResponseEntity.ok(Map.of("success", true, "characters", previewList, "preview", true));
+        return ResponseEntity.ok(Map.of(
+            "success", true,
+            "characters", charList,
+            "party", partyIds,
+            "gems", user.getPremiumCurrency(),
+            "level", user.getLevel(),
+            "exp", user.getExp(),
+            "requiredExp", user.getRequiredExp(),
+            "claimedLevelRewards", user.getClaimedLevelRewards() != null ? user.getClaimedLevelRewards() : "",
+            "claimedActRewards", progress.getClaimedActRewards() != null ? progress.getClaimedActRewards() : "",
+            "storyChapter", user.getStoryChapter()
+        ));
     }
 
     private Map<String, Object> buildCharMap(GameCharacter gc, int level) {
@@ -98,17 +86,53 @@ public class LobbyApiController {
         return m;
     }
 
+    @PostMapping("/save-party")
+    @Transactional
+    public ResponseEntity<?> saveParty(@AuthenticationPrincipal UserDetails userDetails,
+                                       @RequestBody Map<String, List<Long>> request) {
+        if (userDetails == null) return ResponseEntity.status(401).build();
+        User user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+        if (user == null) return ResponseEntity.badRequest().build();
+
+        List<Long> ids = request.get("partyIds");
+        if (ids != null && ids.size() >= 4) {
+            user.updateParty(ids.get(0), ids.get(1), ids.get(2), ids.get(3));
+            userRepository.save(user);
+        }
+        return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    @PostMapping("/claim-level-reward")
+    public ResponseEntity<?> claimLevelReward(@AuthenticationPrincipal UserDetails userDetails,
+                                              @RequestBody Map<String, Integer> request) {
+        if (userDetails == null) return ResponseEntity.status(401).build();
+        User user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+        if (user == null) return ResponseEntity.badRequest().build();
+
+        Integer targetLevel = request.get("level");
+        var result = rewardService.claimLevelReward(user.getId(), targetLevel);
+        return ResponseEntity.ok(Map.of("success", result.success(), "message", result.message(), "amount", result.amount()));
+    }
+
+    @PostMapping("/claim-act-reward")
+    public ResponseEntity<?> claimActReward(@AuthenticationPrincipal UserDetails userDetails,
+                                            @RequestBody Map<String, Integer> request) {
+        if (userDetails == null) return ResponseEntity.status(401).build();
+        User user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+        if (user == null) return ResponseEntity.badRequest().build();
+
+        Integer act = request.get("act");
+        var result = rewardService.claimActReward(user.getId(), act);
+        return ResponseEntity.ok(Map.of("success", result.success(), "message", result.message(), "amount", result.amount()));
+    }
+
     @PostMapping("/profile-image")
     @Transactional
     public ResponseEntity<?> updateProfileImage(@AuthenticationPrincipal UserDetails userDetails,
                                                 @RequestBody Map<String, String> request) {
-        if (userDetails == null) {
-            return ResponseEntity.status(401).body(Map.of("success", false, "error", "Unauthorized"));
-        }
+        if (userDetails == null) return ResponseEntity.status(401).build();
         User user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
-        if (user == null) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "User not found"));
-        }
+        if (user == null) return ResponseEntity.badRequest().build();
         String imagePath = request.get("imagePath");
         if (imagePath != null && !imagePath.isEmpty()) {
             user.updateProfile(null, imagePath);
@@ -119,22 +143,14 @@ public class LobbyApiController {
     @PostMapping("/main-character")
     @Transactional
     public ResponseEntity<?> updateMainCharacter(@AuthenticationPrincipal UserDetails userDetails,
-                                                 @RequestBody Map<String, String> request) {
-        if (userDetails == null) {
-            return ResponseEntity.status(401).body(Map.of("success", false, "error", "Unauthorized"));
-        }
+                                                 @RequestBody Map<String, Object> request) {
+        if (userDetails == null) return ResponseEntity.status(401).build();
         User user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
-        if (user == null) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "User not found"));
-        }
+        if (user == null) return ResponseEntity.badRequest().build();
         Object characterIdObj = request.get("characterId");
         if (characterIdObj != null) {
-            try {
-                Long characterId = Long.valueOf(String.valueOf(characterIdObj));
-                user.updateProfile(characterId, null);
-            } catch (NumberFormatException e) {
-                log.error("Invalid characterId: {}", characterIdObj);
-            }
+            Long characterId = Long.valueOf(String.valueOf(characterIdObj));
+            user.updateProfile(characterId, null);
         }
         return ResponseEntity.ok(Map.of("success", true));
     }

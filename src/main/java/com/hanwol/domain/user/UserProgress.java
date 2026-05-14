@@ -61,6 +61,10 @@ public class UserProgress {
     private String claimedActRewards = ""; // "1,2,3" 형태
 
     @Builder.Default
+    @Column(length = 500, columnDefinition = "varchar(500) default ''")
+    private String claimedLevelRewards = ""; // "5,10,15" 형태
+
+    @Builder.Default
     @Column
     private Integer lastEventRewardStageId = 0; // 기존 15스테이지 배수 보상용
 

@@ -52,16 +52,18 @@ public class QuestService {
     }
 
     private UserProgress getOrCreateProgress(Long userId) {
-        return progressRepository.findById(userId)
-                .orElseGet(() -> {
-                    UserProgress newProgress = UserProgress.builder()
-                            .userId(userId)
-                            .maxClearedStageId(0)
-                            .currentQuestId(1) // 1번 퀘스트부터 시작
-                            .questStatus(UserProgress.STATUS_IN_PROGRESS)
-                            .build();
-                    return progressRepository.save(newProgress);
-                });
+        UserProgress progress = progressRepository.findById(userId).orElse(null);
+        if (progress != null) return progress;
+
+        UserProgress newProgress = UserProgress.builder()
+                .userId(userId)
+                .maxClearedStageId(0)
+                .currentQuestId(1) 
+                .questStatus(UserProgress.STATUS_IN_PROGRESS)
+                .build();
+        UserProgress saved = progressRepository.save(newProgress);
+        if (saved == null) throw new RuntimeException("Failed to initialize user progress");
+        return saved;
     }
 
     /**
@@ -99,8 +101,10 @@ public class QuestService {
             throw new IllegalStateException("보상을 수령할 수 있는 상태가 아닙니다.");
         }
 
-        MainQuest quest = questRepository.findById(progress.getCurrentQuestId()).orElseThrow();
-        User user = userRepository.findById(userId).orElseThrow();
+        MainQuest quest = questRepository.findById(progress.getCurrentQuestId())
+                .orElseThrow(() -> new IllegalStateException("Quest not found: " + progress.getCurrentQuestId()));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalStateException("User not found: " + userId));
 
         // 1. 보상 지급
         user.gainGold(quest.getRewardGold());

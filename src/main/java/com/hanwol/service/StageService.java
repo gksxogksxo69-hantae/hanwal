@@ -63,7 +63,9 @@ public class StageService {
                 .currentQuestId(1)
                 .questStatus(UserProgress.STATUS_IN_PROGRESS)
                 .build();
-        return userProgressRepository.save(newProgress);
+        UserProgress saved = userProgressRepository.save(newProgress);
+        if (saved == null) throw new RuntimeException("Failed to initialize user progress");
+        return saved;
     }
 
     // 내부 응답용 DTO

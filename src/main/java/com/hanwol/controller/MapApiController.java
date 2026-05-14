@@ -56,11 +56,9 @@ public class MapApiController {
         // 전투력 계산 로직
         List<com.hanwol.domain.character.UserCharacter> allChars = userCharacterRepository.findByUserId(user.getId());
         
-        // 캐릭터가 하나도 없으면 남궁천(id=1) 기본 지급 (보정 로직)
+        // 캐릭터가 하나도 없으면 보정 로직 (나중에 튜토리얼에서 강제 지급 보장되므로 로깅만 유지)
         if (allChars.isEmpty()) {
-            log.info("유저({})의 캐릭터가 없어 기본 캐릭터를 지급합니다.", user.getNickname());
-            com.hanwol.domain.character.GameCharacter starter = userRepository.findById(1L).isPresent() ? null : null; // Temp
-            // 실제로는 캐릭터 레포지토리에서 가져와야함. TutorialService.grantStarterCharacter 로직 참고.
+            log.warn("유저({})의 캐릭터가 없습니다. 편성 데이터 확인이 필요합니다.", user.getNickname());
         }
 
         long totalPower = 0;
@@ -87,8 +85,11 @@ public class MapApiController {
         response.put("gender", user.getGender() != null ? user.getGender().name() : "MALE");
         response.put("nickname", user.getNickname());
         response.put("level", user.getLevel());
+        response.put("exp", user.getExp());
+        response.put("nextLevelExp", user.getRequiredExp());
         response.put("gold", user.getGold());
         response.put("premiumCurrency", user.getPremiumCurrency());
+        response.put("claimedLevelRewards", user.getClaimedLevelRewards());
         response.put("mainCharacterId", user.getMainCharacterId());
         response.put("profileImagePath", user.getProfileImagePath());
         
@@ -165,8 +166,10 @@ public class MapApiController {
     @Transactional
     public ResponseEntity<?> claimActReward(@AuthenticationPrincipal UserDetails userDetails, @RequestParam int act) {
         if (userDetails == null) return ResponseEntity.status(401).build();
-        User user = userRepository.findByEmail(userDetails.getUsername()).orElseThrow();
-        com.hanwol.domain.user.UserProgress progress = userProgressRepository.findById(user.getId()).orElseThrow();
+        User user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+        if (user == null) return ResponseEntity.badRequest().body(Map.of("success", false, "error", "User not found"));
+        com.hanwol.domain.user.UserProgress progress = userProgressRepository.findById(user.getId()).orElse(null);
+        if (progress == null) return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Progress not found"));
 
         // 보상 조건: 해당 Act의 5스테이지 클리어 (예: Act 1 -> 5 stage)
         int requiredStage = act * 5;
@@ -186,5 +189,40 @@ public class MapApiController {
         userProgressRepository.save(progress);
 
         return ResponseEntity.ok(Map.of("success", true, "gems", 1500, "claimedActRewards", progress.getClaimedActRewards()));
+    }
+
+    /**
+     * 계정 레벨 달성 보랑 수령
+     */
+    @PostMapping("/claim-level-reward")
+    @Transactional
+    public ResponseEntity<?> claimLevelReward(@AuthenticationPrincipal UserDetails userDetails, @RequestParam int targetLevel) {
+        if (userDetails == null) return ResponseEntity.status(401).build();
+        User user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+        if (user == null) return ResponseEntity.badRequest().body(Map.of("success", false, "error", "User not found"));
+
+        if (user.getLevel() < targetLevel) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "아직 " + targetLevel + "레벨에 도달하지 않았습니다."));
+        }
+
+        if (user.isLevelRewardClaimed(targetLevel)) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "이미 수령한 보상입니다."));
+        }
+
+        // 보상 계산 (기본 100, 10단위 +500, 5단위 +200)
+        int gems = 100;
+        if (targetLevel % 10 == 0) gems += 500;
+        else if (targetLevel % 10 == 5) gems += 200;
+
+        user.gainGems(gems);
+        user.claimLevelReward(targetLevel);
+        userRepository.save(user);
+
+        return ResponseEntity.ok(Map.of(
+            "success", true, 
+            "gems", gems, 
+            "totalGems", user.getPremiumCurrency(),
+            "claimedLevelRewards", user.getClaimedLevelRewards()
+        ));
     }
 }

@@ -61,7 +61,7 @@ public class BattleApiController {
         BattleDamageResult result = battleLogicService.calculateDamage(
                 attacker,
                 skill,
-                request.getDefenderElement(),
+                request.getDefenderElement() != null ? request.getDefenderElement() : com.hanwol.domain.enums.Element.NONE,
                 request.getDefenderDef());
 
         return ResponseEntity.ok(result);

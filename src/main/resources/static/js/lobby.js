@@ -4,8 +4,11 @@ document.addEventListener('alpine:init', () => {
         playerGender: 'MALE',
         playerNickname: '모험가',
         playerLevel: 1,
+        playerExp: 0,
+        playerNextLevelExp: 100,
         playerGold: 0,
         playerGems: 0,
+        claimedLevelRewards: "",
 
         // ── 로비 상태 ──
         currentModal: null,
@@ -76,12 +79,15 @@ document.addEventListener('alpine:init', () => {
                     this.playerGender = data.gender || 'MALE';
                     this.playerNickname = data.nickname || '모험가';
                     this.playerLevel = data.level || 1;
+                    this.playerExp = data.exp || 0;
+                    this.playerNextLevelExp = data.nextLevelExp || 100;
                     this.playerGold = data.gold || 0;
                     this.playerGems = data.premiumCurrency || 0;
+                    this.claimedLevelRewards = data.claimedLevelRewards || "";
                     
                     // 신규 필드 매핑
                     this.combatPower = data.totalPower || 0;
-                    this.partyCombatPower = data.partyPower || 0; // x-data에는 명시 안되어있지만 Alpine은 동적 할당 가능
+                    this.partyCombatPower = data.partyPower || 0; 
                     this.serverRank = data.serverRank || '--';
                     this.towerFloor = data.towerFloor || 1;
                     this.hallStage = data.hallStage || 1;
@@ -394,6 +400,29 @@ document.addEventListener('alpine:init', () => {
 
         canClaimAct(act) {
             return this.maxClearedStageId >= (act * 5);
+        },
+
+        async claimLevelReward(lv) {
+            if (this.playerLevel < lv || this.isLevelRewardClaimed(lv)) return;
+            try {
+                const res = await fetch(`/api/map/claim-level-reward?targetLevel=${lv}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    this.playerGems = data.totalGems;
+                    this.claimedLevelRewards = data.claimedLevelRewards;
+                    // Lucide 아이콘 재로드 (모달 내 아이콘 갱신용)
+                    this.$nextTick(() => lucide.createIcons());
+                } else {
+                    alert(data.error || "수령 실패");
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        },
+
+        isLevelRewardClaimed(lv) {
+            if (!this.claimedLevelRewards) return false;
+            return this.claimedLevelRewards.split(',').includes(lv.toString());
         },
 
         async drawGacha(count) {

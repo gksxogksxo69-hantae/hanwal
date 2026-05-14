@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum Rarity {
+    U(0.0, "U"),        // 신화 (오직 승급으로만)
     S(0.002, "S"),      // 0.2%
     A(0.05, "A"),       // 5.0%
     B(0.30, "B"),       // 30.0%

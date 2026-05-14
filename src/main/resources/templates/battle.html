@@ -59,10 +59,36 @@
         }
 
         .command-panel {
-            min-height: 130px; background: rgba(15,23,42,0.85);
-            border-top: 1px solid rgba(255,255,255,0.1); display: flex; padding: 0.75rem; gap: 1rem;
-            box-shadow: 0 -8px 30px rgba(0,0,0,0.5); z-index: 20;
+            min-height: 160px;
+            background: linear-gradient(to bottom, rgba(30, 20, 10, 0.95), rgba(15, 10, 5, 1));
+            border-top: 3px solid #d97706;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            padding: 1rem;
+            gap: 1rem;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
+            position: relative;
+            z-index: 20;
         }
+
+        .wuxia-card {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(217, 119, 6, 0.3);
+            border-radius: 0.75rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .wuxia-card:hover {
+            border-color: #fbbf24;
+            background: rgba(245, 158, 11, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .wuxia-progress-bg { background: rgba(0, 0, 0, 0.6); border-radius: 9999px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+        .wuxia-hp-bar { background: linear-gradient(90deg, #991b1b, #ef4444); box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+        .wuxia-spirit-bar { background: linear-gradient(90deg, #701a75, #d946ef); box-shadow: 0 0 10px rgba(217, 70, 239, 0.4); }
+        .wuxia-energy-ball { box-shadow: 0 0 15px rgba(245, 158, 11, 0.5); }
 
         .hit-shake { animation: shake 0.35s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake {
@@ -199,83 +225,106 @@
             </div>
         </div>
 
-        <!-- [Zone 3] 커맨드 패널 -->
+        <!-- [Zone 3] 커맨드 패널 (Bento Grid) -->
         <div class="command-panel relative pointer-events-auto">
             <div class="absolute inset-0 bg-black/40 z-30 flex items-center justify-center transition-opacity"
                  x-show="!isPlayerTurn || gameState !== 'WAITING_INPUT'"></div>
 
-            <!-- 현재 턴 캐릭터 프로필 -->
-            <div class="flex-none w-full md:w-56 border-b md:border-b-0 md:border-r border-slate-600/50 pb-2 md:pb-0 md:pr-3 flex items-center gap-3">
+            <!-- Bento 1: 현재 캐릭터 프로필 (Col 1-4) -->
+            <div class="col-span-12 md:col-span-4 wuxia-card p-4 flex gap-4 items-center">
                 <template x-if="currentActor !== null && currentActor.type === 'PARTY'">
-                    <div class="flex gap-3 w-full h-full">
-                        <div class="w-14 h-14 md:w-20 md:h-20 rounded-lg bg-slate-800 border-2 border-slate-500 overflow-hidden shrink-0">
+                    <div class="flex gap-4 w-full h-full">
+                        <div class="w-20 h-20 rounded-lg bg-slate-900 border-2 border-amber-600/50 overflow-hidden shrink-0 shadow-lg relative">
                             <img :src="currentActor.portrait" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                         </div>
-                        <div class="flex-grow flex flex-col justify-center gap-1">
-                            <div class="font-bold text-white text-base md:text-lg gowun-batang" x-text="currentActor.name"></div>
-                            <div>
-                                <div class="text-[9px] text-emerald-400 mb-0.5">HP <span x-text="currentActor.hp"></span></div>
-                                <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-                                    <div class="bg-emerald-500 h-full transition-all" :style="`width: ${(currentActor.hp/currentActor.maxHp)*100}%`"></div>
+                        <div class="flex-grow flex flex-col justify-center gap-1.5">
+                            <div class="font-bold text-amber-500 text-xl md:text-2xl gowun-batang drop-shadow-md" x-text="currentActor.name"></div>
+                            <div class="w-full">
+                                <div class="flex justify-between text-[10px] text-red-400 font-bold mb-1">
+                                    <span>혈기 (HP)</span>
+                                    <span x-text="`${Math.floor(currentActor.hp)} / ${currentActor.maxHp}`"></span>
+                                </div>
+                                <div class="wuxia-progress-bg h-2">
+                                    <div class="wuxia-hp-bar h-full transition-all duration-500" :style="`width: ${(currentActor.hp/currentActor.maxHp)*100}%`"></div>
                                 </div>
                             </div>
                             <div class="w-full">
-                                <div class="text-[9px] text-fuchsia-400 mb-0.5">궁극기 투기 <span x-text="currentActor.spirit"></span> / <span x-text="currentActor.maxSpirit"></span></div>
-                                <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-                                    <div class="bg-gradient-to-r from-fuchsia-600 to-fuchsia-400 h-full transition-all duration-300" :style="`width: ${(currentActor.spirit/currentActor.maxSpirit)*100}%`"></div>
+                                <div class="flex justify-between text-[10px] text-fuchsia-400 font-bold mb-1">
+                                    <span>투기 (Spirit)</span>
+                                    <span x-text="`${currentActor.spirit} / ${currentActor.maxSpirit}`"></span>
+                                </div>
+                                <div class="wuxia-progress-bg h-1.5">
+                                    <div class="wuxia-spirit-bar h-full transition-all duration-1000" :style="`width: ${(currentActor.spirit/currentActor.maxSpirit)*100}%`"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </template>
                 <template x-if="currentActor == null || currentActor.type === 'ENEMY'">
-                    <div class="w-full flex items-center justify-center text-slate-500 animate-pulse text-sm">적 행동 중...</div>
+                    <div class="w-full h-full flex flex-col items-center justify-center text-slate-500 gap-2">
+                        <i data-lucide="hourglass" class="animate-spin w-8 h-8 opacity-20"></i>
+                        <span class="gowun-batang animate-pulse">적의 공세를 파악 중...</span>
+                    </div>
                 </template>
             </div>
 
-            <!-- 스킬 덱 -->
-            <div class="flex-grow grid grid-cols-4 gap-2 md:gap-3 items-center px-0 md:px-3">
+            <!-- Bento 2: 무공(기술) 목록 (Col 5-12) -->
+            <div class="col-span-12 md:col-span-8 grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <template x-if="currentActor !== null && currentActor.type === 'PARTY'">
                     <div class="contents">
                         <template x-for="(skill, idx) in currentActor.skills" :key="idx">
-                            <div class="h-14 md:h-18 relative group">
-                                <!-- 무공 버튼 -->
+                            <div class="h-full relative group">
                                 <template x-if="!skill.isLock">
                                     <button @click="executeAction(idx)"
-                                            :class="skill.isUltimate ? 'bg-gradient-to-br from-amber-700 to-amber-900 border-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.3)] pulse-ult border-2' : 'bg-slate-800/80 hover:bg-slate-700 border border-slate-600'"
-                                            class="w-full h-full rounded-xl transition text-slate-200 font-bold flex flex-col items-center justify-center gap-0.5">
-                                        <span class="text-[9px] md:text-xs" :class="{'gowun-batang text-amber-200': skill.isUltimate}" x-text="skill.name"></span>
-                                    </button>
-                                </template>
-                                <!-- 잠긴 슬롯 -->
-                                <template x-if="skill.isLock">
-                                    <button disabled class="w-full h-full bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center opacity-40 cursor-not-allowed">
-                                        <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg>
-                                    </button>
-                                </template>
-                                
-                                <!-- 무공 툴팁 (마우스 오버 시 표시) -->
-                                <template x-if="!skill.isLock">
-                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-48 md:w-56 bg-slate-900/95 border-amber-500/50 border rounded-lg p-3 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[100] pointer-events-none flex flex-col gap-1.5 backdrop-blur-sm">
-                                        <div class="font-bold gowun-batang text-base" :class="skill.isUltimate ? 'text-amber-400' : 'text-sky-300'" x-text="skill.name"></div>
-                                        <div class="text-[11px] md:text-sm text-slate-300 leading-snug break-words" x-text="skill.description || '이름 없는 초식입니다.'"></div>
-                                        
-                                        <!-- 기력 & 투기 수치창 -->
-                                        <div class="flex flex-col gap-1 mt-1 pt-2 border-t border-slate-700/50 text-[11px] font-bold">
-                                            <template x-if="skill.energyCost > 0">
-                                                <div class="text-yellow-400">⚡ 기력 소모: <span x-text="skill.energyCost"></span></div>
-                                            </template>
-                                            <template x-if="skill.energyCost < 0">
-                                                <div class="text-emerald-400">🍃 기력 회복: <span x-text="Math.abs(skill.energyCost)"></span></div>
-                                            </template>
-                                            <template x-if="skill.energyCost === 0">
-                                                <div class="text-slate-400">💨 기력 소모 없음</div>
-                                            </template>
-                                            
-                                            <template x-if="skill.spiritCost > 0">
-                                                <div class="text-fuchsia-400">🔥 투기 소모: <span x-text="skill.spiritCost"></span></div>
+                                            :disabled="skill.energyCost > teamEnergy || (skill.spiritCost > currentActor.spirit)"
+                                            class="w-full h-full wuxia-card p-3 flex flex-col items-center justify-center gap-2 border-2 disabled:opacity-40 disabled:grayscale transition-all hover:scale-[1.02] active:scale-95 group"
+                                            :class="{
+                                                'border-amber-500 shadow-[inset_0_0_20px_rgba(245,158,11,0.2)]': skill.isUltimate,
+                                                'border-amber-600/30': !skill.isUltimate
+                                            }">
+                                        <div class="relative">
+                                            <i :data-lucide="skill.isUltimate ? 'sparkles' : 'zap'" 
+                                               class="w-6 h-6 transition-transform group-hover:rotate-12"
+                                               :class="skill.isUltimate ? 'text-amber-400' : 'text-amber-600/70'"></i>
+                                            <template x-if="skill.isUltimate">
+                                                <div class="absolute inset-0 bg-amber-400 blur-lg opacity-40 animate-pulse"></div>
                                             </template>
                                         </div>
+                                        <div class="text-center">
+                                            <div class="text-sm font-bold gowun-batang text-white group-hover:text-amber-400 transition-colors" x-text="skill.name"></div>
+                                            <div class="text-[9px] font-bold mt-1 px-2 py-0.5 rounded-full inline-block"
+                                                 :class="skill.energyCost > 0 ? 'bg-amber-900/40 text-amber-300' : 'bg-emerald-900/40 text-emerald-300'">
+                                                <span x-text="skill.energyCost > 0 ? `기력 ${skill.energyCost} 소모` : `기력 ${Math.abs(skill.energyCost)} 회복`"></span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- 무공 상세 툴팁 -->
+                                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-60 bg-slate-950/95 border-2 border-amber-600/50 rounded-xl p-4 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[100] pointer-events-none backdrop-blur-md">
+                                            <div class="flex justify-between items-start mb-2 border-b border-white/10 pb-2">
+                                                <div class="font-bold gowun-batang text-lg" :class="skill.isUltimate ? 'text-amber-400' : 'text-amber-100'" x-text="skill.name"></div>
+                                                <div class="bg-black/40 px-2 py-0.5 rounded text-[10px] border border-white/10 font-bold" x-text="skill.isUltimate ? '초필살기' : '일반무공'"></div>
+                                            </div>
+                                            <div class="text-[12px] text-slate-300 leading-relaxed gowun-batang italic opacity-90 mb-3" x-text="skill.description || '이름 없는 초식입니다.'"></div>
+                                            
+                                            <div class="grid grid-cols-2 gap-2 text-[10px] font-bold border-t border-white/5 pt-2">
+                                                <div class="flex items-center gap-1" :class="skill.energyCost > 0 ? 'text-amber-400' : 'text-emerald-400'">
+                                                    <i data-lucide="zap" class="w-3 h-3"></i>
+                                                    <span x-text="skill.energyCost > 0 ? `기력 -${skill.energyCost}` : `기력 +${Math.abs(skill.energyCost)}`"></span>
+                                                </div>
+                                                <template x-if="skill.spiritCost > 0">
+                                                    <div class="flex items-center gap-1 text-fuchsia-400">
+                                                        <i data-lucide="flame" class="w-3 h-3"></i>
+                                                        <span x-text="`투기 -${skill.spiritCost}`"></span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </template>
+                                <template x-if="skill.isLock">
+                                    <div class="w-full h-full wuxia-card opacity-30 flex items-center justify-center grayscale">
+                                        <i data-lucide="lock" class="w-6 h-6 text-slate-500"></i>
                                     </div>
                                 </template>
                             </div>

@@ -20,27 +20,47 @@ public class UserProgress {
     @Id
     private Long userId; // User ID와 1:1 매핑 (Primary Key로 사용)
 
+    @Builder.Default
     @Column(columnDefinition = "int default 0")
-    private Integer maxClearedStageId; // 클리어한 최고 스테이지 ID
+    private Integer maxClearedStageId = 0; // 클리어한 최고 스테이지 ID
 
+    @Builder.Default
     @Column(columnDefinition = "int default 1")
-    private Integer currentQuestId;    // 수행 중인 퀘스트 ID
+    private Integer currentQuestId = 1;    // 수행 중인 퀘스트 ID
 
+    @Builder.Default
     @Column(length = 20, columnDefinition = "varchar(20) default 'IN_PROGRESS'")
-    private String questStatus;        // IN_PROGRESS, COMPLETED, CLAIMED
+    private String questStatus = "IN_PROGRESS";        // IN_PROGRESS, COMPLETED, CLAIMED
 
+    @Builder.Default
     @Column(columnDefinition = "int default 1")
-    private Integer towerFloor;        // 무한의 탑 진행 층수
+    private Integer towerFloor = 1;        // 무한의 탑 진행 층수
 
+    @Builder.Default
     @Column(columnDefinition = "int default 1")
-    private Integer hallStage;         // 기억의 전당 진행 단계
+    private Integer hallStage = 1;         // 기억의 전당 진행 단계
 
+    @Builder.Default
     @Column(columnDefinition = "int default 1")
-    private Integer raidStage;         // 주간 레이드 단계
+    private Integer raidStage = 1;         // 주간 레이드 단계
 
+    @Builder.Default
+    @Column(nullable = false)
+    private int skillLevelNormal = 1;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private int skillLevelBattle = 1;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private int skillLevelUltimate = 1;
+
+    @Builder.Default
     @Column(length = 500)
     private String claimedActRewards = ""; // "1,2,3" 형태
 
+    @Builder.Default
     @Column
     private Integer lastEventRewardStageId = 0; // 기존 15스테이지 배수 보상용
 

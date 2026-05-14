@@ -74,9 +74,9 @@ public class MapApiController {
         response.put("nickname", user.getNickname());
         response.put("level", user.getLevel());
         response.put("exp", user.getExp());
-        response.put("nextLevelExp", user.getRequiredExp());
+        response.put("requiredExp", user.getRequiredExp());
         response.put("gold", user.getGold());
-        response.put("premiumCurrency", user.getPremiumCurrency());
+        response.put("gems", user.getPremiumCurrency());
         response.put("claimedLevelRewards", user.getClaimedLevelRewards());
         response.put("mainCharacterId", user.getMainCharacterId());
         response.put("profileImagePath", user.getProfileImagePath());

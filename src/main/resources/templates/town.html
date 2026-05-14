@@ -88,11 +88,11 @@
                     if (data.success) {
                         this.playerGender = data.gender;
                         this.playerNickname = data.nickname;
-                        this.level = data.level;
-                        this.exp = data.exp;
-                        this.requiredExp = data.requiredExp;
-                        this.gold = data.gold;
-                        this.gems = data.gems;
+                        this.level = data.level || 1;
+                        this.exp = data.exp || 0;
+                        this.requiredExp = data.requiredExp || 100;
+                        this.gold = data.gold || 0;
+                        this.gems = data.gems || 0;
                         this.combatPower = data.totalPower || 0;
                         this.partyCombatPower = data.partyPower || 0;
                         this.serverRank = data.serverRank || '--';
@@ -288,14 +288,14 @@
                         <i data-lucide="swords" class="text-amber-500 w-5 h-5"></i>
                         <div>
                             <p class="text-[9px] text-amber-500/70 font-bold mb-0.5">대협 소지 무력</p>
-                            <p class="text-lg font-black text-white font-mono leading-none" x-text="combatPower.toLocaleString()"></p>
+                            <p class="text-lg font-black text-white font-mono leading-none" x-text="(combatPower || 0).toLocaleString()"></p>
                         </div>
                     </div>
                     <div class="glass-panel px-4 py-2 flex items-center gap-3 border-cyan-500/20">
                         <i data-lucide="shield-check" class="text-cyan-400 w-5 h-5"></i>
                         <div>
                             <p class="text-[9px] text-cyan-400/70 font-bold mb-0.5">출전 파티 무력</p>
-                            <p class="text-lg font-black text-white font-mono leading-none" x-text="partyCombatPower.toLocaleString()"></p>
+                            <p class="text-lg font-black text-white font-mono leading-none" x-text="(partyCombatPower || 0).toLocaleString()"></p>
                         </div>
                     </div>
                 </div>
@@ -305,11 +305,11 @@
                 <div class="flex gap-2">
                     <div class="glass-panel-circle px-4 py-1.5 flex items-center gap-2">
                         <i data-lucide="coins" class="text-yellow-500 w-4 h-4"></i>
-                        <span class="font-mono font-bold text-sm" x-text="gold.toLocaleString()"></span>
+                        <span class="font-mono font-bold text-sm" x-text="(gold || 0).toLocaleString()"></span>
                     </div>
                     <div class="glass-panel-circle px-4 py-1.5 flex items-center gap-2">
                         <i data-lucide="gem" class="text-cyan-400 w-4 h-4"></i>
-                        <span class="font-mono font-bold text-sm" x-text="gems.toLocaleString()"></span>
+                        <span class="font-mono font-bold text-sm" x-text="(gems || 0).toLocaleString()"></span>
                     </div>
                 </div>
                 
@@ -392,7 +392,7 @@
                                 <span class="text-2xl font-black italic serif w-12 text-center" :class="ranker.rank <= 3 ? 'text-amber-500' : 'text-slate-500'" x-text="ranker.rank"></span>
                                 <div class="w-12 h-12 rounded-full border border-white/10 overflow-hidden"><img :src="ranker.portrait" class="w-full h-full object-cover"></div>
                                 <div class="flex-1"><h5 class="text-white font-bold serif" x-text="ranker.nickname"></h5><p class="text-slate-500 text-[10px]">압도적인 전력을 지닌 강자</p></div>
-                                <div class="text-right font-mono font-black text-white text-lg" x-text="ranker.power.toLocaleString()"></div>
+                                <div class="text-right font-mono font-black text-white text-lg" x-text="(ranker.power || 0).toLocaleString()"></div>
                             </div>
                         </template>
                     </div>
@@ -508,8 +508,8 @@
                                         </div>
                                         <div class="h-1.5 w-full bg-slate-700 rounded-full overflow-hidden border border-white/5 shadow-inner">
                                             <div class="h-full bg-gradient-to-r from-blue-600 to-sky-400 transition-all duration-700 shadow-[0_0_8px_rgba(56,189,248,0.5)]" 
-                                                 :style="`width: ${(exp / requiredExp) * 100}%`"></div
-                                        </div>
+                                                 :style="`width: ${(exp / (requiredExp || 100)) * 100}%`"></div
+                                        ></div>
                                     </div>
                                     <p class="text-slate-500 text-[10px] mt-6 font-mono opacity-50 tracking-widest">UID: 800012345</p>
                                 </div>
@@ -517,7 +517,7 @@
                                 <!-- Party Combat Power Display -->
                                 <div class="w-full mt-2 bg-slate-900/60 rounded-2xl p-5 border border-white/5 shadow-inner">
                                     <p class="text-slate-500 text-[10px] font-bold mb-3 uppercase tracking-[0.2em] text-center">Current Total Power</p>
-                                    <p class="text-4xl text-sky-400 font-black text-center tabular-nums drop-shadow-[0_0_10px_rgba(56,189,248,0.3)]" x-text="combatPower.toLocaleString()">0</p>
+                                    <p class="text-4xl text-sky-400 font-black text-center tabular-nums drop-shadow-[0_0_10px_rgba(56,189,248,0.3)]" x-text="(combatPower || 0).toLocaleString()">0</p>
                                 </div>
                             </div>
 
@@ -531,7 +531,7 @@
                                             <i data-lucide="swords" class="w-40 h-40"></i>
                                         </div>
                                         <p class="text-red-400 text-xs font-bold uppercase tracking-[0.3em] mb-4">Total CP</p>
-                                        <p class="text-5xl text-white font-black tabular-nums tracking-tighter" x-text="partyCombatPower.toLocaleString()">0</p>
+                                        <p class="text-5xl text-white font-black tabular-nums tracking-tighter" x-text="(partyCombatPower || 0).toLocaleString()">0</p>
                                         <div class="mt-4 h-1 w-20 bg-red-500/30 rounded-full"></div>
                                     </div>
 

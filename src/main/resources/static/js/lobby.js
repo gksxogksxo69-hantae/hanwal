@@ -25,20 +25,29 @@ document.addEventListener('alpine:init', () => {
         currentCharIndex: 0,
         currentParty: [null, null, null, null],
 
-        // ── 상세 프로필 수치 (더미) ──
-        combatPower: 15400,
-        serverRank: 12345,
-        towerFloor: 15,
-        hallStage: 3,
+        // ── 상세 프로필 수치 ──
+        combatPower: 0,
+        partyCombatPower: 0,
+        serverRank: '--',
+        towerFloor: 1,
+        hallStage: 1,
         raidStage: 1,
+        maxClearedStageId: 0,
+        claimedActRewards: "",
 
         // ── 퀘스트 & 던전 상태 ──
-        currentQuest: { title: '로딩 중...', goalDesc: '데이터 동기화 중...', status: 'IN_PROGRESS' },
+        currentQuest: { 
+            id: 0, 
+            title: '로딩 중...', 
+            goalDesc: '데이터 동기화 중...', 
+            status: 'IN_PROGRESS',
+            rewardGold: 0,
+            rewardGems: 0
+        },
         stages: [],
         currentChapter: 1,
 
         selectedPartySlot: 0,
-        towerFloor: 1,
 
         // ── 가이드라인 엔진 ──
         guideStep: 0,
@@ -520,8 +529,18 @@ document.addEventListener('alpine:init', () => {
                 this.guideTyping = false;
             } else {
                 this.guideMonologueIndex++;
-                this.typeGuideMonologue();
+                if (this.guideMonologueIndex >= this.guideMonologueLines.length) {
+                    this.guideStep = 2; // 독백 끝 → 편성 강조
+                } else {
+                    this.typeGuideMonologue();
+                }
             }
+        },
+
+        skipGuide() {
+            this.guideStep = 0;
+            this.guideActive = false;
+            localStorage.setItem('hanwol_lobby_guide_done', 'true');
         },
 
         guideOpenParty() {

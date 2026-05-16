@@ -154,10 +154,10 @@
                         this.stamina = data.stamina || this.stamina;
                         this.maxStamina = data.maxStamina || 200;
                         this.myCharacters = data.characters.map(c => ({
-                            id: c.id, name: c.name, title: c.title, src: c.imagePath, rarity: c.rarity, role: c.role, level: c.level,
-                            hp: c.hp, atk: c.atk, def: c.def, spd: c.spd, power: c.power,
-                            faction: c.faction, gender: c.gender, age: c.age, realm: c.realm,
-                            alignment: c.alignment, relationships: c.relationships, lore: c.lore
+                            id: c.id, name: c.name, title: c.title || '기록되지 않은 자', src: c.imagePath, rarity: c.rarity, role: c.role, level: c.level,
+                            hp: c.hp || 0, atk: c.atk || 0, def: c.def || 0, spd: c.spd || 0, power: c.power || 0,
+                            faction: c.faction || '-', gender: c.gender || '-', age: c.age || '-', realm: c.realm || '-',
+                            alignment: c.alignment || '-', relationships: c.relationships || '-', lore: c.lore || '아직 알려진 기록이 없습니다.'
                         }));
                         if (data.party) {
                              const saved = data.party;
@@ -997,7 +997,7 @@
                                 <span class="text-lg px-3 py-1 rounded font-black shadow-lg" :class="{'S':'bg-amber-500 text-black','A':'bg-purple-500 text-white','B':'bg-blue-500 text-white','C':'bg-slate-500 text-white'}[selectedCharForDetail.rarity]" x-text="selectedCharForDetail.rarity + '급'"></span>
                                 <span class="bg-slate-900/80 backdrop-blur-md text-cyan-400 px-3 py-1 rounded text-xs font-bold border border-cyan-500/30" x-text="selectedCharForDetail.realm || '경지 미설정'"></span>
                             </div>
-                            <img :src="selectedCharForDetail.imagePath" class="w-full h-full object-cover">
+                            <img :src="selectedCharForDetail.src" class="w-full h-full object-cover">
                         </div>
                         
                         <!-- 배경 정보 요약 -->

@@ -92,11 +92,15 @@ public class LobbyApiController {
         m.put("imagePath", gc.getImagePath() != null ? gc.getImagePath() : "/images/portrait_male.png");
         
         // 상세 스탯 (레벨 1 기준 또는 기본값)
-        m.put("hp", gc.calcHpAtLevel(level));
-        m.put("atk", gc.calcAtkAtLevel(level));
-        m.put("def", gc.calcDefAtLevel(level));
-        m.put("spd", gc.calcSpdAtLevel(level));
-        m.put("power", 0); // 기본 캐릭터는 파워 0 또는 대략 계산
+        int hp = gc.calcHpAtLevel(level);
+        int atk = gc.calcAtkAtLevel(level);
+        int def = gc.calcDefAtLevel(level);
+        int spd = gc.calcSpdAtLevel(level);
+        m.put("hp", hp);
+        m.put("atk", atk);
+        m.put("def", def);
+        m.put("spd", spd);
+        m.put("power", (hp / 10) + (atk * 5) + (def * 3) + (spd * 2)); // 대략적인 전투력 계산
         
         // 배경 정보
         m.put("faction", gc.getFaction());

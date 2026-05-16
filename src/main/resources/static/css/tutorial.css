@@ -465,6 +465,115 @@
     font-style: italic;
 }
 
+/* ── 나레이션 스택 (소설 스타일) ── */
+.narrative-container {
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    padding: 10vh 10% 20vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow-y: auto;
+    scrollbar-width: none;
+    mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+    pointer-events: none;
+}
+
+.narrative-container::-webkit-scrollbar { display: none; }
+
+.narrative-item {
+    margin-bottom: 24px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: narrativeFadeIn 0.8s ease-out forwards;
+}
+
+@keyframes narrativeFadeIn {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.narrative-speaker {
+    font-size: 0.9rem;
+    color: #fbbf24;
+    font-weight: bold;
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+}
+
+.narrative-text {
+    font-size: 1.25rem;
+    line-height: 1.8;
+    color: #e5e7eb;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+    word-break: keep-all;
+}
+
+.narrative-text.ji-mun {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+/* ── 추가 화면 효과 ── */
+.fade-in-dark {
+    animation: fadeInDark 2s ease-in forwards;
+}
+@keyframes fadeInDark {
+    from { background: #000; }
+    to { background: transparent; }
+}
+
+.red-flash {
+    animation: redFlash 1s ease-out infinite alternate;
+}
+@keyframes redFlash {
+    from { background: rgba(153, 27, 27, 0.4); }
+    to { background: rgba(153, 27, 27, 0.1); }
+}
+
+.screen-shake-heavy {
+    animation: shakeHeavy 0.5s ease-in-out infinite;
+}
+@keyframes shakeHeavy {
+    0%, 100% { transform: translate(0); }
+    25% { transform: translate(-15px, 10px) rotate(-1deg); }
+    50% { transform: translate(15px, -10px) rotate(1deg); }
+    75% { transform: translate(-10px, -15px); }
+}
+
+.fire-effect-overlay {
+    background: radial-gradient(circle at bottom, rgba(234, 88, 12, 0.4) 0%, rgba(234, 88, 12, 0) 70%);
+    animation: fireFlicker 0.1s infinite alternate;
+}
+@keyframes fireFlicker {
+    from { opacity: 0.8; }
+    to { opacity: 1; }
+}
+
+.title-drop-overlay {
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.title-text {
+    font-size: 3rem;
+    color: #fff;
+    letter-spacing: 1rem;
+    animation: titleZoom 4s ease-out forwards;
+}
+@keyframes titleZoom {
+    from { transform: scale(0.8); opacity: 0; filter: blur(10px); }
+    to { transform: scale(1); opacity: 1; filter: blur(0); }
+}
+
+.bg-dim-effect {
+    filter: brightness(0.4) blur(2px);
+    transition: filter 2s ease;
+}
+
 /* ── 불꽃 파티클 (습격 씬) ── */
 .fire-ember {
     position: absolute;

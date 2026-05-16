@@ -21,8 +21,13 @@ public class IndexController {
         return "tutorial_cave";
     }
 
-    @GetMapping("/battle/tutorial")
-    public String battleTutorial() {
-        return "battle_tutorial";
+    @GetMapping("/stage-select")
+    public String stageSelect() {
+        return "stage_select";
+    }
+
+    @GetMapping("/battle")
+    public String battle() {
+        return "battle";
     }
 }

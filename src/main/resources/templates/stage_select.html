@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한월(韓月) - 임무 (막 단위)</title>
+    <link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts (Gowun Batang & Pretendard) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #0f172a; font-family: 'Pretendard', sans-serif; }
+        .gowun-batang { font-family: 'Gowun Batang', serif; }
+        
+        .bg-layer {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0.4;
+            transition: background-image 0.5s ease-in-out;
+            z-index: 1;
+        }
+
+        /* 새로운 Bento Grid 스타일 스테이지 카드 */
+        .stage-card {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(8px);
+        }
+
+        .stage-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(245, 158, 11, 0.5);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .stage-card.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+            filter: grayscale(100%);
+        }
+
+        .stage-card.locked:hover {
+            transform: none;
+            border-color: rgba(148, 163, 184, 0.2);
+            box-shadow: none;
+        }
+
+        .stage-card.cleared {
+            border-color: rgba(16, 185, 129, 0.4);
+            background: rgba(15, 23, 42, 0.6);
+        }
+
+        .stage-card.current {
+            border-color: rgba(245, 158, 11, 0.8);
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(69, 26, 3, 0.8));
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+            animation: pulse-border 2s infinite;
+        }
+
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+
+        /* 별점 표시 애니메이션 */
+        .star-icon {
+            color: #fbbf24;
+            filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.6));
+        }
+    </style>
+</head>
+<body x-data="stageApp()">
+
+    <!-- 전체 배경 (막에 따라 변경됨) -->
+    <div class="bg-layer" :style="currentAct ? `background-image: url(${currentAct.bg})` : ''"></div>
+    <div class="absolute inset-0 bg-gradient-to-r from-slate-900 via-transparent to-slate-900 z-10 pointer-events-none"></div>
+
+    <div class="relative z-20 h-screen w-screen flex">
+        
+        <!-- 좌측 탭 (막 선택) -->
+        <aside class="w-64 bg-slate-900/95 border-r border-slate-700/50 flex flex-col">
+            <div class="p-6 border-b border-slate-700/50 flex justify-between items-center">
+                <button @click="goBack()" class="text-slate-400 hover:text-white transition"><i data-lucide="arrow-left"></i></button>
+                <h1 class="text-2xl font-bold gowun-batang text-amber-500">천하제일 임무</h1>
+                <div class="w-6"></div> <!-- 보정용 -->
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-4 space-y-3" x-show="acts.length > 0">
+                <template x-for="(act, index) in acts" :key="index">
+                    <button @click="selectAct(index)" 
+                            :disabled="isActLocked(index)"
+                            class="w-full text-left p-4 rounded-xl border transition-all duration-300 relative overflow-hidden"
+                            :class="[
+                                currentActIndex === index ? 'bg-amber-900/40 border-amber-500/50' : 'bg-slate-800/40 border-slate-700/50',
+                                isActLocked(index) ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:bg-slate-700/50'
+                            ]">
+                        <div class="absolute inset-0 bg-black/60 flex items-center justify-center z-10" x-show="isActLocked(index)">
+                            <i data-lucide="lock" class="text-slate-400 w-6 h-6"></i>
+                        </div>
+                        <div class="text-sm font-bold text-amber-400 mb-1" x-text="act.title"></div>
+                        <div class="text-white font-bold gowun-batang text-lg" x-text="act.stages.length > 0 ? '개방됨' : '준비 중'"></div>
+                    </button>
+                </template>
+            </div>
+            <!-- 로딩 표시 -->
+            <div x-show="acts.length === 0" class="flex-1 flex items-center justify-center">
+                <i data-lucide="loader-2" class="w-8 h-8 text-amber-500 animate-spin"></i>
+            </div>
+        </aside>
+
+        <!-- 우측 메인 리스트 뷰 (Bento Grid Style) -->
+        <main class="flex-1 relative overflow-y-auto px-8 py-12" x-show="currentAct">
+            
+            <div class="mb-10 animate-fade-in-down">
+                <h2 class="text-5xl font-bold gowun-batang text-white opacity-20 absolute -top-4 -left-4 pointer-events-none" x-text="currentAct?.title"></h2>
+                <h3 class="text-3xl text-amber-300 gowun-batang relative z-10 font-bold drop-shadow-md">스테이지 목록</h3>
+                <p class="text-slate-400 mt-2">다음 관문을 향해 나아가십시오.</p>
+            </div>
+
+            <!-- CSS Grid 기반 자동 레이아웃 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto pb-20">
+                <template x-for="(stage, idx) in currentAct?.stages" :key="idx">
+                    <div class="stage-card"
+                         :class="stage.status"
+                         @click="openStageDetail(stage)">
+                        
+                        <!-- 뱃지 영역 -->
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="px-2.5 py-1 rounded-md text-xs font-bold font-mono tracking-wider"
+                                  :class="{
+                                      'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30': stage.status === 'cleared',
+                                      'bg-amber-500/20 text-amber-400 border border-amber-500/30': stage.status === 'current',
+                                      'bg-slate-700 text-slate-400': stage.status === 'locked'
+                                  }" x-text="`${currentActIndex+1}-${idx+1}`"></span>
+                            
+                            <!-- 클리어 여부에 따른 우측 아이콘 -->
+                            <div x-show="stage.status === 'cleared'" class="flex gap-1" title="클리어됨">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-emerald-500"></i>
+                            </div>
+                            <div x-show="stage.status === 'locked'" title="잠김">
+                                <i data-lucide="lock" class="w-5 h-5 text-slate-500"></i>
+                            </div>
+                            <div x-show="stage.status === 'current'" title="진행 중">
+                                <i data-lucide="swords" class="w-5 h-5 text-amber-400 animate-pulse"></i>
+                            </div>
+                        </div>
+
+                        <!-- 내용 영역 -->
+                        <div class="mb-4">
+                            <h4 class="text-xl font-bold gowun-batang text-white mb-2 flex items-center gap-2">
+                                <span x-text="stage.name"></span>
+                                <i data-lucide="skull" class="w-4 h-4 text-red-500" x-show="stage.type === 'boss'"></i>
+                            </h4>
+                            <p class="text-sm text-slate-400 line-clamp-2" x-text="stage.desc || '적들이 기다리고 있습니다.'"></p>
+                        </div>
+                        
+                        <!-- 스펙 및 보상 미리보기 -->
+                        <div class="mt-auto border-t border-slate-700/50 pt-4 flex justify-between items-center text-xs">
+                            <div class="text-slate-400">
+                                <span x-text="`권장 Lv.${(currentActIndex) * 10 + (idx * 2) + 10}`"></span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-1 text-yellow-500">
+                                    <i data-lucide="coins" class="w-4 h-4"></i> <span x-text="stage.rewardGold"></span>
+                                </div>
+                                <div class="flex items-center gap-1 text-sky-400">
+                                    <i data-lucide="sparkles" class="w-4 h-4"></i> <span x-text="stage.rewardExp"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </template>
+            </div>
+        </main>
+
+        <!-- 스테이지 상세 모달 -->
+        <div x-show="selectedStage" 
+             style="display: none;"
+             class="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+             x-transition.opacity>
+            <div @click.away="selectedStage = null" class="bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl w-full max-w-md overflow-hidden">
+                <div class="bg-gradient-to-r from-amber-600 to-red-800 p-5 relative">
+                    <button @click="selectedStage = null" class="absolute top-4 right-4 text-white/70 hover:text-white"><i data-lucide="x"></i></button>
+                    <div class="text-amber-200 text-sm font-bold mb-1 tracking-widest" x-text="`${currentActIndex+1}-${selectedStage?.id || 1}`"></div>
+                    <h3 class="text-2xl font-bold gowun-batang text-white" x-text="selectedStage?.name"></h3>
+                </div>
+                
+                <div class="p-6">
+                    <p class="text-slate-300 text-sm mb-6 leading-relaxed bg-slate-800 p-4 rounded-lg" x-text="selectedStage?.desc"></p>
+                    
+                    <div class="mb-6">
+                        <div class="text-xs text-slate-400 font-bold mb-2">권장 레벨: <span class="text-amber-400">Lv. 10</span></div>
+                        <div class="text-xs text-slate-400 font-bold mb-2">소모 행동력: <span class="text-green-400">10 지령서</span></div>
+                    </div>
+                    
+                    <button @click="startStage()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 rounded-lg shadow-[0_0_15px_rgba(245,158,11,0.3)] transition transform hover:scale-[1.02]">
+                        전투 시작
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('stageApp', () => ({
+                // 스테이지 데이터
+                acts: [],
+                maxClearedStageId: 0,
+                currentActIndex: 0,
+                selectedStage: null,
+
+                get currentAct() {
+                    return this.acts.length > 0 ? this.acts[this.currentActIndex] : null;
+                },
+
+                async init() {
+                    try {
+                        const res = await fetch('/api/stage/list');
+                        const data = await res.json();
+                        if (data.success) {
+                            this.acts = data.acts;
+                            this.maxClearedStageId = data.maxClearedStageId;
+                            
+                            // 현재 클리어 스코어에 맞춰서 챕터 열기
+                            let latestChapterIdx = 0;
+                            for (let i = 0; i < this.acts.length; i++) {
+                                if (this.acts[i].stages.some(s => s.status === 'current')) {
+                                    latestChapterIdx = i;
+                                    break;
+                                }
+                            }
+                            this.currentActIndex = latestChapterIdx;
+                            
+                            this.$nextTick(() => lucide.createIcons());
+                        }
+                    } catch (e) {
+                        console.error("스테이지 목록 로드 실패", e);
+                    }
+                },
+
+                isActLocked(index) {
+                    // 첫 막은 무조건 개방
+                    if (index === 0) return false;
+                    // 이전 막의 모든 스테이지가 'cleared'인지 확인
+                    const prevAct = this.acts[index - 1];
+                    if (!prevAct || !prevAct.stages) return true;
+                    // 이전 막의 마지막 스테이지가 클리어 되었는지
+                    const lastStage = prevAct.stages[prevAct.stages.length - 1];
+                    if (lastStage && lastStage.status !== 'cleared') return true;
+                    return false;
+                },
+
+                selectAct(index) {
+                    this.currentActIndex = index;
+                },
+
+                goBack() {
+                    window.location.href = '/town'; // 로비로 돌아가기
+                },
+
+                openStageDetail(stage) {
+                    if (stage.status !== 'locked') {
+                        this.selectedStage = stage;
+                    }
+                },
+
+                startStage() {
+                    const act = this.currentActIndex + 1;
+                    const stageId = this.selectedStage?.id || 1;
+                    window.location.href = `/battle?act=${act}&stageId=${stageId}`;
+                },
+
+                // 두 점을 연결하던 구형 함수 삭제.
+                calcLineStyle() { return ''; }
+            }));
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

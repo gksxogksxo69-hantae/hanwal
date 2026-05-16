@@ -2,6 +2,7 @@ package com.hanwol.domain.character;
 
 import com.hanwol.domain.enums.Element;
 import com.hanwol.domain.enums.GrowthGrade;
+import com.hanwol.domain.enums.Rarity;
 import com.hanwol.domain.enums.RouteType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -29,6 +30,9 @@ public class GameCharacter {
     @Column(nullable = false, length = 100)
     private String name;
 
+    @Column(unique = true, length = 50)
+    private String code; // 예: "CH_NAMGUNG_CHUN"
+
     @Column(length = 200)
     private String title; // 별호
 
@@ -42,6 +46,13 @@ public class GameCharacter {
     @Enumerated(EnumType.STRING)
     @Column(length = 10)
     private RouteType routeType; // null이면 공용
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 5)
+    private Rarity rarity = Rarity.C; // 캐릭터 등급 (S, A, B, C)
+
+    @Column(nullable = false)
+    private boolean isGachaTarget = true; // 가챠 획득 가능 여부 (남궁천 등 스토리 캐릭은 false)
 
     // --- 기본 스탯 (Lv.1) ---
     @Column(nullable = false)

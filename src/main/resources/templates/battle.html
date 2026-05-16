@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한월(韓月) - 전투</title>
+    <link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #020617; font-family: 'Pretendard', sans-serif; }
+        .gowun-batang { font-family: 'Gowun Batang', serif; }
+
+        .battle-container { display: flex; flex-direction: column; width: 100vw; height: 100dvh; }
+
+        .top-timeline {
+            height: 70px; background: linear-gradient(180deg, rgba(15,23,42,0.95), rgba(15,23,42,0.5));
+            border-bottom: 1px solid rgba(51,65,85,0.5); display: flex; align-items: center;
+            overflow-x: auto; padding: 0 1rem; gap: 0.75rem; scrollbar-width: none;
+        }
+        .top-timeline::-webkit-scrollbar { display: none; }
+
+        .timeline-item {
+            transition: all 0.2s linear; filter: grayscale(0.5) opacity(0.7);
+        }
+        .timeline-item.active {
+            transform: scale(1.15) translateY(-4px); filter: grayscale(0) opacity(1);
+            border-color: #38bdf8 !important; box-shadow: 0 0 12px rgba(56,189,248,0.5); z-index: 10;
+        }
+
+        .battle-field {
+            flex-grow: 1; position: relative;
+            background-size: cover; background-position: center;
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        .battle-field::before {
+            content: ''; position: absolute; inset: 0;
+            background: rgba(2,6,23,0.5); z-index: 0;
+        }
+
+        .enemy-zone { flex: 1; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 1.5rem; gap: 1.5rem; z-index: 1; }
+        .party-zone {
+            height: 30vh; border-top: 1px dashed rgba(255,255,255,0.1);
+            display: flex; justify-content: space-evenly; align-items: flex-end; padding-bottom: 0.5rem;
+            background: linear-gradient(0deg, rgba(15,23,42,0.8), transparent); z-index: 1;
+        }
+        .party-slot { width: 22%; height: 100%; position: relative; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; transition: all 0.2s; }
+        .party-slot.active-turn { transform: translateY(-10px); }
+
+        .floating-log {
+            position: absolute; top: 0.5rem; right: 0.5rem; width: 260px; max-height: 130px;
+            background: rgba(15,23,42,0.7); border: 1px solid rgba(51,65,85,0.5); border-radius: 0.5rem;
+            overflow-y: auto; padding: 0.5rem; pointer-events: none; display: flex; flex-direction: column; gap: 3px; z-index: 5;
+        }
+
+        .command-panel {
+            min-height: 160px;
+            background: linear-gradient(to bottom, rgba(30, 20, 10, 0.95), rgba(15, 10, 5, 1));
+            border-top: 3px solid #d97706;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            padding: 1rem;
+            gap: 1rem;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
+            position: relative;
+            z-index: 20;
+        }
+
+        .wuxia-card {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(217, 119, 6, 0.3);
+            border-radius: 0.75rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .wuxia-card:hover {
+            border-color: #fbbf24;
+            background: rgba(245, 158, 11, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .wuxia-progress-bg { background: rgba(0, 0, 0, 0.6); border-radius: 9999px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+        .wuxia-hp-bar { background: linear-gradient(90deg, #991b1b, #ef4444); box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+        .wuxia-spirit-bar { background: linear-gradient(90deg, #701a75, #d946ef); box-shadow: 0 0 10px rgba(217, 70, 239, 0.4); }
+        .wuxia-energy-ball { box-shadow: 0 0 15px rgba(245, 158, 11, 0.5); }
+
+        .hit-shake { animation: shake 0.35s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-3px, 0, 0); }
+            20%, 80% { transform: translate3d(5px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+
+        .slash-effect {
+            position: absolute; top: 50%; left: 50%; width: 150%; height: 4px;
+            background: linear-gradient(90deg, transparent, #fbbf24, #fff, #fbbf24, transparent);
+            box-shadow: 0 0 15px #fbbf24; transform: translate(-50%, -50%) rotate(-45deg) scaleX(0);
+            animation: slash 0.5s ease-in-out forwards; z-index: 50; pointer-events: none;
+        }
+        @keyframes slash {
+            0% { transform: translate(-50%, -50%) rotate(-45deg) scaleX(0); opacity: 0; }
+            50% { transform: translate(-50%, -50%) rotate(-45deg) scaleX(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) rotate(-45deg) scaleX(1.3); opacity: 0; }
+        }
+
+        .dmg-text {
+            position: absolute; font-size: 2.5rem; font-weight: 800; font-family: 'Gowun Batang', serif;
+            color: #ef4444; text-shadow: 2px 2px 0 #000, 0 0 15px #ef4444;
+            animation: floatUp 1s cubic-bezier(0.2,0.8,0.2,1) forwards; pointer-events: none; z-index: 60;
+        }
+        .dmg-text.critical { font-size: 4rem; color: #fbbf24; text-shadow: 2px 2px 0 #000, 0 0 20px #f59e0b; }
+        @keyframes floatUp {
+            0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); }
+            15% { opacity: 1; transform: translate(-50%, -25px) scale(1.15); }
+            100% { opacity: 0; transform: translate(-50%, -70px) scale(1); }
+        }
+
+        .pulse-ult { animation: pulse-border 1.5s infinite; }
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(245,158,11,0.7); }
+            70% { box-shadow: 0 0 0 12px rgba(245,158,11,0); }
+            100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body x-data="battleApp()">
+
+    <div class="battle-container">
+
+        <!-- [Zone 1] 턴 큐 -->
+        <div class="top-timeline">
+            <template x-for="(entity, idx) in turnQueue" :key="entity.id">
+                <div class="timeline-item w-11 h-11 shrink-0 rounded-full bg-slate-800 border-2 border-slate-600 relative overflow-hidden"
+                     :class="{ 'active': entity.isActive }">
+                    <img :src="entity.portrait" class="w-full h-full object-cover">
+                    <div class="absolute bottom-0 left-0 h-1" :class="entity.type === 'PARTY' ? 'bg-emerald-500' : 'bg-red-500'" :style="`width: ${(entity.hp/entity.maxHp)*100}%`"></div>
+                </div>
+            </template>
+        </div>
+
+        <!-- [Zone 2] 전투 필드 -->
+        <div class="battle-field" :style="`background-image: url('${bgImage}')`">
+
+            <div id="log-container" class="floating-log no-scrollbar">
+                <template x-for="(log, idx) in logs" :key="idx">
+                    <div class="text-[12px]"
+                         :class="{
+                             'text-emerald-300': log.type === 'player',
+                             'text-red-300': log.type === 'enemy',
+                             'text-amber-300': log.type === 'skill',
+                             'text-slate-400': log.type === 'system'
+                         }">
+                        <span x-text="log.message"></span>
+                    </div>
+                </template>
+            </div>
+
+            <!-- 적군 영역 -->
+            <div class="enemy-zone relative">
+                <template x-for="(enemy, idx) in enemies" :key="enemy.id">
+                    <div :id="`enemy-${enemy.id}`" class="relative flex flex-col items-center transition-all duration-300" :class="{ 'opacity-0 scale-90': enemy.isDead }">
+                        <div class="relative cursor-pointer" @click="selectTarget(enemy)">
+                            <div class="w-28 h-28 md:w-40 md:h-40 bg-red-900/30 border border-red-800/50 flex items-center justify-center rounded shadow-lg overflow-hidden"
+                                 :class="selectedTarget === enemy.id ? 'ring-2 ring-red-500' : ''">
+                                <img :src="enemy.portrait" class="w-[140%] hue-rotate-180 brightness-75 object-cover object-top">
+                            </div>
+                        </div>
+                        <div class="mt-3 w-28 md:w-40 h-2 bg-slate-800 rounded-full border border-slate-600 overflow-hidden">
+                            <div class="bg-red-600 h-full transition-all duration-300" :style="`width: ${(enemy.hp/enemy.maxHp)*100}%`"></div>
+                        </div>
+                        <div class="text-xs text-red-300 mt-1 font-bold" x-text="enemy.name"></div>
+                        <div :id="`damage-layer-${enemy.id}`" class="absolute inset-0 z-50"></div>
+                        <div :id="`effect-layer-${enemy.id}`" class="absolute inset-0 pointer-events-none"></div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- 아군 파티 -->
+            <div class="party-zone">
+                <template x-for="(ally, idx) in party" :key="idx">
+                    <template x-if="ally !== null">
+                        <div class="party-slot" :class="{'active-turn': ally.isActive}">
+                            <div class="absolute bottom-0 w-20 h-3 bg-sky-500/20 rounded-[100%] transition-opacity" :class="ally.isActive ? 'opacity-100' : 'opacity-0'"></div>
+                            <div class="relative w-20 h-28 md:w-28 md:h-36 flex items-end justify-center mb-3">
+                                <img :src="ally.standing" class="max-w-[140%] max-h-[140%] object-contain" :class="{'grayscale brightness-50': ally.isDead}">
+                            </div>
+                            <div class="w-full max-w-[90px] flex flex-col gap-0.5 items-center z-10 px-1" :class="{'opacity-50': ally.isDead}">
+                                <span class="text-[9px] text-white font-bold" x-text="ally.name"></span>
+                                <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                                    <div class="bg-emerald-500 h-full transition-all" :style="`width: ${(ally.hp/ally.maxHp)*100}%`"></div>
+                                </div>
+                                <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                                    <div class="bg-fuchsia-500 h-full transition-all" :style="`width: ${(ally.spirit/ally.maxSpirit)*100}%`"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+            </div>
+        </div>
+
+        <!-- 전투 진도 / 공용 자원 (상단 우측 또는 하단 우측 배치) -->
+        <div class="absolute bottom-32 md:bottom-28 right-4 md:right-8 flex flex-col items-end gap-2 z-20 pointer-events-none">
+            <div class="bg-slate-900/80 border border-amber-500/30 rounded-xl p-3 backdrop-blur-md shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+                <div class="text-[10px] text-amber-200 font-bold mb-1 flex items-center justify-end gap-1"><i data-lucide="zap" class="w-3 h-3"></i> 팀 기력 (스킬 포인트)</div>
+                <div class="flex gap-1.5">
+                    <!-- 스킬 포인트 구슬 연출 -->
+                    <template x-for="i in teamMaxEnergy">
+                        <div class="w-4 h-4 md:w-5 md:h-5 rounded-full border border-yellow-600/50 flex items-center justify-center transition-all duration-300"
+                             :class="i <= teamEnergy ? 'bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.8)] scale-110' : 'bg-slate-800/80'">
+                            <div class="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-white opacity-80" x-show="i <= teamEnergy"></div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- [Zone 3] 커맨드 패널 (Bento Grid) -->
+        <div class="command-panel relative pointer-events-auto">
+            <div class="absolute inset-0 bg-black/40 z-30 flex items-center justify-center transition-opacity"
+                 x-show="!isPlayerTurn || gameState !== 'WAITING_INPUT'"></div>
+
+            <!-- Bento 1: 현재 캐릭터 프로필 (Col 1-4) -->
+            <div class="col-span-12 md:col-span-4 wuxia-card p-4 flex gap-4 items-center">
+                <template x-if="currentActor !== null && currentActor.type === 'PARTY'">
+                    <div class="flex gap-4 w-full h-full">
+                        <div class="w-20 h-20 rounded-lg bg-slate-900 border-2 border-amber-600/50 overflow-hidden shrink-0 shadow-lg relative">
+                            <img :src="currentActor.portrait" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                        </div>
+                        <div class="flex-grow flex flex-col justify-center gap-1.5">
+                            <div class="font-bold text-amber-500 text-xl md:text-2xl gowun-batang drop-shadow-md" x-text="currentActor.name"></div>
+                            <div class="w-full">
+                                <div class="flex justify-between text-[10px] text-red-400 font-bold mb-1">
+                                    <span>혈기 (HP)</span>
+                                    <span x-text="`${Math.floor(currentActor.hp)} / ${currentActor.maxHp}`"></span>
+                                </div>
+                                <div class="wuxia-progress-bg h-2">
+                                    <div class="wuxia-hp-bar h-full transition-all duration-500" :style="`width: ${(currentActor.hp/currentActor.maxHp)*100}%`"></div>
+                                </div>
+                            </div>
+                            <div class="w-full">
+                                <div class="flex justify-between text-[10px] text-fuchsia-400 font-bold mb-1">
+                                    <span>투기 (Spirit)</span>
+                                    <span x-text="`${currentActor.spirit} / ${currentActor.maxSpirit}`"></span>
+                                </div>
+                                <div class="wuxia-progress-bg h-1.5">
+                                    <div class="wuxia-spirit-bar h-full transition-all duration-1000" :style="`width: ${(currentActor.spirit/currentActor.maxSpirit)*100}%`"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <template x-if="currentActor == null || currentActor.type === 'ENEMY'">
+                    <div class="w-full h-full flex flex-col items-center justify-center text-slate-500 gap-2">
+                        <i data-lucide="hourglass" class="animate-spin w-8 h-8 opacity-20"></i>
+                        <span class="gowun-batang animate-pulse">적의 공세를 파악 중...</span>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Bento 2: 무공(기술) 목록 (Col 5-12) -->
+            <div class="col-span-12 md:col-span-8 grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <template x-if="currentActor !== null && currentActor.type === 'PARTY'">
+                    <div class="contents">
+                        <template x-for="(skill, idx) in currentActor.skills" :key="idx">
+                            <div class="h-full relative group">
+                                <template x-if="!skill.isLock">
+                                    <button @click="executeAction(idx)"
+                                            :disabled="skill.energyCost > teamEnergy || (skill.spiritCost > currentActor.spirit)"
+                                            class="w-full h-full wuxia-card p-3 flex flex-col items-center justify-center gap-2 border-2 disabled:opacity-40 disabled:grayscale transition-all hover:scale-[1.02] active:scale-95 group"
+                                            :class="{
+                                                'border-amber-500 shadow-[inset_0_0_20px_rgba(245,158,11,0.2)]': skill.isUltimate,
+                                                'border-amber-600/30': !skill.isUltimate
+                                            }">
+                                        <div class="relative">
+                                            <i :data-lucide="skill.isUltimate ? 'sparkles' : 'zap'" 
+                                               class="w-6 h-6 transition-transform group-hover:rotate-12"
+                                               :class="skill.isUltimate ? 'text-amber-400' : 'text-amber-600/70'"></i>
+                                            <template x-if="skill.isUltimate">
+                                                <div class="absolute inset-0 bg-amber-400 blur-lg opacity-40 animate-pulse"></div>
+                                            </template>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-sm font-bold gowun-batang text-white group-hover:text-amber-400 transition-colors" x-text="skill.name"></div>
+                                            <div class="text-[9px] font-bold mt-1 px-2 py-0.5 rounded-full inline-block"
+                                                 :class="skill.energyCost > 0 ? 'bg-amber-900/40 text-amber-300' : 'bg-emerald-900/40 text-emerald-300'">
+                                                <span x-text="skill.energyCost > 0 ? `기력 ${skill.energyCost} 소모` : `기력 ${Math.abs(skill.energyCost)} 회복`"></span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- 무공 상세 툴팁 -->
+                                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-60 bg-slate-950/95 border-2 border-amber-600/50 rounded-xl p-4 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[100] pointer-events-none backdrop-blur-md">
+                                            <div class="flex justify-between items-start mb-2 border-b border-white/10 pb-2">
+                                                <div class="font-bold gowun-batang text-lg" :class="skill.isUltimate ? 'text-amber-400' : 'text-amber-100'" x-text="skill.name"></div>
+                                                <div class="bg-black/40 px-2 py-0.5 rounded text-[10px] border border-white/10 font-bold" x-text="skill.isUltimate ? '초필살기' : '일반무공'"></div>
+                                            </div>
+                                            <div class="text-[12px] text-slate-300 leading-relaxed gowun-batang italic opacity-90 mb-3" x-text="skill.description || '이름 없는 초식입니다.'"></div>
+                                            
+                                            <div class="grid grid-cols-2 gap-2 text-[10px] font-bold border-t border-white/5 pt-2">
+                                                <div class="flex items-center gap-1" :class="skill.energyCost > 0 ? 'text-amber-400' : 'text-emerald-400'">
+                                                    <i data-lucide="zap" class="w-3 h-3"></i>
+                                                    <span x-text="skill.energyCost > 0 ? `기력 -${skill.energyCost}` : `기력 +${Math.abs(skill.energyCost)}`"></span>
+                                                </div>
+                                                <template x-if="skill.spiritCost > 0">
+                                                    <div class="flex items-center gap-1 text-fuchsia-400">
+                                                        <i data-lucide="flame" class="w-3 h-3"></i>
+                                                        <span x-text="`투기 -${skill.spiritCost}`"></span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </template>
+                                <template x-if="skill.isLock">
+                                    <div class="w-full h-full wuxia-card opacity-30 flex items-center justify-center grayscale">
+                                        <i data-lucide="lock" class="w-6 h-6 text-slate-500"></i>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- 전투 결과 모달 -->
+    <div x-show="gameState === 'WIN' || gameState === 'LOSE'" style="display:none;"
+         class="absolute inset-0 z-[100] bg-black/80 flex items-center justify-center pointer-events-auto"
+         x-transition.opacity>
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-8 text-center shadow-2xl">
+            <template x-if="gameState === 'WIN'">
+                <div>
+                    <h1 class="gowun-batang text-4xl text-amber-400 font-bold mb-4">⚔️ 전투 승리</h1>
+                    <div class="flex justify-center gap-1 mb-6">
+                        <template x-for="i in 3">
+                            <span class="text-3xl" :class="i <= battleStars ? 'text-amber-400' : 'text-slate-700'" x-text="'★'"></span>
+                        </template>
+                    </div>
+                    <div class="bg-slate-800 rounded-xl p-4 mb-6 text-left space-y-2">
+                        <div class="flex justify-between text-sm"><span class="text-slate-400">골드 획득</span><span class="text-amber-300 font-bold" x-text="'+' + rewardGold"></span></div>
+                        <div class="flex justify-between text-sm"><span class="text-slate-400">경험치 획득</span><span class="text-emerald-300 font-bold" x-text="'+' + rewardExp"></span></div>
+                    </div>
+                    <button @click="returnToStageSelect()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 rounded-lg transition">
+                        스테이지 선택으로 돌아가기
+                    </button>
+                </div>
+            </template>
+            <template x-if="gameState === 'LOSE'">
+                <div>
+                    <h1 class="gowun-batang text-4xl text-red-400 font-bold mb-4">💀 전투 패배</h1>
+                    <p class="text-slate-400 mb-6">다시 도전하여 적을 물리치세요!</p>
+                    <div class="flex gap-3">
+                        <button @click="retryBattle()" class="flex-1 bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 rounded-lg transition">재도전</button>
+                        <button @click="returnToStageSelect()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-lg transition">돌아가기</button>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="/js/battle.js"></script>
+</body>
+</html>

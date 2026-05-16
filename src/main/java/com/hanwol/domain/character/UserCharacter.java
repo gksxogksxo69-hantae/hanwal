@@ -1,23 +1,25 @@
 package com.hanwol.domain.character;
 
+import com.hanwol.domain.enums.Rarity;
 import com.hanwol.domain.user.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
-/**
- * 유저가 보유한 캐릭터 인스턴스
- * 캐릭터 마스터(GameCharacter) + 유저별 레벨/경험치/장비 상태
- */
 @Entity
 @Table(name = "user_characters")
 @Getter
+@Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserCharacter {
 
@@ -33,22 +35,50 @@ public class UserCharacter {
     @JoinColumn(name = "character_id", nullable = false)
     private GameCharacter character;
 
+    // --- 파티 편성 (출진 슬롯) ---
+    @Builder.Default
+    @Column
+    private Long partySlot1 = null;
+
+    @Builder.Default
+    @Column
+    private Long partySlot2 = null;
+
+    @Builder.Default
+    @Column
+    private Long partySlot3 = null;
+
+    @Builder.Default
+    @Column
+    private Long partySlot4 = null;
+
+    @Builder.Default
     @Column(nullable = false)
     private int level = 1;
 
+    @Builder.Default
     @Column(nullable = false)
     private long currentExp = 0;
 
+    @Builder.Default
     @Column(nullable = false, length = 20)
     private String currentGyeongji = "SAMRYU"; // 현재 경지
 
+    // 원신식 돌파 (0~6)
+    @Builder.Default
+    @Column(nullable = false)
+    private int breakthrough = 0;
+
     // 스킬 레벨 (무공 수련)
+    @Builder.Default
     @Column(nullable = false)
     private int skillLevelNormal = 1;
 
+    @Builder.Default
     @Column(nullable = false)
     private int skillLevelBattle = 1;
 
+    @Builder.Default
     @Column(nullable = false)
     private int skillLevelUltimate = 1;
 
@@ -59,16 +89,16 @@ public class UserCharacter {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @Builder
+    // 생성자 유지 (JPA 용)
     public UserCharacter(User user, GameCharacter character) {
         this.user = user;
         this.character = character;
     }
 
-    /**
-     * 경험치 획득 및 레벨업 처리
-     */
     public boolean gainExp(long amount, long requiredExpForNextLevel) {
+        int maxLevel = getMaxLevel();
+        if (this.level >= maxLevel) return false;
+
         this.currentExp += amount;
         if (this.currentExp >= requiredExpForNextLevel) {
             this.currentExp -= requiredExpForNextLevel;
@@ -78,11 +108,36 @@ public class UserCharacter {
         return false;
     }
 
+    public int getMaxLevel() {
+        if (this.currentRarity == Rarity.U) return 80;
+        return 60; // S등급 이하는 60레벨 제한
+    }
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    private Rarity currentRarity = null;
+
+    public Rarity getEffectiveRarity() {
+        return this.currentRarity != null ? this.currentRarity : character.getRarity();
+    }
+
     /**
      * 경지 돌파
      */
-    public void breakthrough(String newGyeongji) {
+    public void breakthroughGyeongji(String newGyeongji) {
         this.currentGyeongji = newGyeongji;
+    }
+
+    /**
+     * 캐릭터 중복 획득 시 돌파 (최대 6돌파)
+     * @return 6돌파 초과 여부 (초과 시 다른 재화로 변환하기 위함)
+     */
+    public boolean addBreakthrough() {
+        if (this.breakthrough >= 6) {
+            return false; // 이미 풀돌파 상태
+        }
+        this.breakthrough++;
+        return true;
     }
 
     /**

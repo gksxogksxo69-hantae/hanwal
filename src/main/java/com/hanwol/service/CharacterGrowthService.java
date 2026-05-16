@@ -2,7 +2,6 @@ package com.hanwol.service;
 
 import com.hanwol.domain.character.Affinity;
 import com.hanwol.domain.character.AffinityRepository;
-import com.hanwol.domain.character.GameCharacter;
 import com.hanwol.domain.character.UserCharacter;
 import com.hanwol.domain.character.UserCharacterRepository;
 import com.hanwol.domain.enums.GyeongjiTier;
@@ -72,7 +71,7 @@ public class CharacterGrowthService {
 
         // TODO: 돌파 재화 소모 로직 추가
 
-        uc.breakthrough(nextTier.name());
+        uc.breakthroughGyeongji(nextTier.name());
         log.info("경지 돌파! {} -> {}", currentTier.getDisplayName(), nextTier.getDisplayName());
     }
 

@@ -1,168 +1,669 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>한월(韓月) - 무림 본산</title>
-    <link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
-
-    <!-- Tailwind CSS (CDN for development) -->
+    <title>한월(韓月) - 로비</title>
+    <link rel="icon" th:href="@{/images/favicon.svg}" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Google Fonts (Gowun Batang & Pretendard) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
-
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-
     <style>
-        body { margin: 0; overflow: hidden; background-color: #0f172a; font-family: 'Pretendard', sans-serif; }
+        * { box-sizing: border-box }
+        body {
+            margin: 0; overflow: hidden; background: #010409;
+            font-family: 'Pretendard', sans-serif; color: #fff
+        }
+        .serif { font-family: 'Gowun Batang', serif }
+        .bg-layer { position: absolute; inset: 0; z-index: 0 }
+        .bg-layer img { width: 100%; height: 100%; object-fit: cover; opacity: .4 }
         
-        .gowun-batang { font-family: 'Gowun Batang', serif; }
+        .glass-panel { background: rgba(10, 15, 28, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; }
+        .glass-panel-circle { background: rgba(10, 15, 28, 0.6); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 9999px; }
+        .glass-button { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.12); transition: all 0.3s; cursor: pointer; }
+        .glass-button:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.3); transform: translateY(-2px); }
+
+        .jade-bar { background: linear-gradient(90deg, #10b981, #059669); }
         
-        /* 캔버스 화면 꽉 채우기 */
-        #gameCanvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 10;
+        .char-wrap {
+            position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+            height: 94vh; z-index: 2; pointer-events: none;
+            -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent 95%);
+            mask-image: linear-gradient(to bottom, #000 60%, transparent 95%);
+        }
+        .char-wrap img { height: 100%; object-fit: contain; }
+
+        .char-switcher {
+            position: absolute; top: 50%; width: 100%; display: flex; justify-content: space-between;
+            padding: 0 8%; z-index: 10; pointer-events: none;
+        }
+        .switcher-btn {
+            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; pointer-events: auto;
         }
 
-        /* 픽셀 아트 선명하게 유지 */
-        canvas {
-            image-rendering: -moz-crisp-edges;
-            image-rendering: -webkit-crisp-edges;
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
+        .gate-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 320px; }
+        .gate-card {
+            height: 70px; padding: 10px; display: flex; flex-direction: column; justify-content: center;
+            position: relative; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1);
         }
-
-        /* UI 레이어는 캔버스 위로 */
-        .ui-layer {
-            position: relative;
-            z-index: 20;
-            pointer-events: none; /* 클릭을 캔버스로 통과시킴 */
-        }
+        .gate-main { grid-column: span 2; height: 90px; background: linear-gradient(135deg, #b45309, #78350f); border-color: #f59e0b; }
         
-        /* 버튼 등 클릭 가능한 UI는 명시적으로 활성화 */
-        .interactive-ui {
-            pointer-events: auto;
-        }
+        @keyframes pulse-cp { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .animate-cp { animation: pulse-cp 2s infinite ease-in-out; }
     </style>
-</head>
-<body x-data="townApp()">
-
-    <!-- 게임 캔버스 -->
-    <canvas id="gameCanvas"></canvas>
-
-    <!-- 상단 HUD 레이어 -->
-    <div class="ui-layer absolute top-0 left-0 w-full p-4 flex justify-between items-start">
-        
-        <!-- 미니맵(추후) & 기본 정보 -->
-        <div class="interactive-ui flex items-center gap-3 bg-slate-900/80 p-3 rounded-lg border border-slate-700 backdrop-blur-sm">
-            <div class="w-12 h-12 bg-slate-800 rounded-full border-2 border-amber-500 overflow-hidden flex items-center justify-center">
-                <i data-lucide="user" class="text-slate-400"></i>
-            </div>
-            <div>
-                <h2 class="text-white font-bold gowun-batang text-xl tracking-wider" x-text="playerNickname">모험가</h2>
-                <div class="text-amber-400 text-xs font-semibold">Lv.<span x-text="playerLevel">1</span> 모험가</div>
-            </div>
-        </div>
-
-        <!-- 우측: 미니맵 + 재화 -->
-        <div class="interactive-ui flex flex-col items-end gap-2">
-            <!-- 미니맵 -->
-            <div class="relative">
-                <div class="bg-slate-900/90 p-1.5 rounded-lg border-2 border-amber-600/70 shadow-[0_0_12px_rgba(245,158,11,0.3)]">
-                    <canvas id="minimapCanvas" width="160" height="160" class="rounded block" style="image-rendering: pixelated;"></canvas>
-                </div>
-                <div class="absolute -top-2 left-1/2 -translate-x-1/2 bg-slate-900 border border-amber-600 px-2 py-0.5 rounded text-[10px] text-amber-400 font-bold gowun-batang tracking-widest">
-                    무림본산
-                </div>
-            </div>
-            <!-- 재화 정보 -->
-            <div class="flex gap-2">
-                <div class="bg-slate-900/80 px-4 py-2 rounded-lg border border-slate-700 backdrop-blur-sm flex items-center gap-2">
-                    <i data-lucide="coins" class="text-yellow-500 w-4 h-4"></i>
-                    <span class="text-white font-mono font-medium" x-text="playerGold.toLocaleString()">0</span>
-                </div>
-                <div class="bg-slate-900/80 px-4 py-2 rounded-lg border border-slate-700 backdrop-blur-sm flex items-center gap-2">
-                    <i data-lucide="gem" class="text-cyan-400 w-4 h-4"></i>
-                    <span class="text-white font-mono font-medium" x-text="playerGems.toLocaleString()">0</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 스페이스 상호작용 프롬프트 -->
-    <div x-show="showInteractPrompt" 
-         x-transition.opacity
-         class="ui-layer absolute inset-0 flex items-center justify-center pb-32">
-        <div class="bg-slate-900/90 border-2 border-amber-500 px-6 py-3 rounded-md animate-bounce shadow-[0_0_15px_rgba(245,158,11,0.5)]">
-            <span class="text-white text-lg"><strong class="text-amber-400 gowun-batang text-xl mr-2">SPACE</strong> 상호작용</span>
-        </div>
-    </div>
-
-    <!-- 하단 메뉴 -->
-    <div class="ui-layer absolute bottom-0 left-0 w-full p-4 flex justify-center pb-8">
-        <div class="interactive-ui flex gap-4 bg-slate-900/80 px-6 py-3 rounded-2xl border border-slate-700 backdrop-blur-sm shadow-xl">
-            <button class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition group">
-                <div class="p-2 rounded-lg group-hover:bg-slate-700">
-                    <i data-lucide="shield"></i>
-                </div>
-                <span class="text-xs font-medium">캐릭터</span>
-            </button>
-            <button class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition group">
-                <div class="p-2 rounded-lg group-hover:bg-slate-700">
-                    <i data-lucide="users"></i>
-                </div>
-                <span class="text-xs font-medium">파티</span>
-            </button>
-            <button class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition group">
-                <div class="p-2 rounded-lg group-hover:bg-slate-700">
-                    <i data-lucide="package"></i>
-                </div>
-                <span class="text-xs font-medium">인벤토리</span>
-            </button>
-            <button class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition group">
-                <div class="p-2 rounded-lg group-hover:bg-slate-700">
-                    <i data-lucide="settings"></i>
-                </div>
-                <span class="text-xs font-medium">설정</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- 상호작용 모달 UI (예시) -->
-    <div x-show="currentModal !== null" 
-         style="display: none;"
-         class="interactive-ui absolute inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-        
-        <!-- 통합 시스템 모달 -->
-        <div x-show="currentModal !== null" x-transition @click.away="closeModal()" class="bg-slate-800 border border-amber-600 rounded-xl max-w-2xl w-full text-white overflow-hidden shadow-2xl">
-            <div class="bg-slate-900 p-4 border-b border-amber-600/50 flex justify-between items-center">
-                <h3 class="text-2xl font-bold gowun-batang text-amber-500" x-text="modalTitles[currentModal] || '시스템'"></h3>
-                <button @click="closeModal()" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
-            </div>
-            <div class="p-6 h-64 flex items-center justify-center">
-                <p class="text-slate-400" x-text="`${modalTitles[currentModal] || '알 수 없는'} 기능은 아직 준비 중입니다.`"></p>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Alpine.js -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
-    <!-- 타운 로직 분리 -->
-    <script src="/js/town.js"></script>
-
     <script>
-        lucide.createIcons();
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('lobbyApp', () => ({
+            playerGender: 'MALE', playerNickname: '모험가', level: 1, exp: 0, requiredExp: 100,
+            gold: 0, gems: 0,
+            claimedLevelRewards: "", claimedActRewards: "", storyChapter: 0, currentModal: null, modalTitle: '', isLoading: true, customPortrait: null,
+            gachaResults: [], isGachaAnimating: false, myCharacters: [], currentCharIndex: 0, currentParty: [null, null, null, null],
+            combatPower: 0, partyCombatPower: 0, serverRank: '--', towerFloor: 1, hallStage: 1, raidStage: 1, maxClearedStageId: 0,
+            currentQuest: { id: 0, title: '로딩 중...', goalDesc: '데이터 동기화 중...', status: 'IN_PROGRESS' },
+            stages: [], currentChapter: 1, selectedPartySlot: 0,
+            ranking: [], guideStep: 0, guideActive: false, guideMonologueText: '',
+            
+            advanceGuideMonologue() {
+                console.log("Guide advanced");
+                this.guideActive = false;
+            },
+
+            async init() {
+                await this.loadPlayerInfo();
+                await this.loadMyCharacters();
+                await this.fetchQuestInfo();
+                this.isLoading = false;
+                this.$nextTick(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); });
+            },
+
+            async loadPlayerInfo() {
+                try {
+                    const res = await fetch('/api/map/player-info');
+                    const data = await res.json();
+                    if (data.success) {
+                        this.playerGender = data.gender;
+                        this.playerNickname = data.nickname;
+                        this.level = data.level || 1;
+                        this.exp = data.exp || 0;
+                        this.requiredExp = data.requiredExp || 100;
+                        this.gold = data.gold || 0;
+                        this.gems = data.gems || 0;
+                        this.combatPower = data.totalPower || 0;
+                        this.partyCombatPower = data.partyPower || 0;
+                        this.serverRank = data.serverRank || '--';
+                        this.towerFloor = data.towerFloor;
+                        this.hallStage = data.hallStage;
+                        this.raidStage = data.raidStage;
+                        this.maxClearedStageId = data.maxClearedStageId;
+                        this.claimedActRewards = data.claimedActRewards || "";
+                        this.claimedLevelRewards = data.claimedLevelRewards || "";
+                        this.storyChapter = data.storyChapter;
+                        if (data.profileImagePath) this.customPortrait = data.profileImagePath;
+                        if (data.mainCharacterId) this.serverMainCharacterId = data.mainCharacterId;
+                    }
+                } catch (e) { console.warn(e); }
+            },
+
+            async fetchRanking() {
+                try {
+                    const res = await fetch('/api/map/ranking');
+                    const data = await res.json();
+                    if (data.success) this.ranking = data.ranking;
+                } catch (e) { console.error(e); }
+            },
+
+            async fetchQuestInfo() {
+                try {
+                    const res = await fetch('/api/quest/current');
+                    if (res.ok) this.currentQuest = await res.json();
+                } catch (e) { console.error(e); }
+            },
+
+            async loadMyCharacters() {
+                try {
+                    const res = await fetch('/api/lobby/my-characters');
+                    const data = await res.json();
+                    if (data.success && data.characters) {
+                        this.myCharacters = data.characters.map(c => ({
+                            id: c.id, name: c.name, src: c.imagePath, rarity: c.rarity, role: c.role, level: c.level
+                        }));
+                        if (data.party) {
+                             const saved = data.party;
+                             for (let i=0; i<4; i++) {
+                                 if (saved[i]) this.currentParty[i] = this.myCharacters.find(ch => ch.id === saved[i]) || null;
+                             }
+                        }
+                        if (this.serverMainCharacterId) {
+                            const idx = this.myCharacters.findIndex(c => c.id === this.serverMainCharacterId);
+                            if (idx !== -1) this.currentCharIndex = idx;
+                        }
+                    }
+                } catch (e) { console.warn(e); }
+            },
+
+            get playerPortrait() { return this.customPortrait || (this.playerGender === 'FEMALE' ? '/images/portrait_female.png' : '/images/portrait_male.png'); },
+            get currentLobbyCharacter() { return this.myCharacters.length > 0 ? this.myCharacters[this.currentCharIndex % this.myCharacters.length] : { src: this.playerGender === 'FEMALE' ? '/images/portrait_female.png' : '/images/portrait_male.png' }; },
+            
+            nextCharacter() { this.currentCharIndex = (this.currentCharIndex + 1) % this.myCharacters.length; },
+            prevCharacter() { this.currentCharIndex = (this.currentCharIndex - 1 + this.myCharacters.length) % this.myCharacters.length; },
+
+            openModal(type) {
+                if (type === 'RANKING') this.fetchRanking();
+                this.currentModal = type;
+                this.$nextTick(() => lucide.createIcons());
+            },
+            closeModal() { this.currentModal = null; },
+            handleQuestClick() { if (this.currentQuest.status === 'COMPLETED') this.openModal('QUEST_REWARD'); else window.location.href = '/stage-select'; },
+            
+            togglePartyMember(char) {
+                const idx = this.currentParty.findIndex(p => p && p.id === char.id);
+                if (idx !== -1) {
+                    this.currentParty[idx] = null;
+                } else {
+                    const emptySlot = this.currentParty.findIndex(p => p === null);
+                    if (emptySlot !== -1) this.currentParty[emptySlot] = char;
+                }
+            },
+
+            async saveParty() {
+                const ids = this.currentParty.map(p => p ? p.id : null);
+                try {
+                    const res = await fetch('/api/lobby/save-party', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ partyIds: ids })
+                    });
+                    if (res.ok) alert("편성이 저장되었습니다.");
+                } catch (e) { console.error(e); }
+            },
+
+            async drawGacha(count) {
+                this.isGachaAnimating = true;
+                this.gachaResults = [];
+                try {
+                    const res = await fetch('/api/gacha/draw?count=' + count, { method: 'POST' });
+                    const data = await res.json();
+                    if (data.success) {
+                        setTimeout(() => {
+                            this.gachaResults = data.results;
+                            this.isGachaAnimating = false;
+                            this.loadPlayerInfo();
+                            this.loadMyCharacters();
+                        }, 1500);
+                    } else {
+                        alert(data.message || "영입 실패");
+                        this.isGachaAnimating = false;
+                    }
+                } catch (e) { 
+                    console.error(e);
+                    this.isGachaAnimating = false;
+                }
+            },
+
+            async claimLevelReward(lvl) {
+                try {
+                    const res = await fetch('/api/lobby/claim-level-reward', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ level: lvl })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        alert(data.message);
+                        this.loadPlayerInfo();
+                    } else {
+                        alert(data.message);
+                    }
+                } catch (e) { console.error(e); }
+            },
+
+            async claimActReward(act) {
+                try {
+                    const res = await fetch('/api/lobby/claim-act-reward', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ act: act })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        alert(data.message);
+                        this.loadPlayerInfo();
+                    } else {
+                        alert(data.message);
+                    }
+                } catch (e) { console.error(e); }
+            }
+        }));
+    });
     </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+
+<body x-data="lobbyApp">
+    <div class="bg-layer">
+        <img th:src="@{/images/bg_mainss.png}" alt="bg" loading="eager">
+    </div>
+
+    <div x-show="isLoading" class="fixed inset-0 z-[100] bg-[#0a0e1a] flex items-center justify-center">
+        <div class="text-center">
+            <div class="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-slate-400 text-sm tracking-widest serif">입장 중...</p>
+        </div>
+    </div>
+
+    <div class="char-wrap" x-show="!isLoading">
+        <img :src="currentLobbyCharacter.src" loading="lazy">
+    </div>
+
+    <div class="char-switcher" x-show="!isLoading && myCharacters.length > 1">
+        <button @click="prevCharacter()" class="switcher-btn glass-button"><i data-lucide="chevron-left"></i></button>
+        <button @click="nextCharacter()" class="switcher-btn glass-button"><i data-lucide="chevron-right"></i></button>
+    </div>
+
+    <div class="relative z-10 w-screen h-screen flex flex-col justify-between pointer-events-none p-6" x-show="!isLoading">
+        <header class="flex justify-between items-start pointer-events-auto">
+            <div class="flex flex-col gap-4">
+                <button @click="openModal('MY_PROFILE')" class="glass-panel-circle pr-6 pl-2 py-2 flex items-center gap-3 hover:bg-white/10 transition">
+                    <div class="w-12 h-12 rounded-full border-2 border-amber-500/50 overflow-hidden bg-black/80">
+                        <img :src="playerPortrait" class="w-full h-full object-cover">
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-white font-bold text-lg serif" x-text="playerNickname"></span>
+                            <span class="bg-amber-600 text-[10px] px-1.5 py-0.5 rounded font-bold">Lv.<span x-text="level"></span></span>
+                        </div>
+                        <div class="w-32 h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/5">
+                            <div class="h-full jade-bar transition-all duration-500" :style="'width:' + (exp/requiredExp*100) + '%'"></div>
+                        </div>
+                    </div>
+                </button>
+
+                <div class="flex gap-2">
+                    <div class="glass-panel px-4 py-2 flex items-center gap-3 animate-cp border-amber-500/20">
+                        <i data-lucide="swords" class="text-amber-500 w-5 h-5"></i>
+                        <div>
+                            <p class="text-[9px] text-amber-500/70 font-bold mb-0.5">대협 소지 무력</p>
+                            <p class="text-lg font-black text-white font-mono leading-none" x-text="(combatPower || 0).toLocaleString()"></p>
+                        </div>
+                    </div>
+                    <div class="glass-panel px-4 py-2 flex items-center gap-3 border-cyan-500/20">
+                        <i data-lucide="shield-check" class="text-cyan-400 w-5 h-5"></i>
+                        <div>
+                            <p class="text-[9px] text-cyan-400/70 font-bold mb-0.5">출전 파티 무력</p>
+                            <p class="text-lg font-black text-white font-mono leading-none" x-text="(partyCombatPower || 0).toLocaleString()"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col items-end gap-4">
+                <div class="flex gap-2">
+                    <div class="glass-panel-circle px-4 py-1.5 flex items-center gap-2">
+                        <i data-lucide="coins" class="text-yellow-500 w-4 h-4"></i>
+                        <span class="font-mono font-bold text-sm" x-text="(gold || 0).toLocaleString()"></span>
+                    </div>
+                    <div class="glass-panel-circle px-4 py-1.5 flex items-center gap-2">
+                        <i data-lucide="gem" class="text-cyan-400 w-4 h-4"></i>
+                        <span class="font-mono font-bold text-sm" x-text="(gems || 0).toLocaleString()"></span>
+                    </div>
+                </div>
+                
+                <nav class="glass-panel flex p-1.5 gap-1">
+                    <button @click="openModal('GACHA')" class="glass-button px-4 py-2 rounded-xl flex flex-col items-center gap-1 group">
+                        <i data-lucide="wine" class="text-amber-500 w-5 h-5 group-hover:scale-110 transition"></i>
+                        <span class="text-[10px] font-bold">객잔</span>
+                    </button>
+                    <button @click="openModal('RANKING')" class="glass-button px-4 py-2 rounded-xl flex flex-col items-center gap-1 group">
+                        <i data-lucide="scroll-text" class="text-emerald-400 w-5 h-5 group-hover:scale-110 transition"></i>
+                        <span class="text-[10px] font-bold">서열보</span>
+                    </button>
+                    <button @click="openModal('PARTY')" class="glass-button px-4 py-2 rounded-xl flex flex-col items-center gap-1 group">
+                        <i data-lucide="users" class="text-blue-400 w-5 h-5 group-hover:scale-110 transition"></i>
+                        <span class="text-[10px] font-bold">편성</span>
+                    </button>
+                    <button @click="openModal('INVENTORY')" class="glass-button px-4 py-2 rounded-xl flex flex-col items-center gap-1 group">
+                        <i data-lucide="briefcase" class="text-purple-400 w-5 h-5 group-hover:scale-110 transition"></i>
+                        <span class="text-[10px] font-bold">보따리</span>
+                    </button>
+                </nav>
+            </div>
+        </header>
+
+        <main class="flex-1"></main>
+
+        <footer class="flex justify-between items-end pointer-events-auto">
+            <div @click="handleQuestClick()" class="glass-panel p-5 w-80 border-l-4 border-l-amber-500 cursor-pointer hover:bg-white/5 transition flex flex-col gap-2 relative overflow-hidden group">
+                <div class="absolute top-2 right-4 opacity-5 group-hover:opacity-10 transition"><i data-lucide="scroll" class="w-16 h-16"></i></div>
+                <div class="flex justify-between items-center">
+                    <span class="text-amber-500 text-[10px] font-black tracking-widest uppercase">CURRENT QUEST</span>
+                    <i data-lucide="arrow-right-circle" class="w-4 h-4 text-amber-500"></i>
+                </div>
+                <h4 class="text-white font-bold text-lg serif" x-text="currentQuest.title"></h4>
+                <p class="text-slate-400 text-xs leading-relaxed" x-text="currentQuest.goalDesc"></p>
+                <div x-show="currentQuest.status==='COMPLETED'" class="absolute inset-0 bg-amber-600/10 flex items-center justify-center animate-pulse border border-amber-500 rounded-lg">
+                    <span class="text-amber-400 text-xs font-bold serif underline decoration-2">임무 완수! 보상 수령</span>
+                </div>
+            </div>
+
+            <div class="gate-grid">
+                <button @click="handleQuestClick()" :class="guideStep === 3 ? 'guide-glow' : ''" class="gate-card gate-main glass-button">
+                    <span class="text-white/60 text-[10px] font-bold mb-1 uppercase tracking-tighter">MAIN STORY</span>
+                    <span class="text-white text-2xl font-black serif drop-shadow-md">임무 시작</span>
+                </button>
+                <button @click="openModal('TOWER')" class="gate-card glass-button">
+                    <span class="text-cyan-400/80 text-[10px] font-bold">무한의 탑</span>
+                    <span class="text-white font-bold text-sm serif"><span x-text="towerFloor"></span>층 도전</span>
+                </button>
+                <button @click="openModal('RAID')" class="gate-card glass-button">
+                    <span class="text-rose-400/80 text-[10px] font-bold">주간 레이드</span>
+                    <span class="text-white font-bold text-sm serif">토벌전</span>
+                </button>
+                <button @click="openModal('DAILY_HALL')" class="gate-card glass-button col-span-2 !height-11 mt-1 flex-row gap-4 items-center justify-center">
+                    <i data-lucide="compass" class="w-4 h-4 text-emerald-400"></i>
+                    <span class="text-white font-bold text-sm serif">기억의 전당</span>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <div id="DIV_MODAL_ROOT" class="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+        <div x-show="currentModal" x-transition.opacity class="absolute inset-0 bg-black/75 pointer-events-auto" @click="closeModal()"></div>
+
+        <div x-show="currentModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="relative z-10 w-full max-w-5xl px-4 pointer-events-auto">
+            
+            <template x-if="currentModal==='RANKING'">
+                <div class="glass-panel w-full max-w-4xl mx-auto flex flex-col p-6 overflow-hidden shadow-2xl border-emerald-500/20" style="height: 80vh;">
+                    <div class="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                        <h2 class="text-3xl font-bold serif text-emerald-400 flex items-center gap-3"><i data-lucide="scroll-text"></i> 무림 서열보</h2>
+                        <button @click="closeModal()" class="glass-button w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-600 transition"><i data-lucide="x"></i></button>
+                    </div>
+                    <div class="bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-4 mb-6 flex justify-between items-center">
+                        <div class="flex items-center gap-3"><i data-lucide="info" class="text-emerald-400 w-5 h-5"></i><span class="text-xs text-emerald-100/80">매주 월요일 자정, 서열 100위 내 고수들께 보석 보상이 지급됩니다.</span></div>
+                        <div class="text-right"><p class="text-[9px] text-slate-500 uppercase">My Rank</p><p class="text-lg font-black text-emerald-400" x-text="serverRank"></p></div>
+                    </div>
+                    <div class="flex-1 overflow-y-auto pr-2 space-y-2 custom-scrollbar">
+                        <template x-for="ranker in ranking" :key="ranker.rank">
+                            <div class="flex items-center gap-4 bg-white/5 p-3 rounded-xl border border-white/5">
+                                <span class="text-2xl font-black italic serif w-12 text-center" :class="ranker.rank <= 3 ? 'text-amber-500' : 'text-slate-500'" x-text="ranker.rank"></span>
+                                <div class="w-12 h-12 rounded-full border border-white/10 overflow-hidden"><img :src="ranker.portrait" class="w-full h-full object-cover"></div>
+                                <div class="flex-1"><h5 class="text-white font-bold serif" x-text="ranker.nickname"></h5><p class="text-slate-500 text-[10px]">압도적인 전력을 지닌 강자</p></div>
+                                <div class="text-right font-mono font-black text-white text-lg" x-text="(ranker.power || 0).toLocaleString()"></div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            <template x-if="currentModal==='PARTY'">
+                <div class="glass-panel w-full flex flex-col p-6 overflow-hidden shadow-2xl" style="height: 85vh;">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-3xl font-bold serif text-blue-400 flex items-center gap-3"><i data-lucide="users"></i> 편성 관리</h2>
+                        <div class="flex gap-2">
+                             <button @click="saveParty()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-8 rounded shadow-lg transition">편성 저장</button>
+                             <button @click="closeModal()" class="glass-button w-10 h-10 rounded-full flex items-center justify-center"><i data-lucide="x"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 mb-8 h-64">
+                        <template x-for="(hero, i) in currentParty" :key="i">
+                            <div @click="selectedPartySlot = i" :class="selectedPartySlot === i ? 'ring-2 ring-blue-500 ring-offset-4 ring-offset-black' : ''" class="flex-1 glass-panel relative cursor-pointer overflow-hidden group">
+                                <template x-if="hero">
+                                    <div class="w-full h-full relative">
+                                        <img :src="hero.src" class="w-full h-full object-cover">
+                                        <div class="absolute bottom-4 left-4"><h3 class="text-lg font-bold text-white serif" x-text="hero.name"></h3></div>
+                                    </div>
+                                </template>
+                                <template x-if="!hero">
+                                    <div class="w-full h-full flex flex-col items-center justify-center opacity-20"><i data-lucide="plus" class="w-8 h-8"></i><span class="text-xs font-bold mt-2">출전 가능</span></div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                        <div class="grid grid-cols-6 gap-3">
+                            <template x-for="char in myCharacters" :key="char.id">
+                                <div @click="togglePartyMember(char)" class="glass-panel p-2 transition cursor-pointer relative" :class="currentParty.some(p => p && p.id === char.id) ? 'border-blue-500 bg-blue-500/10' : 'hover:bg-white/5'">
+                                    <div class="aspect-[3/4] overflow-hidden rounded bg-black/40"><img :src="char.src" class="w-full h-full object-cover"></div>
+                                    <div class="text-center mt-1"><span class="text-[10px] font-bold text-white" x-text="char.name"></span></div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <template x-if="currentModal==='GACHA'">
+                <div class="glass-panel w-full max-w-4xl mx-auto flex flex-col p-10 overflow-hidden shadow-2xl border-amber-500/20" style="height: 80vh;">
+                    <div class="flex justify-between items-center mb-10"><h2 class="text-4xl font-bold serif text-amber-500">객잔 (영입)</h2><button @click="closeModal()" class="glass-button w-10 h-10 rounded-full flex items-center justify-center"><i data-lucide="x"></i></button></div>
+                    <div class="flex-1 flex flex-col items-center justify-center relative">
+                         <i data-lucide="sparkles" class="w-24 h-24 text-amber-500 animate-pulse mb-8"></i>
+                         <div x-show="!isGachaAnimating && gachaResults.length === 0" class="text-center">
+                             <p class="text-xl text-slate-300 mb-10 serif">강호의 인연이 대협을 기다립니다.</p>
+                             <div class="flex gap-6">
+                                 <button @click="drawGacha(1)" class="glass-button px-10 py-3 rounded-full font-bold border-amber-500/50">1회 영입</button>
+                                 <button @click="drawGacha(10)" class="glass-button px-12 py-3 rounded-full font-bold bg-amber-600/20 border-amber-500">10회 영입</button>
+                             </div>
+                         </div>
+                         <div x-show="isGachaAnimating" class="text-center"><div class="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto"></div></div>
+                         <div x-show="!isGachaAnimating && gachaResults.length > 0" class="w-full text-center">
+                             <div class="flex justify-center flex-wrap gap-4 mb-4"><template x-for="res in gachaResults"><div class="glass-panel p-3 w-32"><img :src="res.imagePath" class="w-full aspect-square object-cover rounded"><p class="text-xs font-bold mt-2" x-text="res.name"></p></div></template></div>
+                             <button @click="gachaResults = []" class="glass-button px-10 py-2 rounded-full font-bold">확인</button>
+                         </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- [MY_PROFILE] 종합 상태창 (Redesigned Bento Style) -->
+            <template x-if="currentModal==='MY_PROFILE'">
+                <div class="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeModal()"></div>
+                    <div class="relative w-full max-w-5xl bg-slate-900/95 border border-slate-700 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+                        
+                        <!-- Header -->
+                        <div class="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-slate-800 to-transparent">
+                            <div>
+                                <h2 class="text-3xl font-bold text-white tracking-tight italic uppercase">My Status Card</h2>
+                                <p class="text-slate-400 text-sm mt-1">대협의 무림 기록과 성장 현황을 확인합니다.</p>
+                            </div>
+                            <button @click="closeModal()" class="p-2 hover:bg-white/10 rounded-full transition text-slate-400 hover:text-white">
+                                <i data-lucide="x" class="w-8 h-8"></i>
+                            </button>
+                        </div>
+
+                        <!-- Content Grid -->
+                        <div class="p-8 grid grid-cols-12 gap-6 overflow-y-auto no-scrollbar">
+                            
+                            <!-- Left Section: Basic Info Box (Bento Card) -->
+                            <div class="col-span-12 lg:col-span-4 bg-slate-800/50 border border-white/5 rounded-3xl p-8 flex flex-col items-center gap-6 shadow-inner pointer-events-auto">
+                                <div class="relative w-40 h-40 rounded-full p-1 bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 shadow-[0_0_30px_rgba(245,158,11,0.3)]">
+                                    <div class="w-full h-full rounded-full overflow-hidden border-4 border-slate-900 group relative">
+                                        <img :src="playerPortrait" class="w-full h-full object-cover">
+                                        <button @click="openModal('PORTRAIT_SELECT')" 
+                                                class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-bold uppercase tracking-widest">
+                                            Change Portrait
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="text-center w-full">
+                                    <h3 class="text-3xl font-bold text-white mb-2 serif" x-text="playerNickname">한태</h3>
+                                    
+                                    <div class="flex items-center justify-center gap-3 mb-4">
+                                        <span class="px-3 py-1 bg-amber-500/20 text-amber-500 rounded-lg text-sm font-bold border border-amber-500/30">Lv. <span x-text="level">1</span></span>
+                                        <button @click="openModal('LEVEL_REWARDS')" 
+                                                class="px-4 py-1.5 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg shadow-lg shadow-red-900/20 transition-transform active:scale-95 pointer-events-auto">
+                                            보상 수령
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Level EXP Bar -->
+                                    <div class="w-full max-w-[200px] mx-auto px-2">
+                                        <div class="flex justify-between text-[10px] text-slate-500 mb-1 px-1 font-mono uppercase tracking-tighter">
+                                            <span x-text="Math.floor((exp/requiredExp)*100) + '%'">35%</span>
+                                            <span x-text="exp + ' / ' + requiredExp">1234/5000</span>
+                                        </div>
+                                        <div class="h-1.5 w-full bg-slate-700 rounded-full overflow-hidden border border-white/5 shadow-inner">
+                                            <div class="h-full bg-gradient-to-r from-blue-600 to-sky-400 transition-all duration-700 shadow-[0_0_8px_rgba(56,189,248,0.5)]" 
+                                                 :style="`width: ${(exp / (requiredExp || 100)) * 100}%`"></div
+                                        ></div>
+                                    </div>
+                                    <p class="text-slate-500 text-[10px] mt-6 font-mono opacity-50 tracking-widest">UID: 800012345</p>
+                                </div>
+
+                                <!-- Party Combat Power Display -->
+                                <div class="w-full mt-2 bg-slate-900/60 rounded-2xl p-5 border border-white/5 shadow-inner">
+                                    <p class="text-slate-500 text-[10px] font-bold mb-3 uppercase tracking-[0.2em] text-center">Current Total Power</p>
+                                    <p class="text-4xl text-sky-400 font-black text-center tabular-nums drop-shadow-[0_0_10px_rgba(56,189,248,0.3)]" x-text="(combatPower || 0).toLocaleString()">0</p>
+                                </div>
+                            </div>
+
+                            <!-- Right Section: Stats & Progress -->
+                            <div class="col-span-12 lg:col-span-8 flex flex-col gap-6">
+                                
+                                <!-- Top Stats Row -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="bg-gradient-to-br from-red-900/20 to-slate-800 border border-white/5 rounded-3xl p-8 relative overflow-hidden group shadow-lg">
+                                        <div class="absolute -right-4 -top-4 text-red-500/5 group-hover:scale-110 transition-transform duration-1000">
+                                            <i data-lucide="swords" class="w-40 h-40"></i>
+                                        </div>
+                                        <p class="text-red-400 text-xs font-bold uppercase tracking-[0.3em] mb-4">Total CP</p>
+                                        <p class="text-5xl text-white font-black tabular-nums tracking-tighter" x-text="(partyCombatPower || 0).toLocaleString()">0</p>
+                                        <div class="mt-4 h-1 w-20 bg-red-500/30 rounded-full"></div>
+                                    </div>
+
+                                    <div class="bg-gradient-to-br from-slate-800 to-indigo-900/10 border border-white/5 rounded-3xl p-8 relative overflow-hidden group shadow-lg">
+                                        <div class="absolute -right-4 -top-4 text-sky-500/5 group-hover:scale-110 transition-transform duration-1000">
+                                            <i data-lucide="trophy" class="w-40 h-40"></i>
+                                        </div>
+                                        <p class="text-sky-400 text-xs font-bold uppercase tracking-[0.3em] mb-4">Server Rank</p>
+                                        <p class="text-5xl text-white font-black tabular-nums tracking-tighter" x-text="serverRank || '--'">--</p>
+                                        <div class="mt-4 h-1 w-20 bg-sky-500/30 rounded-full"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Adventure Progress Card (The Big Bento) -->
+                                <div class="bg-slate-800/30 border border-white/10 rounded-3xl p-8 flex-grow flex flex-col shadow-inner backdrop-blur-md">
+                                    <div class="flex justify-between items-center mb-10">
+                                        <h4 class="text-2xl font-bold text-white flex items-center gap-3 serif">
+                                            <i data-lucide="map" class="w-6 h-6 text-amber-500"></i>
+                                            모험 진척도
+                                        </h4>
+                                        <div class="px-4 py-2 bg-slate-900/80 rounded-full border border-white/5 flex items-center gap-3">
+                                            <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Available</span>
+                                            <span class="text-amber-500 font-black" x-text="Math.max(0, storyChapter - (claimedActRewards ? claimedActRewards.split(',').length : 0))">0</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Acts Grid -->
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <template x-for="i in 3" :key="i">
+                                            <div class="relative bg-slate-900/40 border border-white/5 rounded-2xl p-6 flex flex-col justify-between group transition-all hover:bg-slate-900/80 hover:border-white/20 shadow-lg"
+                                                 :class="storyChapter < i ? 'opacity-40 pointer-events-none' : 'opacity-100 pointer-events-auto'">
+                                                
+                                                <div class="text-center">
+                                                    <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] mb-3" x-text="'Act. 0' + i">ACT. 01</p>
+                                                    <h5 class="text-white text-xl font-bold serif" x-text="i + ' 막'">1 층</h5>
+                                                </div>
+
+                                                <div class="flex flex-col gap-5 items-center my-6">
+                                                    <div class="w-20 h-20 flex items-center justify-center rounded-3xl bg-amber-500/5 text-amber-500 border border-amber-500/10 group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                                                        <i data-lucide="package" class="w-10 h-10" x-show="storyChapter >= i"></i>
+                                                        <i data-lucide="lock-keyhole" class="w-10 h-10 text-slate-600" x-show="storyChapter < i"></i>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Reward Button -->
+                                                <button @click="claimActReward(i)" 
+                                                        :disabled="storyChapter < i || ((claimedActRewards || '').split(',').includes(String(i)))"
+                                                        class="w-full py-3 rounded-xl font-bold text-xs transition-all shadow-xl active:scale-95 uppercase tracking-widest"
+                                                        :class="storyChapter < i ? 'bg-slate-800 text-slate-500' : 
+                                                                ((claimedActRewards || '').split(',').includes(String(i)) ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-gradient-to-r from-amber-600 to-amber-500 text-white shadow-amber-900/40')">
+                                                    <span x-text="(claimedActRewards || '').split(',').includes(String(i)) ? 'Received' : '1500 GEM'"></span>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- [LEVEL_REWARDS] 성장 보상 모달 -->
+            <template x-if="currentModal==='LEVEL_REWARDS'">
+                <div class="fixed inset-0 z-[300] flex items-center justify-center p-4">
+                    <div class="absolute inset-0 bg-black/85 backdrop-blur-md" @click="closeModal()"></div>
+                    <div class="relative w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-3xl p-8 shadow-2xl overflow-hidden">
+                        <div class="absolute -right-20 -top-20 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl"></div>
+                        
+                        <div class="flex justify-between items-center mb-8 pb-4 border-b border-white/5 relative z-10">
+                            <div>
+                                <h3 class="text-3xl font-black text-white italic tracking-tighter uppercase">Level Rewards</h3>
+                                <p class="text-slate-500 text-xs mt-1">대협의 성장 단계에 따른 무림 보급품입니다.</p>
+                            </div>
+                            <button @click="closeModal()" class="text-slate-500 hover:text-white transition p-2">
+                                <i data-lucide="x" class="w-8 h-8"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar relative z-10">
+                            <template x-for="lvl in [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]" :key="lvl">
+                                <div class="flex items-center justify-between p-5 bg-slate-800/40 rounded-2xl border border-white/5 transition hover:bg-slate-800/80 pointer-events-auto"
+                                     :class="level < lvl ? 'opacity-30 grayscale' : 'opacity-100'">
+                                    
+                                    <div class="flex items-center gap-6">
+                                        <div class="w-16 h-16 flex flex-col items-center justify-center rounded-2xl bg-slate-950 border border-white/10">
+                                            <span class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">LV</span>
+                                            <span class="text-2xl font-black text-amber-500" x-text="lvl">5</span>
+                                        </div>
+                                        <div>
+                                            <p class="text-white font-bold text-lg serif">무림 보급 <span x-text="'[' + lvl + ']'"></span></p>
+                                            <div class="flex items-center gap-2">
+                                                <span class="w-2 h-2 rounded-full" :class="lvl % 10 === 0 ? 'bg-red-500 animate-pulse' : 'bg-slate-600'"></span>
+                                                <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest" x-text="lvl % 10 === 0 ? 'Legendary Supply' : 'Normal Supply'"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-8">
+                                        <div class="flex flex-col items-end">
+                                            <span class="text-sky-400 font-black text-xl flex items-center gap-2 italic">
+                                                <span x-text="lvl % 10 === 0 ? '1,000' : (lvl % 5 === 0 ? '500' : '100')">500</span>
+                                                <i data-lucide="gem" class="w-5 h-5"></i>
+                                            </span>
+                                        </div>
+
+                                        <button @click="claimLevelReward(lvl)"
+                                                :disabled="level < lvl || (claimedLevelRewards || '').split(',').includes(String(lvl))"
+                                                class="px-6 py-2.5 rounded-xl font-bold text-xs transition shadow-lg active:scale-95 uppercase tracking-widest"
+                                                :class="level < lvl ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 
+                                                        ((claimedLevelRewards || '').split(',').includes(String(lvl)) ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-gradient-to-b from-amber-500 to-amber-600 text-white shadow-amber-900/40 hover:from-amber-400 hover:to-amber-500')">
+                                            <span x-text="(claimedLevelRewards || '').split(',').includes(String(lvl)) ? 'Done' : 'Claim'"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- [CONSTRUCTION] 준비 중 -->
+            <template x-if="['TOWER','RAID','DAILY_HALL','INVENTORY','QUEST_REWARD'].includes(currentModal)">
+                <div class="glass-panel w-full max-w-md mx-auto p-12 text-center shadow-2xl">
+                    <i data-lucide="construction" class="w-16 h-16 text-slate-600 mx-auto mb-6"></i>
+                    <h3 class="text-xl font-bold text-white mb-2 serif">수련 환경 정비 중</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed">대협, 이곳은 현재 수련 환경 개선 중입니다. 곧 새로운 모습으로 찾아뵙겠습니다.</p>
+                    <button @click="closeModal()" class="mt-8 glass-button px-10 py-2 rounded-full text-xs">로비로 원복</button>
+                </div>
+            </template>
+        </div>
+    </div>
 </body>
 </html>

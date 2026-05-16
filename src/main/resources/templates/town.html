@@ -193,6 +193,21 @@
                 } catch(e) { console.error(e); }
             },
 
+            async selectPortrait(src) {
+                try {
+                    const res = await fetch('/api/lobby/profile-image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ imagePath: src })
+                    });
+                    if (res.ok) {
+                        this.showAlert("초상화가 변경되었습니다.", "success");
+                        this.customPortrait = src;
+                        this.closeModal();
+                    }
+                } catch(e) { console.error(e); }
+            },
+
             openModal(type) {
                 if (type === 'RANKING') this.fetchRanking();
                 if (type === 'TOWER') this.towerEnemies = this.generateTowerEnemies(this.towerFloor);
@@ -911,6 +926,32 @@
                         <button @click="closeModal()" class="glass-button px-8 py-3 rounded-xl text-sm">나중에</button>
                     </div>
                 </div>
+            </template>
+
+            <!-- [PORTRAIT_SELECT] 초상화 변경 -->
+            <template x-if="currentModal==='PORTRAIT_SELECT'">
+                <div class="glass-panel w-full max-w-4xl mx-auto flex flex-col p-8 shadow-2xl border-white/20" style="height:80vh;">
+                    <div class="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                        <div>
+                            <h2 class="text-3xl font-bold serif text-white flex items-center gap-3"><i data-lucide="user-circle"></i> 초상화 변경</h2>
+                            <p class="text-slate-400 text-sm mt-1">대협의 얼굴이 될 초상화를 선택하세요.</p>
+                        </div>
+                        <button @click="openModal('MY_PROFILE')" class="glass-button w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-600 transition"><i data-lucide="arrow-left"></i></button>
+                    </div>
+                    <div class="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                        <div class="grid grid-cols-5 gap-6">
+                            <template x-for="char in myCharacters" :key="char.id">
+                                <button @click="selectPortrait(char.src)" class="glass-panel p-2 transition hover:bg-white/10 relative group border-2" :class="char.src === playerPortrait ? 'border-amber-500' : 'border-transparent'">
+                                    <div x-show="char.src === playerPortrait" class="absolute top-2 left-2 z-10 bg-amber-500 text-black text-[9px] px-2 py-0.5 rounded font-bold">적용 중</div>
+                                    <div class="aspect-square overflow-hidden rounded-full bg-black/40 border-2 border-slate-700"><img :src="char.src" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"></div>
+                                    <p class="text-white font-bold text-xs serif mt-2 text-center" x-text="char.name"></p>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
             <!-- [ILLUSTRATION_SELECT] 대표 일러스트 변경 -->
             <template x-if="currentModal==='ILLUSTRATION_SELECT'">
                 <div class="glass-panel w-full max-w-4xl mx-auto flex flex-col p-8 shadow-2xl border-white/20" style="height:80vh;">

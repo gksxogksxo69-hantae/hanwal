@@ -372,8 +372,11 @@
                     </div>
                     <h4 class="text-white font-bold text-sm serif" x-text="currentQuest.title"></h4>
                     <p class="text-slate-400 text-[11px] leading-relaxed" x-text="currentQuest.goalDesc"></p>
-                    <div x-show="currentQuest.status==='COMPLETED'" class="absolute inset-0 bg-amber-600/10 flex items-center justify-center animate-pulse border border-amber-500 rounded-lg">
-                        <span class="text-amber-400 text-xs font-bold serif underline decoration-2">임무 완수! 보상 수령</span>
+                    <div x-show="currentQuest.status==='COMPLETED'" class="absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center border border-amber-500 rounded-2xl z-10">
+                        <div class="flex flex-col items-center gap-1">
+                            <i data-lucide="award" class="w-5 h-5 text-amber-500 animate-pulse"></i>
+                            <span class="text-amber-400 text-xs font-bold serif">임무 완수! 보상 수령</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -415,7 +418,7 @@
 
         <footer class="flex justify-end items-end pointer-events-auto">
             <div class="gate-grid">
-                <button @click="handleQuestClick()" :class="guideStep === 3 ? 'guide-glow' : ''" class="gate-card gate-main glass-button">
+                <button @click="window.location.href='/stage-select'" :class="guideStep === 3 ? 'guide-glow' : ''" class="gate-card gate-main glass-button">
                     <span class="text-white/60 text-[10px] font-bold mb-1 tracking-tighter">본편 이야기</span>
                     <span class="text-white text-2xl font-black serif drop-shadow-md">임무 시작</span>
                 </button>

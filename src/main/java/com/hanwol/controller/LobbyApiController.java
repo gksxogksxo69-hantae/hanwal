@@ -50,8 +50,11 @@ public class LobbyApiController {
         if (!userChars.isEmpty()) {
             charList = userChars.stream().map(uc -> buildCharMap(uc)).collect(Collectors.toList());
         } else {
+            // 보유 캐릭터가 없는 경우(튜토리얼 등): 선택한 루트에 맞는 캐릭터와 중립 캐릭터만 노출
+            final com.hanwol.domain.enums.RouteType userRoute = user.getRouteType();
             charList = gameCharacterRepository.findAll().stream()
                     .filter(gc -> gc.getImagePath() != null && !gc.getImagePath().contains("portrait_male"))
+                    .filter(gc -> gc.getRouteType() == null || gc.getRouteType() == userRoute)
                     .limit(5)
                     .map(gc -> buildCharMap(gc, 1))
                     .collect(Collectors.toList());
@@ -102,6 +105,9 @@ public class LobbyApiController {
         m.put("spd", spd);
         m.put("power", (hp / 10) + (atk * 5) + (def * 3) + (spd * 2)); // 대략적인 전투력 계산
         
+        m.put("exp", 0);
+        m.put("requiredExp", 100 + (level * 30L) + ((long) level * level * 5));
+        
         // 배경 정보
         m.put("faction", gc.getFaction());
         m.put("gender", gc.getGender());
@@ -132,6 +138,8 @@ public class LobbyApiController {
         m.put("def", uc.getEffectiveDef());
         m.put("spd", uc.getEffectiveSpd());
         m.put("power", combatPowerService.calculateCharacterPower(uc));
+        m.put("exp", uc.getCurrentExp());
+        m.put("requiredExp", uc.getRequiredExp());
 
         // 배경 정보
         m.put("faction", gc.getFaction());

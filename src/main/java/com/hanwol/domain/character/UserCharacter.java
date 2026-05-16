@@ -108,6 +108,10 @@ public class UserCharacter {
         return false;
     }
 
+    public long getRequiredExp() {
+        return 100 + (this.level * 30L) + ((long) this.level * this.level * 5);
+    }
+
     public int getMaxLevel() {
         if (this.currentRarity == Rarity.U) return 80;
         return 60; // S등급 이하는 60레벨 제한

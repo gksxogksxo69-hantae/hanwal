@@ -156,6 +156,7 @@
                         this.myCharacters = data.characters.map(c => ({
                             id: c.id, name: c.name, title: c.title || '기록되지 않은 자', src: c.imagePath, rarity: c.rarity, role: c.role, level: c.level,
                             hp: c.hp || 0, atk: c.atk || 0, def: c.def || 0, spd: c.spd || 0, power: c.power || 0,
+                            exp: c.exp || 0, requiredExp: c.requiredExp || 100,
                             faction: c.faction || '-', gender: c.gender || '-', age: c.age || '-', realm: c.realm || '-',
                             alignment: c.alignment || '-', relationships: c.relationships || '-', lore: c.lore || '아직 알려진 기록이 없습니다.'
                         }));
@@ -1029,6 +1030,16 @@
                             <div class="flex items-center gap-3">
                                 <span class="text-amber-500 font-bold text-lg">Lv. <span x-text="selectedCharForDetail.level"></span></span>
                                 <span class="text-slate-400 text-sm" x-text="selectedCharForDetail.role"></span>
+                            </div>
+                            <!-- 경험치 바 -->
+                            <div class="mt-2 w-full max-w-xs">
+                                <div class="flex justify-between text-[10px] text-slate-500 mb-1">
+                                    <span>수련 진척도</span>
+                                    <span x-text="selectedCharForDetail.exp + ' / ' + selectedCharForDetail.requiredExp"></span>
+                                </div>
+                                <div class="w-full h-1 bg-black/40 rounded-full overflow-hidden border border-white/5">
+                                    <div class="h-full bg-gradient-to-r from-amber-600 to-amber-400 transition-all duration-500" :style="'width:' + (selectedCharForDetail.exp / selectedCharForDetail.requiredExp * 100) + '%'"></div>
+                                </div>
                             </div>
                         </div>
 

@@ -102,7 +102,7 @@
                         this.maxClearedStageId = data.maxClearedStageId;
                         this.claimedActRewards = data.claimedActRewards || "";
                         this.claimedLevelRewards = data.claimedLevelRewards || "";
-                        this.storyChapter = data.storyChapter;
+                        this.storyChapter = data.storyChapter || 0;
                         if (data.profileImagePath) this.customPortrait = data.profileImagePath;
                         if (data.mainCharacterId) this.serverMainCharacterId = data.mainCharacterId;
                     }

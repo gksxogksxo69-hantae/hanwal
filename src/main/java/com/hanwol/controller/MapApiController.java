@@ -88,6 +88,7 @@ public class MapApiController {
         response.put("hallStage", progress.getHallStage());
         response.put("raidStage", progress.getRaidStage());
         response.put("maxClearedStageId", progress.getMaxClearedStageId());
+        response.put("storyChapter", progress.getMaxClearedStageId() / 5);
         response.put("claimedActRewards", progress.getClaimedActRewards());
         response.put("totalPower", totalPower);
         response.put("partyPower", partyPower);

@@ -81,7 +81,10 @@ public class MapApiController {
         response.put("mainCharacterId", user.getMainCharacterId());
         response.put("profileImagePath", user.getProfileImagePath());
         
-        // 진행도 및 전투력 추가
+        user.getCurrentStamina(); // 지령서 갱신
+        userRepository.save(user);
+        response.put("stamina", user.getStamina());
+        response.put("maxStamina", 200);
         response.put("currentQuestId", progress.getCurrentQuestId());
         response.put("questStatus", progress.getQuestStatus());
         response.put("towerFloor", progress.getTowerFloor());

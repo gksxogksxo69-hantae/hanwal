@@ -433,6 +433,10 @@
                         <i data-lucide="gem" class="text-cyan-400 w-4 h-4"></i>
                         <span class="font-mono font-bold text-sm" x-text="(gems || 0).toLocaleString()"></span>
                     </div>
+                    <div class="glass-panel-circle px-4 py-1.5 flex items-center gap-2 border-rose-500/30">
+                        <i data-lucide="scroll" class="text-rose-400 w-4 h-4"></i>
+                        <span class="font-mono font-bold text-sm"><span x-text="stamina"></span>/200</span>
+                    </div>
                 </div>
                 
                 <nav class="glass-panel flex p-1.5 gap-1">
@@ -978,42 +982,90 @@
 
             <!-- [CHAR_DETAIL] 캐릭터 상세 보기 -->
             <template x-if="currentModal==='CHAR_DETAIL' && selectedCharForDetail">
-                <div class="glass-panel w-full max-w-4xl mx-auto p-8 shadow-2xl border-purple-500/20 flex gap-8" style="height:70vh;">
-                    <div class="w-1/2 rounded-2xl overflow-hidden bg-black/40 border border-white/10 relative">
-                        <div class="absolute top-4 left-4 z-10">
-                            <span class="text-lg px-3 py-1 rounded font-black shadow-lg" :class="{'S':'bg-amber-500 text-black','A':'bg-purple-500 text-white','B':'bg-blue-500 text-white','C':'bg-slate-500 text-white'}[selectedCharForDetail.rarity]" x-text="selectedCharForDetail.rarity + '급'"></span>
+                <div class="glass-panel w-full max-w-5xl mx-auto p-8 shadow-2xl border-purple-500/20 flex gap-8" style="height:85vh;">
+                    <!-- 좌측: 일러스트 및 기본 태그 -->
+                    <div class="w-2/5 flex flex-col gap-4">
+                        <div class="flex-1 rounded-2xl overflow-hidden bg-black/40 border border-white/10 relative">
+                            <div class="absolute top-4 left-4 z-10 flex flex-col gap-2">
+                                <span class="text-lg px-3 py-1 rounded font-black shadow-lg" :class="{'S':'bg-amber-500 text-black','A':'bg-purple-500 text-white','B':'bg-blue-500 text-white','C':'bg-slate-500 text-white'}[selectedCharForDetail.rarity]" x-text="selectedCharForDetail.rarity + '급'"></span>
+                                <span class="bg-slate-900/80 backdrop-blur-md text-cyan-400 px-3 py-1 rounded text-xs font-bold border border-cyan-500/30" x-text="selectedCharForDetail.realm || '경지 미설정'"></span>
+                            </div>
+                            <img :src="selectedCharForDetail.imagePath" class="w-full h-full object-cover">
                         </div>
-                        <img :src="selectedCharForDetail.src" class="w-full h-full object-cover">
+                        
+                        <!-- 배경 정보 요약 -->
+                        <div class="bg-slate-900/60 rounded-xl p-4 border border-white/5 grid grid-cols-2 gap-3 text-[11px]">
+                            <div class="flex flex-col gap-1">
+                                <span class="text-slate-500">소속</span>
+                                <span class="text-white font-bold" x-text="selectedCharForDetail.faction || '-'"></span>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <span class="text-slate-500">성별/나이</span>
+                                <span class="text-white font-bold"><span x-text="selectedCharForDetail.gender || '-'"></span> / <span x-text="selectedCharForDetail.age || '-'"></span></span>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <span class="text-slate-500">성향</span>
+                                <span class="text-white font-bold" x-text="selectedCharForDetail.alignment || '-'"></span>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <span class="text-slate-500">주요 관계</span>
+                                <span class="text-white font-bold truncate" :title="selectedCharForDetail.relationships" x-text="selectedCharForDetail.relationships || '-'"></span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="w-1/2 flex flex-col justify-center">
-                        <div class="mb-8 border-b border-white/10 pb-6">
-                            <h2 class="text-4xl font-black text-white serif mb-2" x-text="selectedCharForDetail.name"></h2>
+
+                    <!-- 우측: 스탯 및 상세 설명 -->
+                    <div class="w-3/5 flex flex-col">
+                        <div class="mb-6 border-b border-white/10 pb-4">
+                            <h2 class="text-4xl font-black text-white serif mb-1" x-text="selectedCharForDetail.name"></h2>
+                            <p class="text-amber-500/80 text-sm italic mb-2" x-text="selectedCharForDetail.title"></p>
                             <div class="flex items-center gap-3">
                                 <span class="text-amber-500 font-bold text-lg">Lv. <span x-text="selectedCharForDetail.level"></span></span>
                                 <span class="text-slate-400 text-sm" x-text="selectedCharForDetail.role"></span>
                             </div>
                         </div>
-                        <div class="space-y-4">
-                            <h3 class="text-lg font-bold text-purple-400 mb-2 flex items-center gap-2"><i data-lucide="bar-chart-2"></i> 세부 능력치</h3>
-                            <div class="bg-slate-800/40 p-4 rounded-xl border border-white/5 flex justify-between items-center">
-                                <span class="text-slate-400 text-sm">체력 (HP)</span>
-                                <span class="text-white font-bold text-lg font-mono" x-text="((selectedCharForDetail.level * 50) + 1000).toLocaleString()"></span>
+
+                        <!-- 스탯 그리드 -->
+                        <div class="grid grid-cols-2 gap-3 mb-6">
+                            <div class="bg-slate-800/40 p-3 rounded-xl border border-white/5 flex justify-between items-center">
+                                <span class="text-slate-500 text-[11px]">체력 (HP)</span>
+                                <span class="text-white font-bold font-mono" x-text="(selectedCharForDetail.hp || 0).toLocaleString()"></span>
                             </div>
-                            <div class="bg-slate-800/40 p-4 rounded-xl border border-white/5 flex justify-between items-center">
-                                <span class="text-slate-400 text-sm">공격력 (ATK)</span>
-                                <span class="text-white font-bold text-lg font-mono" x-text="((selectedCharForDetail.level * 10) + 150).toLocaleString()"></span>
+                            <div class="bg-slate-800/40 p-3 rounded-xl border border-white/5 flex justify-between items-center">
+                                <span class="text-slate-500 text-[11px]">공격력 (ATK)</span>
+                                <span class="text-white font-bold font-mono" x-text="(selectedCharForDetail.atk || 0).toLocaleString()"></span>
                             </div>
-                            <div class="bg-slate-800/40 p-4 rounded-xl border border-white/5 flex justify-between items-center">
-                                <span class="text-slate-400 text-sm">방어력 (DEF)</span>
-                                <span class="text-white font-bold text-lg font-mono" x-text="((selectedCharForDetail.level * 5) + 50).toLocaleString()"></span>
+                            <div class="bg-slate-800/40 p-3 rounded-xl border border-white/5 flex justify-between items-center">
+                                <span class="text-slate-500 text-[11px]">방어력 (DEF)</span>
+                                <span class="text-white font-bold font-mono" x-text="(selectedCharForDetail.def || 0).toLocaleString()"></span>
                             </div>
-                            <div class="bg-slate-800/40 p-4 rounded-xl border border-white/5 flex justify-between items-center">
-                                <span class="text-slate-400 text-sm">속도 (SPD)</span>
-                                <span class="text-white font-bold text-lg font-mono">100</span>
+                            <div class="bg-slate-800/40 p-3 rounded-xl border border-white/5 flex justify-between items-center">
+                                <span class="text-slate-500 text-[11px]">속도 (SPD)</span>
+                                <span class="text-white font-bold font-mono" x-text="selectedCharForDetail.spd || 0"></span>
                             </div>
                         </div>
-                        <div class="mt-8 flex justify-end">
-                            <button @click="openModal('INVENTORY')" class="bg-gradient-to-r from-purple-600 to-purple-500 text-white font-bold py-3 px-10 rounded-xl shadow-lg hover:from-purple-500 hover:to-purple-400 transition active:scale-95">돌아가기</button>
+
+                        <!-- 전투력 수치 (강조) -->
+                        <div class="bg-gradient-to-r from-purple-900/40 to-blue-900/40 p-4 rounded-xl border border-purple-500/30 flex justify-between items-center mb-6 shadow-lg shadow-purple-900/20">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="zap" class="text-purple-400 w-5 h-5"></i>
+                                <span class="text-purple-300 font-bold text-sm tracking-widest">개인 무력</span>
+                            </div>
+                            <span class="text-3xl text-white font-black font-mono tracking-tighter" x-text="(selectedCharForDetail.power || 0).toLocaleString()"></span>
+                        </div>
+
+                        <!-- 배경 설명 (스크롤 영역) -->
+                        <div class="flex-1 flex flex-col min-h-0 bg-black/20 rounded-xl border border-white/5 p-4">
+                            <h3 class="text-xs font-bold text-slate-500 mb-3 flex items-center gap-2">
+                                <i data-lucide="book-open" class="w-3 h-3"></i> 인물 일대기
+                            </h3>
+                            <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                                <p class="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap" x-text="selectedCharForDetail.lore || '아직 알려진 기록이 없습니다.'"></p>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 flex justify-end gap-3">
+                            <button @click="openModal('INVENTORY')" class="glass-button px-8 py-2.5 rounded-xl text-sm font-bold border border-white/10 hover:bg-white/5 transition">닫기</button>
                         </div>
                     </div>
                 </div>

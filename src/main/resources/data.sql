@@ -259,3 +259,37 @@ INSERT INTO mst_stage (id, chapter_id, stage_num, title, story_before_id, story_
 (38, 8, 3, '공포의 메아리', 0, 0, 803, 3400, 1700),
 (39, 8, 4, '무의 영역', 0, 0, 804, 3600, 1800),
 (40, 8, 5, '심연의 마왕', 0, 0, 805, 5000, 3000);
+
+
+-- ====================================================================
+-- 9. 캐릭터 상세 배경 및 설정 데이터 업데이트
+-- ====================================================================
+UPDATE characters SET 
+    faction = '남궁세가', gender = '남성', age = '17세', realm = '삼류(三流)', 
+    alignment = '정의로움', relationships = '남궁설화(여동생), 남궁현(숙부)', 
+    lore = '남궁세가의 적자이나 기해(氣海)가 막혀 무공을 익히지 못해 가문의 수치라 불렸다. 하지만 사실 그는 전설적인 무공인 창궁무애검의 자질을 타고난 기재였다.' 
+WHERE id = 1;
+
+UPDATE characters SET 
+    faction = '남궁세가', gender = '여성', age = '15세', realm = '삼류(三流)', 
+    alignment = '활발함', relationships = '남궁천(오빠), 남궁현(숙부)', 
+    lore = '남궁세가의 막내딸로 오빠인 남궁천을 무시하는 척하지만 누구보다 걱정하고 있다. 소리에 민감하여 적의 움직임을 파악하는 능력이 뛰어나다.' 
+WHERE id = 2;
+
+UPDATE characters SET 
+    faction = '남궁세가', gender = '남성', age = '52세', realm = '현경(玄境)', 
+    alignment = '온화함', relationships = '남궁천(조카), 남궁설화(조카)', 
+    lore = '남궁세가의 가주이자 천검선이라 불리는 고수. 조카인 남궁천의 숨겨진 재능을 알아보고 뒤에서 묵묵히 지켜봐 주는 든든한 조력자이다.' 
+WHERE id = 5;
+
+UPDATE characters SET 
+    faction = '하북팽가', gender = '여성', age = '19세', realm = '일류(一流)', 
+    alignment = '호탕함', relationships = '팽무독(사촌오빠)', 
+    lore = '하북팽가의 차세대 도객. 붉은 도기를 휘두르며 전장을 누비는 모습 때문에 적련(赤蓮)이라는 별호를 얻었다. 성격이 매우 급하고 직설적이다.' 
+WHERE id = 3;
+
+UPDATE characters SET 
+    faction = '사천당가', gender = '여성', age = '18세', realm = '일류(一流)', 
+    alignment = '냉철함', relationships = '당외(조부)', 
+    lore = '그늘 속에 숨어 적의 숨통을 끊는 사천당가의 암살자. 독과 암기 사용에 능하며, 감정을 잘 드러내지 않아 그림자 독이라 불린다.' 
+WHERE id = 4;

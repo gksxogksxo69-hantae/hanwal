@@ -105,7 +105,25 @@ public class GameCharacter {
     @Column(nullable = false)
     private int spiritBonusAmount = 0;
 
-    // --- 설명 ---
+    // --- 설정 및 배경 ---
+    @Column(length = 50)
+    private String faction; // 소속 세가/문파
+
+    @Column(length = 20)
+    private String gender; // 성별
+
+    @Column(length = 30)
+    private String age; // 나이
+
+    @Column(length = 50)
+    private String realm; // 세계관 경지
+
+    @Column(length = 50)
+    private String alignment; // 성향
+
+    @Column(length = 255)
+    private String relationships; // 주요 관계
+
     @Column(columnDefinition = "TEXT")
     private String description;
 

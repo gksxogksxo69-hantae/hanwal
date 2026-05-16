@@ -31,6 +31,7 @@ public class LobbyApiController {
     private final GameCharacterRepository gameCharacterRepository;
     private final UserProgressRepository userProgressRepository;
     private final RewardService rewardService;
+    private final com.hanwol.service.CombatPowerService combatPowerService;
 
     @GetMapping("/my-characters")
     public ResponseEntity<?> getMyCharacters(@AuthenticationPrincipal UserDetails userDetails) {
@@ -47,7 +48,7 @@ public class LobbyApiController {
         List<Map<String, Object>> charList;
 
         if (!userChars.isEmpty()) {
-            charList = userChars.stream().map(uc -> buildCharMap(uc.getCharacter(), uc.getLevel())).collect(Collectors.toList());
+            charList = userChars.stream().map(uc -> buildCharMap(uc)).collect(Collectors.toList());
         } else {
             charList = gameCharacterRepository.findAll().stream()
                     .filter(gc -> gc.getImagePath() != null && !gc.getImagePath().contains("portrait_male"))
@@ -55,6 +56,9 @@ public class LobbyApiController {
                     .map(gc -> buildCharMap(gc, 1))
                     .collect(Collectors.toList());
         }
+
+        user.getCurrentStamina(); // 지령서 갱신
+        userRepository.save(user); // 갱신된 시간 저장
 
         List<Long> partyIds = Arrays.asList(user.getPartySlot1(), user.getPartySlot2(), user.getPartySlot3(), user.getPartySlot4());
         UserProgress progress = userProgressRepository.findById(user.getId()).orElse(new UserProgress());
@@ -67,6 +71,8 @@ public class LobbyApiController {
             "level", user.getLevel(),
             "exp", user.getExp(),
             "requiredExp", user.getRequiredExp(),
+            "stamina", user.getStamina(),
+            "maxStamina", 200,
             "claimedLevelRewards", user.getClaimedLevelRewards() != null ? user.getClaimedLevelRewards() : "",
             "claimedActRewards", progress.getClaimedActRewards() != null ? progress.getClaimedActRewards() : "",
             "storyChapter", user.getStoryChapter()
@@ -83,6 +89,54 @@ public class LobbyApiController {
         m.put("rarity", gc.getRarity().name());
         m.put("level", level);
         m.put("imagePath", gc.getImagePath() != null ? gc.getImagePath() : "/images/portrait_male.png");
+        
+        // 상세 스탯 (레벨 1 기준 또는 기본값)
+        m.put("hp", gc.calcHpAtLevel(level));
+        m.put("atk", gc.calcAtkAtLevel(level));
+        m.put("def", gc.calcDefAtLevel(level));
+        m.put("spd", gc.calcSpdAtLevel(level));
+        m.put("power", 0); // 기본 캐릭터는 파워 0 또는 대략 계산
+        
+        // 배경 정보
+        m.put("faction", gc.getFaction());
+        m.put("gender", gc.getGender());
+        m.put("age", gc.getAge());
+        m.put("realm", gc.getRealm());
+        m.put("alignment", gc.getAlignment());
+        m.put("relationships", gc.getRelationships());
+        m.put("lore", gc.getLore());
+        
+        return m;
+    }
+
+    private Map<String, Object> buildCharMap(UserCharacter uc) {
+        GameCharacter gc = uc.getCharacter();
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", gc.getId());
+        m.put("name", gc.getName());
+        m.put("title", gc.getTitle());
+        m.put("role", gc.getRole());
+        m.put("element", gc.getElement().name());
+        m.put("rarity", uc.getEffectiveRarity().name());
+        m.put("level", uc.getLevel());
+        m.put("imagePath", gc.getImagePath() != null ? gc.getImagePath() : "/images/portrait_male.png");
+
+        // 실제 계산된 스탯
+        m.put("hp", uc.getEffectiveHp());
+        m.put("atk", uc.getEffectiveAtk());
+        m.put("def", uc.getEffectiveDef());
+        m.put("spd", uc.getEffectiveSpd());
+        m.put("power", combatPowerService.calculateCharacterPower(uc));
+
+        // 배경 정보
+        m.put("faction", gc.getFaction());
+        m.put("gender", gc.getGender());
+        m.put("age", gc.getAge());
+        m.put("realm", gc.getRealm());
+        m.put("alignment", gc.getAlignment());
+        m.put("relationships", gc.getRelationships());
+        m.put("lore", gc.getLore());
+
         return m;
     }
 

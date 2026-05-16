@@ -55,6 +55,13 @@ public class User {
     @Column(nullable = false)
     private long premiumCurrency = 0;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private int stamina = 200;
+
+    @Column
+    private LocalDateTime lastStaminaUpdateTime;
+
     // --- 루트 시스템 ---
     @Enumerated(EnumType.STRING)
     @Column(length = 10)
@@ -251,5 +258,40 @@ public class User {
         if (profileImagePath != null) {
             this.profileImagePath = profileImagePath;
         }
+    }
+
+    public int getCurrentStamina() {
+        if (this.stamina >= 200) {
+            // 최대치 이상이면 업데이트 불필요
+            return this.stamina;
+        }
+        if (this.lastStaminaUpdateTime == null) {
+            this.lastStaminaUpdateTime = LocalDateTime.now();
+            return this.stamina;
+        }
+        long minutesPassed = java.time.Duration.between(this.lastStaminaUpdateTime, LocalDateTime.now()).toMinutes();
+        int recovered = (int) (minutesPassed / 3);
+        if (recovered > 0) {
+            this.stamina = Math.min(200, this.stamina + recovered);
+            // 200개 도달 시 갱신 시간을 null로 하거나, 마지막 회복 시점을 정확히 밀어줌
+            if (this.stamina >= 200) {
+                this.lastStaminaUpdateTime = null;
+            } else {
+                this.lastStaminaUpdateTime = this.lastStaminaUpdateTime.plusMinutes(recovered * 3);
+            }
+        }
+        return this.stamina;
+    }
+
+    public void useStamina(int amount) {
+        getCurrentStamina(); // 계산 후 소모
+        if (this.stamina < amount) {
+            throw new IllegalStateException("지령서가 부족합니다.");
+        }
+        // 풀피 상태에서 소모를 시작하면 타이머 가동
+        if (this.stamina >= 200 && amount > 0) {
+            this.lastStaminaUpdateTime = LocalDateTime.now();
+        }
+        this.stamina -= amount;
     }
 }

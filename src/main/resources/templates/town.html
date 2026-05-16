@@ -55,6 +55,14 @@
         
         @keyframes pulse-cp { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
         .animate-cp { animation: pulse-cp 2s infinite ease-in-out; }
+
+        /* 커스텀 스크롤바 */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.25); border-radius: 9999px; transition: background 0.3s; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(245, 158, 11, 0.5); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
     <script>
     document.addEventListener('alpine:init', () => {
@@ -67,6 +75,7 @@
             currentQuest: { id: 0, title: '로딩 중...', goalDesc: '데이터 동기화 중...', status: 'IN_PROGRESS' },
             stages: [], currentChapter: 1, selectedPartySlot: 0,
             ranking: [], guideStep: 0, guideActive: false, guideMonologueText: '',
+            towerEnemies: [], dailyDungeons: [], inventoryFilter: 'ALL', raidWeeklyRemaining: 3,
             
             advanceGuideMonologue() {
                 console.log("Guide advanced");
@@ -154,11 +163,16 @@
 
             openModal(type) {
                 if (type === 'RANKING') this.fetchRanking();
+                if (type === 'TOWER') this.towerEnemies = this.generateTowerEnemies(this.towerFloor);
+                if (type === 'DAILY_HALL') this.dailyDungeons = this.getDailyDungeons();
                 this.currentModal = type;
                 this.$nextTick(() => lucide.createIcons());
             },
             closeModal() { this.currentModal = null; },
-            handleQuestClick() { if (this.currentQuest.status === 'COMPLETED') this.openModal('QUEST_REWARD'); else window.location.href = '/stage-select'; },
+            handleQuestClick() {
+                if (this.currentQuest.status === 'COMPLETED') this.openModal('QUEST_REWARD');
+                else window.location.href = '/stage-select';
+            },
             
             togglePartyMember(char) {
                 const idx = this.currentParty.findIndex(p => p && p.id === char.id);
@@ -237,6 +251,55 @@
                         alert(data.message);
                     }
                 } catch (e) { console.error(e); }
+            },
+
+            generateTowerEnemies(floor) {
+                const pool = [
+                    {name:'혈교 도수',role:'전위 돌격병'},{name:'혈교 암자객',role:'후방 자객'},
+                    {name:'혈교 도사',role:'지원 술사'},{name:'혈교 호법',role:'근위 호법'},
+                    {name:'마교 궁수',role:'원거리 사수'},{name:'마교 역사',role:'중장 역사'}
+                ];
+                const count = Math.min(3 + Math.floor((floor-1)/5), 6);
+                const baseLv = floor * 2 + 3;
+                let enemies = [];
+                for (let i = 0; i < count; i++) {
+                    const t = pool[i % pool.length];
+                    enemies.push({name:t.name,role:t.role,level:baseLv+Math.floor(Math.random()*3),isBoss:false});
+                }
+                if (floor % 5 === 0) {
+                    const bosses = ['혈교 장로','혈교 부교주','마교 호법왕','마교 좌사','마교 교주'];
+                    enemies.push({name:bosses[Math.min(Math.floor(floor/5)-1,bosses.length-1)],role:'두목',level:baseLv+10,isBoss:true});
+                }
+                return enemies;
+            },
+
+            getDailyDungeons() {
+                const day = new Date().getDay();
+                return [
+                    {name:'금속의 시련',desc:'공격력 성장 재료',days:[1,4],icon:'swords',color:'amber'},
+                    {name:'목기의 시련',desc:'방어력 성장 재료',days:[2,5],icon:'shield',color:'emerald'},
+                    {name:'수기의 시련',desc:'체력 성장 재료',days:[3,6],icon:'heart',color:'sky'},
+                    {name:'화기의 시련',desc:'속도 성장 재료',days:[1,3,5],icon:'flame',color:'red'},
+                    {name:'토기의 시련',desc:'종합 성장 재료',days:[0,6],icon:'mountain',color:'yellow'}
+                ].map(d=>({...d,isAvailable:d.days.includes(day),stage:this.hallStage}));
+            },
+
+            get filteredCharacters() {
+                if (this.inventoryFilter === 'ALL') return this.myCharacters;
+                return this.myCharacters.filter(c => c.rarity === this.inventoryFilter);
+            },
+
+            async claimQuestReward() {
+                try {
+                    const res = await fetch('/api/quest/claim', { method: 'POST' });
+                    const data = await res.json();
+                    if (data.success) {
+                        alert('보상을 수령했습니다!');
+                        await this.loadPlayerInfo();
+                        await this.fetchQuestInfo();
+                        this.closeModal();
+                    } else { alert(data.error || '수령 실패'); }
+                } catch(e) { console.error(e); }
             }
         }));
     });
@@ -299,6 +362,20 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Quest Panel (좌측 상단 배치) -->
+                <div @click="handleQuestClick()" class="glass-panel p-4 w-72 border-l-4 border-l-amber-500 cursor-pointer hover:bg-white/5 transition flex flex-col gap-1.5 relative overflow-hidden group">
+                    <div class="absolute top-2 right-4 opacity-5 group-hover:opacity-10 transition"><i data-lucide="scroll" class="w-12 h-12"></i></div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-amber-500 text-[10px] font-black tracking-widest">진행 중인 의뢰</span>
+                        <i data-lucide="arrow-right-circle" class="w-3.5 h-3.5 text-amber-500"></i>
+                    </div>
+                    <h4 class="text-white font-bold text-sm serif" x-text="currentQuest.title"></h4>
+                    <p class="text-slate-400 text-[11px] leading-relaxed" x-text="currentQuest.goalDesc"></p>
+                    <div x-show="currentQuest.status==='COMPLETED'" class="absolute inset-0 bg-amber-600/10 flex items-center justify-center animate-pulse border border-amber-500 rounded-lg">
+                        <span class="text-amber-400 text-xs font-bold serif underline decoration-2">임무 완수! 보상 수령</span>
+                    </div>
+                </div>
             </div>
 
             <div class="flex flex-col items-end gap-4">
@@ -336,23 +413,10 @@
 
         <main class="flex-1"></main>
 
-        <footer class="flex justify-between items-end pointer-events-auto">
-            <div @click="handleQuestClick()" class="glass-panel p-5 w-80 border-l-4 border-l-amber-500 cursor-pointer hover:bg-white/5 transition flex flex-col gap-2 relative overflow-hidden group">
-                <div class="absolute top-2 right-4 opacity-5 group-hover:opacity-10 transition"><i data-lucide="scroll" class="w-16 h-16"></i></div>
-                <div class="flex justify-between items-center">
-                    <span class="text-amber-500 text-[10px] font-black tracking-widest uppercase">CURRENT QUEST</span>
-                    <i data-lucide="arrow-right-circle" class="w-4 h-4 text-amber-500"></i>
-                </div>
-                <h4 class="text-white font-bold text-lg serif" x-text="currentQuest.title"></h4>
-                <p class="text-slate-400 text-xs leading-relaxed" x-text="currentQuest.goalDesc"></p>
-                <div x-show="currentQuest.status==='COMPLETED'" class="absolute inset-0 bg-amber-600/10 flex items-center justify-center animate-pulse border border-amber-500 rounded-lg">
-                    <span class="text-amber-400 text-xs font-bold serif underline decoration-2">임무 완수! 보상 수령</span>
-                </div>
-            </div>
-
+        <footer class="flex justify-end items-end pointer-events-auto">
             <div class="gate-grid">
                 <button @click="handleQuestClick()" :class="guideStep === 3 ? 'guide-glow' : ''" class="gate-card gate-main glass-button">
-                    <span class="text-white/60 text-[10px] font-bold mb-1 uppercase tracking-tighter">MAIN STORY</span>
+                    <span class="text-white/60 text-[10px] font-bold mb-1 tracking-tighter">본편 이야기</span>
                     <span class="text-white text-2xl font-black serif drop-shadow-md">임무 시작</span>
                 </button>
                 <button @click="openModal('TOWER')" class="gate-card glass-button">
@@ -466,8 +530,8 @@
                         <!-- Header -->
                         <div class="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-slate-800 to-transparent">
                             <div>
-                                <h2 class="text-3xl font-bold text-white tracking-tight italic uppercase">My Status Card</h2>
-                                <p class="text-slate-400 text-sm mt-1">대협의 무림 기록과 성장 현황을 확인합니다.</p>
+                                <h2 class="text-3xl font-bold text-white tracking-tight italic">대협의 무림 수첩</h2>
+                                <p class="text-slate-400 text-sm mt-1">무림에서의 발자취와 성장 현황을 한눈에 살핍니다.</p>
                             </div>
                             <button @click="closeModal()" class="p-2 hover:bg-white/10 rounded-full transition text-slate-400 hover:text-white">
                                 <i data-lucide="x" class="w-8 h-8"></i>
@@ -483,8 +547,8 @@
                                     <div class="w-full h-full rounded-full overflow-hidden border-4 border-slate-900 group relative">
                                         <img :src="playerPortrait" class="w-full h-full object-cover">
                                         <button @click="openModal('PORTRAIT_SELECT')" 
-                                                class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-bold uppercase tracking-widest">
-                                            Change Portrait
+                                                class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-bold tracking-widest">
+                                            초상화 변경
                                         </button>
                                     </div>
                                 </div>
@@ -502,8 +566,8 @@
                                     
                                     <!-- Level EXP Bar -->
                                     <div class="w-full max-w-[200px] mx-auto px-2">
-                                        <div class="flex justify-between text-[10px] text-slate-500 mb-1 px-1 font-mono uppercase tracking-tighter">
-                                            <span x-text="Math.floor((exp/requiredExp)*100) + '%'">35%</span>
+                                        <div class="flex justify-between text-[10px] text-slate-500 mb-1 px-1 font-mono tracking-tighter">
+                                            <span x-text="Math.floor((exp/(requiredExp||100))*100) + '%'">35%</span>
                                             <span x-text="exp + ' / ' + requiredExp">1234/5000</span>
                                         </div>
                                         <div class="h-1.5 w-full bg-slate-700 rounded-full overflow-hidden border border-white/5 shadow-inner">
@@ -511,12 +575,12 @@
                                                  :style="`width: ${(exp / (requiredExp || 100)) * 100}%`"></div
                                         ></div>
                                     </div>
-                                    <p class="text-slate-500 text-[10px] mt-6 font-mono opacity-50 tracking-widest">UID: 800012345</p>
+                                    <p class="text-slate-500 text-[10px] mt-6 font-mono opacity-50 tracking-widest">무림인 번호: 800012345</p>
                                 </div>
 
                                 <!-- Party Combat Power Display -->
                                 <div class="w-full mt-2 bg-slate-900/60 rounded-2xl p-5 border border-white/5 shadow-inner">
-                                    <p class="text-slate-500 text-[10px] font-bold mb-3 uppercase tracking-[0.2em] text-center">Current Total Power</p>
+                                    <p class="text-slate-500 text-[10px] font-bold mb-3 tracking-[0.2em] text-center">총 전투력</p>
                                     <p class="text-4xl text-sky-400 font-black text-center tabular-nums drop-shadow-[0_0_10px_rgba(56,189,248,0.3)]" x-text="(combatPower || 0).toLocaleString()">0</p>
                                 </div>
                             </div>
@@ -530,7 +594,7 @@
                                         <div class="absolute -right-4 -top-4 text-red-500/5 group-hover:scale-110 transition-transform duration-1000">
                                             <i data-lucide="swords" class="w-40 h-40"></i>
                                         </div>
-                                        <p class="text-red-400 text-xs font-bold uppercase tracking-[0.3em] mb-4">Total CP</p>
+                                        <p class="text-red-400 text-xs font-bold tracking-[0.3em] mb-4">종합 무력</p>
                                         <p class="text-5xl text-white font-black tabular-nums tracking-tighter" x-text="(partyCombatPower || 0).toLocaleString()">0</p>
                                         <div class="mt-4 h-1 w-20 bg-red-500/30 rounded-full"></div>
                                     </div>
@@ -539,7 +603,7 @@
                                         <div class="absolute -right-4 -top-4 text-sky-500/5 group-hover:scale-110 transition-transform duration-1000">
                                             <i data-lucide="trophy" class="w-40 h-40"></i>
                                         </div>
-                                        <p class="text-sky-400 text-xs font-bold uppercase tracking-[0.3em] mb-4">Server Rank</p>
+                                        <p class="text-sky-400 text-xs font-bold tracking-[0.3em] mb-4">무림 서열</p>
                                         <p class="text-5xl text-white font-black tabular-nums tracking-tighter" x-text="serverRank || '--'">--</p>
                                         <div class="mt-4 h-1 w-20 bg-sky-500/30 rounded-full"></div>
                                     </div>
@@ -553,8 +617,8 @@
                                             모험 진척도
                                         </h4>
                                         <div class="px-4 py-2 bg-slate-900/80 rounded-full border border-white/5 flex items-center gap-3">
-                                            <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Available</span>
-                                            <span class="text-amber-500 font-black" x-text="Math.max(0, storyChapter - (claimedActRewards ? claimedActRewards.split(',').length : 0))">0</span>
+                                            <span class="text-slate-500 text-[10px] font-bold tracking-widest">수령 가능</span>
+                                            <span class="text-amber-500 font-black" x-text="Math.max(0, storyChapter - (claimedActRewards ? claimedActRewards.split(',').filter(s=>s).length : 0))">0</span>
                                         </div>
                                     </div>
 
@@ -565,8 +629,8 @@
                                                  :class="storyChapter < i ? 'opacity-40 pointer-events-none' : 'opacity-100 pointer-events-auto'">
                                                 
                                                 <div class="text-center">
-                                                    <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] mb-3" x-text="'Act. 0' + i">ACT. 01</p>
-                                                    <h5 class="text-white text-xl font-bold serif" x-text="i + ' 막'">1 층</h5>
+                                                    <p class="text-slate-500 text-[10px] font-bold tracking-[0.3em] mb-3" x-text="'제 ' + i + ' 장'">제 1 장</p>
+                                                    <h5 class="text-white text-xl font-bold serif" x-text="'제 ' + i + ' 막'">제 1 막</h5>
                                                 </div>
 
                                                 <div class="flex flex-col gap-5 items-center my-6">
@@ -582,7 +646,7 @@
                                                         class="w-full py-3 rounded-xl font-bold text-xs transition-all shadow-xl active:scale-95 uppercase tracking-widest"
                                                         :class="storyChapter < i ? 'bg-slate-800 text-slate-500' : 
                                                                 ((claimedActRewards || '').split(',').includes(String(i)) ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-gradient-to-r from-amber-600 to-amber-500 text-white shadow-amber-900/40')">
-                                                    <span x-text="(claimedActRewards || '').split(',').includes(String(i)) ? 'Received' : '1500 GEM'"></span>
+                                                    <span x-text="(claimedActRewards || '').split(',').includes(String(i)) ? '수령 완료' : '보석 1,500'"></span>
                                                 </button>
                                             </div>
                                         </template>
@@ -604,29 +668,29 @@
                         
                         <div class="flex justify-between items-center mb-8 pb-4 border-b border-white/5 relative z-10">
                             <div>
-                                <h3 class="text-3xl font-black text-white italic tracking-tighter uppercase">Level Rewards</h3>
-                                <p class="text-slate-500 text-xs mt-1">대협의 성장 단계에 따른 무림 보급품입니다.</p>
+                                <h3 class="text-3xl font-black text-white italic tracking-tighter">성장 보급품</h3>
+                                <p class="text-slate-500 text-xs mt-1">경지에 도달할 때마다 무림맹에서 하사하는 보급품입니다.</p>
                             </div>
                             <button @click="closeModal()" class="text-slate-500 hover:text-white transition p-2">
                                 <i data-lucide="x" class="w-8 h-8"></i>
                             </button>
                         </div>
                         
-                        <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar relative z-10">
+                        <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar relative z-10" style="scrollbar-gutter: stable;">
                             <template x-for="lvl in [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]" :key="lvl">
                                 <div class="flex items-center justify-between p-5 bg-slate-800/40 rounded-2xl border border-white/5 transition hover:bg-slate-800/80 pointer-events-auto"
                                      :class="level < lvl ? 'opacity-30 grayscale' : 'opacity-100'">
                                     
                                     <div class="flex items-center gap-6">
                                         <div class="w-16 h-16 flex flex-col items-center justify-center rounded-2xl bg-slate-950 border border-white/10">
-                                            <span class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">LV</span>
+                                            <span class="text-[9px] text-slate-500 font-bold tracking-widest mb-1">경지</span>
                                             <span class="text-2xl font-black text-amber-500" x-text="lvl">5</span>
                                         </div>
                                         <div>
                                             <p class="text-white font-bold text-lg serif">무림 보급 <span x-text="'[' + lvl + ']'"></span></p>
                                             <div class="flex items-center gap-2">
                                                 <span class="w-2 h-2 rounded-full" :class="lvl % 10 === 0 ? 'bg-red-500 animate-pulse' : 'bg-slate-600'"></span>
-                                                <span class="text-slate-500 text-[10px] font-bold uppercase tracking-widest" x-text="lvl % 10 === 0 ? 'Legendary Supply' : 'Normal Supply'"></span>
+                                                <span class="text-slate-500 text-[10px] font-bold tracking-widest" x-text="lvl % 10 === 0 ? '전설급 보급' : '일반 보급'"></span>
                                             </div>
                                         </div>
                                     </div>
@@ -644,7 +708,7 @@
                                                 class="px-6 py-2.5 rounded-xl font-bold text-xs transition shadow-lg active:scale-95 uppercase tracking-widest"
                                                 :class="level < lvl ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 
                                                         ((claimedLevelRewards || '').split(',').includes(String(lvl)) ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-gradient-to-b from-amber-500 to-amber-600 text-white shadow-amber-900/40 hover:from-amber-400 hover:to-amber-500')">
-                                            <span x-text="(claimedLevelRewards || '').split(',').includes(String(lvl)) ? 'Done' : 'Claim'"></span>
+                                            <span x-text="(claimedLevelRewards || '').split(',').includes(String(lvl)) ? '수령 완료' : '수령'"></span>
                                         </button>
                                     </div>
                                 </div>
@@ -654,13 +718,169 @@
                 </div>
             </template>
 
-            <!-- [CONSTRUCTION] 준비 중 -->
-            <template x-if="['TOWER','RAID','DAILY_HALL','INVENTORY','QUEST_REWARD'].includes(currentModal)">
-                <div class="glass-panel w-full max-w-md mx-auto p-12 text-center shadow-2xl">
-                    <i data-lucide="construction" class="w-16 h-16 text-slate-600 mx-auto mb-6"></i>
-                    <h3 class="text-xl font-bold text-white mb-2 serif">수련 환경 정비 중</h3>
-                    <p class="text-slate-500 text-sm leading-relaxed">대협, 이곳은 현재 수련 환경 개선 중입니다. 곧 새로운 모습으로 찾아뵙겠습니다.</p>
-                    <button @click="closeModal()" class="mt-8 glass-button px-10 py-2 rounded-full text-xs">로비로 원복</button>
+            <!-- [TOWER] 무한의 탑 -->
+            <template x-if="currentModal==='TOWER'">
+                <div class="glass-panel w-full max-w-4xl mx-auto flex flex-col p-8 overflow-hidden shadow-2xl border-cyan-500/20" style="height:80vh;">
+                    <div class="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                        <div>
+                            <h2 class="text-3xl font-bold serif text-cyan-400 flex items-center gap-3"><i data-lucide="building"></i> 무한의 탑</h2>
+                            <p class="text-slate-400 text-sm mt-1">끝없는 시련의 탑, 정상을 향해 올라가라.</p>
+                        </div>
+                        <button @click="closeModal()" class="glass-button w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-600 transition"><i data-lucide="x"></i></button>
+                    </div>
+                    <div class="bg-cyan-950/20 border border-cyan-500/20 rounded-xl p-6 mb-6 flex justify-between items-center">
+                        <div>
+                            <p class="text-cyan-400/70 text-xs font-bold tracking-widest mb-1">현재 도전 층수</p>
+                            <p class="text-4xl font-black text-white serif"><span x-text="towerFloor"></span>층</p>
+                        </div>
+                        <button @click="alert('전투 시스템 연동 준비 중입니다.')" class="bg-gradient-to-r from-cyan-600 to-cyan-500 text-white font-bold py-3 px-10 rounded-xl shadow-lg hover:from-cyan-500 hover:to-cyan-400 transition active:scale-95">도전 개시</button>
+                    </div>
+                    <h4 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="shield-alert" class="w-5 h-5 text-red-400"></i> 적 배치표</h4>
+                    <div class="flex-1 overflow-y-auto custom-scrollbar space-y-3">
+                        <template x-for="(enemy, idx) in towerEnemies" :key="idx">
+                            <div class="flex items-center gap-4 p-4 rounded-xl border transition" :class="enemy.isBoss ? 'bg-red-950/30 border-red-500/30' : 'bg-slate-800/40 border-white/5'">
+                                <div class="w-14 h-14 rounded-xl flex items-center justify-center" :class="enemy.isBoss ? 'bg-red-500/20 text-red-400' : 'bg-slate-700 text-slate-400'">
+                                    <i :data-lucide="enemy.isBoss ? 'crown' : 'skull'" class="w-7 h-7"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-white font-bold serif" x-text="enemy.name"></span>
+                                        <span x-show="enemy.isBoss" class="text-[9px] px-2 py-0.5 bg-red-500/20 text-red-400 rounded font-bold">두목</span>
+                                    </div>
+                                    <span class="text-slate-500 text-xs" x-text="enemy.role"></span>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[9px] text-slate-500 tracking-widest mb-1">경지</p>
+                                    <p class="text-xl font-black" :class="enemy.isBoss ? 'text-red-400' : 'text-white'" x-text="'Lv.' + enemy.level"></p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            <!-- [RAID] 주간 레이드 -->
+            <template x-if="currentModal==='RAID'">
+                <div class="glass-panel w-full max-w-3xl mx-auto flex flex-col p-8 overflow-hidden shadow-2xl border-rose-500/20" style="height:70vh;">
+                    <div class="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                        <div>
+                            <h2 class="text-3xl font-bold serif text-rose-400 flex items-center gap-3"><i data-lucide="flame"></i> 주간 토벌전</h2>
+                            <p class="text-slate-400 text-sm mt-1">강호를 어지럽히는 거악을 처단하라.</p>
+                        </div>
+                        <button @click="closeModal()" class="glass-button w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-600 transition"><i data-lucide="x"></i></button>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center justify-center gap-8">
+                        <div class="w-32 h-32 rounded-full bg-rose-500/10 border-2 border-rose-500/30 flex items-center justify-center">
+                            <i data-lucide="skull" class="w-16 h-16 text-rose-500 animate-pulse"></i>
+                        </div>
+                        <div class="text-center">
+                            <h3 class="text-2xl font-bold text-white serif mb-2">혈교 교주 - 천마</h3>
+                            <p class="text-slate-400 text-sm mb-1">Lv. <span x-text="raidStage * 10 + 40"></span></p>
+                            <p class="text-rose-400/70 text-xs">주간 남은 도전: <span class="text-white font-bold" x-text="raidWeeklyRemaining"></span>회</p>
+                        </div>
+                        <div class="bg-rose-950/20 border border-rose-500/20 rounded-xl p-4 w-full max-w-md">
+                            <p class="text-slate-400 text-xs text-center mb-3">토벌 보상</p>
+                            <div class="flex justify-center gap-6">
+                                <div class="flex items-center gap-2"><i data-lucide="coins" class="w-4 h-4 text-yellow-500"></i><span class="text-white font-bold" x-text="(raidStage * 5000).toLocaleString()"></span></div>
+                                <div class="flex items-center gap-2"><i data-lucide="gem" class="w-4 h-4 text-cyan-400"></i><span class="text-white font-bold" x-text="(raidStage * 500).toLocaleString()"></span></div>
+                            </div>
+                        </div>
+                        <button @click="alert('전투 시스템 연동 준비 중입니다.')" class="bg-gradient-to-r from-rose-600 to-rose-500 text-white font-bold py-3 px-12 rounded-xl shadow-lg hover:from-rose-500 hover:to-rose-400 transition active:scale-95">토벌 개시</button>
+                    </div>
+                </div>
+            </template>
+
+            <!-- [DAILY_HALL] 기억의 전당 -->
+            <template x-if="currentModal==='DAILY_HALL'">
+                <div class="glass-panel w-full max-w-3xl mx-auto flex flex-col p-8 overflow-hidden shadow-2xl border-emerald-500/20" style="height:75vh;">
+                    <div class="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                        <div>
+                            <h2 class="text-3xl font-bold serif text-emerald-400 flex items-center gap-3"><i data-lucide="compass"></i> 기억의 전당</h2>
+                            <p class="text-slate-400 text-sm mt-1">오행의 기운으로 무공을 연마하라.</p>
+                        </div>
+                        <button @click="closeModal()" class="glass-button w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-600 transition"><i data-lucide="x"></i></button>
+                    </div>
+                    <div class="flex-1 overflow-y-auto custom-scrollbar space-y-4">
+                        <template x-for="(dg, idx) in dailyDungeons" :key="idx">
+                            <div class="flex items-center gap-5 p-5 rounded-2xl border transition" :class="dg.isAvailable ? 'bg-slate-800/40 border-white/10 hover:bg-slate-800/70' : 'bg-slate-900/30 border-white/5 opacity-40'">
+                                <div class="w-14 h-14 rounded-xl flex items-center justify-center" :class="'bg-' + dg.color + '-500/15 text-' + dg.color + '-400'">
+                                    <i :data-lucide="dg.icon" class="w-7 h-7"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h5 class="text-white font-bold serif text-lg" x-text="dg.name"></h5>
+                                    <p class="text-slate-500 text-xs" x-text="dg.desc"></p>
+                                    <p class="text-slate-600 text-[10px] mt-1">현재 단계: <span class="text-white font-bold" x-text="dg.stage"></span></p>
+                                </div>
+                                <div class="text-right">
+                                    <span x-show="dg.isAvailable" class="text-emerald-400 text-[10px] font-bold px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full">입장 가능</span>
+                                    <span x-show="!dg.isAvailable" class="text-slate-600 text-[10px] font-bold px-3 py-1 bg-slate-800 border border-white/5 rounded-full">오늘 비활성</span>
+                                </div>
+                                <button @click="alert('전투 시스템 연동 준비 중입니다.')" :disabled="!dg.isAvailable" class="px-6 py-2.5 rounded-xl font-bold text-xs transition active:scale-95" :class="dg.isAvailable ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow-lg' : 'bg-slate-800 text-slate-500 cursor-not-allowed'">도전</button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            <!-- [INVENTORY] 보따리 -->
+            <template x-if="currentModal==='INVENTORY'">
+                <div class="glass-panel w-full max-w-5xl mx-auto flex flex-col p-6 overflow-hidden shadow-2xl border-purple-500/20" style="height:85vh;">
+                    <div class="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                        <div>
+                            <h2 class="text-3xl font-bold serif text-purple-400 flex items-center gap-3"><i data-lucide="briefcase"></i> 보따리</h2>
+                            <p class="text-slate-400 text-sm mt-1">보유한 동료들의 현황을 살핍니다.</p>
+                        </div>
+                        <button @click="closeModal()" class="glass-button w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-600 transition"><i data-lucide="x"></i></button>
+                    </div>
+                    <div class="flex gap-2 mb-6">
+                        <template x-for="grade in ['ALL','S','A','B','C']" :key="grade">
+                            <button @click="inventoryFilter = grade" class="px-4 py-1.5 rounded-full text-xs font-bold transition" :class="inventoryFilter === grade ? 'bg-purple-600 text-white' : 'glass-button text-slate-400'" x-text="grade === 'ALL' ? '전체' : grade + '급'"></button>
+                        </template>
+                    </div>
+                    <div class="flex-1 overflow-y-auto custom-scrollbar">
+                        <div class="grid grid-cols-5 gap-4">
+                            <template x-for="char in filteredCharacters" :key="char.id">
+                                <div class="glass-panel p-3 transition hover:bg-white/5 relative group">
+                                    <div class="absolute top-2 right-2 z-10">
+                                        <span class="text-[9px] px-1.5 py-0.5 rounded font-bold" :class="{'S':'bg-amber-500 text-black','A':'bg-purple-500 text-white','B':'bg-blue-500 text-white','C':'bg-slate-500 text-white'}[char.rarity]" x-text="char.rarity"></span>
+                                    </div>
+                                    <div class="aspect-[3/4] overflow-hidden rounded-lg bg-black/40 mb-2"><img :src="char.src" class="w-full h-full object-cover"></div>
+                                    <div class="text-center">
+                                        <p class="text-white font-bold text-sm serif" x-text="char.name"></p>
+                                        <p class="text-slate-500 text-[10px]" x-text="char.role"></p>
+                                        <p class="text-amber-500 text-[10px] font-bold mt-1">Lv. <span x-text="char.level"></span></p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        <div x-show="filteredCharacters.length === 0" class="text-center py-20">
+                            <i data-lucide="search-x" class="w-12 h-12 text-slate-600 mx-auto mb-4"></i>
+                            <p class="text-slate-500">해당 등급의 동료가 없습니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- [QUEST_REWARD] 퀘스트 보상 수령 -->
+            <template x-if="currentModal==='QUEST_REWARD'">
+                <div class="glass-panel w-full max-w-lg mx-auto p-10 text-center shadow-2xl border-amber-500/20">
+                    <div class="w-24 h-24 rounded-full bg-amber-500/10 border-2 border-amber-500/30 flex items-center justify-center mx-auto mb-6">
+                        <i data-lucide="award" class="w-12 h-12 text-amber-500 animate-pulse"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white serif mb-2">임무 완수!</h3>
+                    <p class="text-slate-400 text-sm mb-1 serif" x-text="currentQuest.title"></p>
+                    <p class="text-slate-500 text-xs mb-8" x-text="currentQuest.goalDesc"></p>
+                    <div class="bg-slate-800/50 rounded-2xl p-6 mb-8 border border-white/5">
+                        <p class="text-slate-500 text-xs mb-4">완수 보상</p>
+                        <div class="flex justify-center gap-8">
+                            <div class="flex items-center gap-2"><i data-lucide="coins" class="w-5 h-5 text-yellow-500"></i><span class="text-white font-bold text-lg" x-text="(currentQuest.rewardGold || 1000).toLocaleString()"></span></div>
+                            <div class="flex items-center gap-2"><i data-lucide="gem" class="w-5 h-5 text-cyan-400"></i><span class="text-white font-bold text-lg" x-text="(currentQuest.rewardGems || 100).toLocaleString()"></span></div>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 justify-center">
+                        <button @click="claimQuestReward()" class="bg-gradient-to-r from-amber-600 to-amber-500 text-white font-bold py-3 px-12 rounded-xl shadow-lg shadow-amber-900/30 hover:from-amber-500 hover:to-amber-400 transition active:scale-95">보상 수령</button>
+                        <button @click="closeModal()" class="glass-button px-8 py-3 rounded-xl text-sm">나중에</button>
+                    </div>
                 </div>
             </template>
         </div>

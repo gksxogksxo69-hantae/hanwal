@@ -523,9 +523,7 @@
 
             <!-- [MY_PROFILE] 종합 상태창 (Redesigned Bento Style) -->
             <template x-if="currentModal==='MY_PROFILE'">
-                <div class="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeModal()"></div>
-                    <div class="relative w-full max-w-5xl bg-slate-900/95 border border-slate-700 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+                <div class="glass-panel w-full max-w-5xl mx-auto flex flex-col overflow-hidden shadow-2xl max-h-[90vh]">
                         
                         <!-- Header -->
                         <div class="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-slate-800 to-transparent">

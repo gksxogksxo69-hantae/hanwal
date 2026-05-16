@@ -268,36 +268,42 @@ document.addEventListener('alpine:init', () => {
             let isCritical = false;
             let elementEffect = 1.0;
 
-            try {
-                const response = await fetch('/api/battle/attack', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        attackerId: actor.id,                       // 시전 캐릭터 고유 ID
-                        skillId: skill.id,                          // 시전 무공 고유 ID
-                        defenderElement: target.element || 'NONE',  // 피격 몬스터 속성 이넘
-                        defenderDef: target.def,                    // 피격 몬스터 방어력
-                        currentEnergy: preEnergy,                   // 소모 전 기준 파티 기력
-                        currentSpirit: preSpirit                    // 소모 전 기준 개인 투기
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(errorText);
-                }
-
-                // 백엔드의 BattleDamageResult 자바 객체가 JSON으로 수신됨
-                const resultData = await response.json();
-                finalDamage = resultData.finalDamage;
-                isCritical = resultData.isCritical;
-                elementEffect = resultData.elementEffect;
-
-            } catch (err) {
-                console.error("서버 공격 연산 실패, 클라이언트 폴백 가동:", err);
-                // 서버 터졌을 때 전투가 굳어버리는 걸 막기 위한 시니어의 최소 방어선(폴백) 로직
+            // 로컬 폴백 캐릭터(party-1 등)인 경우 서버 호출 생략 (400 Bad Request 방지)
+            if (typeof actor.id === 'string' && actor.id.startsWith('party-')) {
                 finalDamage = Math.floor(actor.atk * (skill.multiplier || 1.0));
                 isCritical = false;
+            } else {
+                try {
+                    const response = await fetch('/api/battle/attack', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            attackerId: actor.id,                       // 시전 캐릭터 고유 ID
+                            skillId: skill.id,                          // 시전 무공 고유 ID
+                            defenderElement: target.element || 'NONE',  // 피격 몬스터 속성 이넘
+                            defenderDef: target.def,                    // 피격 몬스터 방어력
+                            currentEnergy: preEnergy,                   // 소모 전 기준 파티 기력
+                            currentSpirit: preSpirit                    // 소모 전 기준 개인 투기
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(errorText);
+                    }
+
+                    // 백엔드의 BattleDamageResult 자바 객체가 JSON으로 수신됨
+                    const resultData = await response.json();
+                    finalDamage = resultData.finalDamage;
+                    isCritical = resultData.isCritical;
+                    elementEffect = resultData.elementEffect;
+
+                } catch (err) {
+                    console.error("서버 공격 연산 실패, 클라이언트 폴백 가동:", err);
+                    // 서버 터졌을 때 전투가 굳어버리는 걸 막기 위한 시니어의 최소 방어선(폴백) 로직
+                    finalDamage = Math.floor(actor.atk * (skill.multiplier || 1.0));
+                    isCritical = false;
+                }
             }
 
             // 무공 종류에 따른 화면 이펙트 및 대미지 레이어 노출 분기

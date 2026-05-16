@@ -198,7 +198,8 @@ UPDATE characters SET image_path = '/images/portrait_female.png' WHERE id = 18 A
 UPDATE characters SET rarity = 'S', is_gacha_target = false WHERE id IN (1, 2);
 UPDATE characters SET rarity = 'S', is_gacha_target = true WHERE id IN (6, 12);
 UPDATE characters SET rarity = 'A', is_gacha_target = true WHERE id IN (3, 4, 7, 8, 10);
-UPDATE characters SET rarity = 'B', is_gacha_target = true WHERE id IN (5, 9, 11, 13);
+UPDATE characters SET rarity = 'B', is_gacha_target = true WHERE id IN (9, 11, 13);
+UPDATE characters SET rarity = 'S', is_gacha_target = true WHERE id IN (5);
 UPDATE characters SET rarity = 'C', is_gacha_target = true WHERE id IN (14, 15, 16, 17, 18, 19);
 
 

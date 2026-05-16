@@ -63,20 +63,21 @@ public class LobbyApiController {
         List<Long> partyIds = Arrays.asList(user.getPartySlot1(), user.getPartySlot2(), user.getPartySlot3(), user.getPartySlot4());
         UserProgress progress = userProgressRepository.findById(user.getId()).orElse(new UserProgress());
 
-        return ResponseEntity.ok(Map.of(
-            "success", true,
-            "characters", charList,
-            "party", partyIds,
-            "gems", user.getPremiumCurrency(),
-            "level", user.getLevel(),
-            "exp", user.getExp(),
-            "requiredExp", user.getRequiredExp(),
-            "stamina", user.getStamina(),
-            "maxStamina", 200,
-            "claimedLevelRewards", user.getClaimedLevelRewards() != null ? user.getClaimedLevelRewards() : "",
-            "claimedActRewards", progress.getClaimedActRewards() != null ? progress.getClaimedActRewards() : "",
-            "storyChapter", user.getStoryChapter()
-        ));
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("characters", charList);
+        response.put("party", partyIds);
+        response.put("gems", user.getPremiumCurrency());
+        response.put("level", user.getLevel());
+        response.put("exp", user.getExp());
+        response.put("requiredExp", user.getRequiredExp());
+        response.put("stamina", user.getStamina());
+        response.put("maxStamina", 200);
+        response.put("claimedLevelRewards", user.getClaimedLevelRewards() != null ? user.getClaimedLevelRewards() : "");
+        response.put("claimedActRewards", progress.getClaimedActRewards() != null ? progress.getClaimedActRewards() : "");
+        response.put("storyChapter", user.getStoryChapter());
+
+        return ResponseEntity.ok(response);
     }
 
     private Map<String, Object> buildCharMap(GameCharacter gc, int level) {

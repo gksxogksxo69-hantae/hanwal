@@ -436,7 +436,7 @@
     </div>
 
     <div id="DIV_MODAL_ROOT" class="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-        <div x-show="currentModal" x-transition.opacity class="absolute inset-0 bg-black/75 pointer-events-auto" @click="closeModal()"></div>
+        <div x-show="currentModal" x-transition.opacity class="absolute inset-0 bg-black/75 pointer-events-auto" @click="currentModal === 'LEVEL_REWARDS' ? openModal('MY_PROFILE') : closeModal()"></div>
 
         <div x-show="currentModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="relative z-10 w-full max-w-5xl px-4 pointer-events-auto">
             
@@ -661,9 +661,7 @@
 
             <!-- [LEVEL_REWARDS] 성장 보상 모달 -->
             <template x-if="currentModal==='LEVEL_REWARDS'">
-                <div class="fixed inset-0 z-[300] flex items-center justify-center p-4">
-                    <div class="absolute inset-0 bg-black/85 backdrop-blur-md" @click="openModal('MY_PROFILE')"></div>
-                    <div class="glass-panel w-full max-w-2xl mx-auto flex flex-col p-8 overflow-hidden shadow-2xl border-amber-500/20">
+                <div class="glass-panel w-full max-w-2xl mx-auto flex flex-col p-8 overflow-hidden shadow-2xl border-amber-500/20">
                         <div class="absolute -right-20 -top-20 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl"></div>
                         
                         <div class="flex justify-between items-center mb-8 pb-4 border-b border-white/5 relative z-10">
@@ -716,9 +714,7 @@
                             </template>
                         </div>
                     </div>
-                </div>
             </template>
-
             <!-- [TOWER] 무한의 탑 -->
             <template x-if="currentModal==='TOWER'">
                 <div class="glass-panel w-full max-w-4xl mx-auto flex flex-col p-8 overflow-hidden shadow-2xl border-cyan-500/20" style="height:80vh;">

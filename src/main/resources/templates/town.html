@@ -68,7 +68,7 @@
     document.addEventListener('alpine:init', () => {
         Alpine.data('lobbyApp', () => ({
             playerGender: 'MALE', playerNickname: '모험가', level: 1, exp: 0, requiredExp: 100,
-            gold: 0, gems: 0,
+            gold: 0, gems: 0, stamina: 0, maxStamina: 200,
             claimedLevelRewards: "", claimedActRewards: "", storyChapter: 0, currentModal: null, modalTitle: '', isLoading: true, customPortrait: null,
             gachaResults: [], isGachaAnimating: false, myCharacters: [], currentCharIndex: 0, currentParty: [null, null, null, null],
             combatPower: 0, partyCombatPower: 0, serverRank: '--', towerFloor: 1, hallStage: 1, raidStage: 1, maxClearedStageId: 0,
@@ -121,6 +121,8 @@
                         this.claimedActRewards = data.claimedActRewards || "";
                         this.claimedLevelRewards = data.claimedLevelRewards || "";
                         this.storyChapter = data.storyChapter || 0;
+                        this.stamina = data.stamina || 0;
+                        this.maxStamina = data.maxStamina || 200;
                         if (data.profileImagePath) this.customPortrait = data.profileImagePath;
                         if (data.mainCharacterId) {
                             this.serverMainCharacterId = data.mainCharacterId;
@@ -149,8 +151,13 @@
                     const res = await fetch('/api/lobby/my-characters');
                     const data = await res.json();
                     if (data.success && data.characters) {
+                        this.stamina = data.stamina || this.stamina;
+                        this.maxStamina = data.maxStamina || 200;
                         this.myCharacters = data.characters.map(c => ({
-                            id: c.id, name: c.name, src: c.imagePath, rarity: c.rarity, role: c.role, level: c.level
+                            id: c.id, name: c.name, title: c.title, src: c.imagePath, rarity: c.rarity, role: c.role, level: c.level,
+                            hp: c.hp, atk: c.atk, def: c.def, spd: c.spd, power: c.power,
+                            faction: c.faction, gender: c.gender, age: c.age, realm: c.realm,
+                            alignment: c.alignment, relationships: c.relationships, lore: c.lore
                         }));
                         if (data.party) {
                              const saved = data.party;

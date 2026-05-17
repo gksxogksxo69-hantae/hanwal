@@ -174,8 +174,8 @@
                 } catch (e) { console.warn(e); }
             },
 
-            get playerPortrait() { return this.customPortrait || (this.playerGender === 'FEMALE' ? '/images/portrait_female.png' : '/images/portrait_male.png'); },
-            get currentLobbyCharacter() { return this.myCharacters.length > 0 ? this.myCharacters[this.currentCharIndex % this.myCharacters.length] : { src: this.playerGender === 'FEMALE' ? '/images/portrait_female.png' : '/images/portrait_male.png' }; },
+            get playerPortrait() { return this.customPortrait || (this.playerGender === 'FEMALE' ? '/images/남궁설화.jpg' : '/images/남궁천.png'); },
+            get currentLobbyCharacter() { return this.myCharacters.length > 0 ? this.myCharacters[this.currentCharIndex % this.myCharacters.length] : { src: this.playerGender === 'FEMALE' ? '/images/남궁설화.jpg' : '/images/남궁천.png' }; },
             
             selectedCharForDetail: null,
             
@@ -226,7 +226,16 @@
             closeModal() { this.currentModal = null; },
             handleQuestClick() {
                 if (this.currentQuest.status === 'COMPLETED') this.openModal('QUEST_REWARD');
-                else window.location.href = '/stage-select';
+                else this.startMission();
+            },
+
+            startMission() {
+                const hasParty = this.currentParty.some(char => char !== null);
+                if (!hasParty) {
+                    this.showAlert("파티를 편성하고 다시 진행해주세요.", "error");
+                    return;
+                }
+                window.location.href = '/stage-select';
             },
             
             togglePartyMember(char) {
@@ -472,7 +481,7 @@
 
         <footer class="flex justify-end items-end pointer-events-auto">
             <div class="gate-grid">
-                <button @click="window.location.href='/stage-select'" :class="guideStep === 3 ? 'guide-glow' : ''" class="gate-card gate-main glass-button">
+                <button @click="startMission()" :class="guideStep === 3 ? 'guide-glow' : ''" class="gate-card gate-main glass-button">
                     <span class="text-white/60 text-[10px] font-bold mb-1 tracking-tighter">본편 이야기</span>
                     <span class="text-white text-2xl font-black serif drop-shadow-md">임무 시작</span>
                 </button>

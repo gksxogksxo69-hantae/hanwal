@@ -177,7 +177,7 @@
                         <!-- 스펙 및 보상 미리보기 -->
                         <div class="mt-auto border-t border-slate-700/50 pt-4 flex justify-between items-center text-xs">
                             <div class="text-slate-400">
-                                <span x-text="`권장 Lv.${(currentActIndex) * 10 + (idx * 2) + 10}`"></span>
+                                <span x-text="`권장 Lv.${stage.recommendedLevel}`"></span>
                             </div>
                             <div class="flex items-center gap-3">
                                 <div class="flex items-center gap-1 text-yellow-500">
@@ -210,7 +210,7 @@
                     <p class="text-slate-300 text-sm mb-6 leading-relaxed bg-slate-800 p-4 rounded-lg" x-text="selectedStage?.desc"></p>
                     
                     <div class="mb-6">
-                        <div class="text-xs text-slate-400 font-bold mb-2">권장 레벨: <span class="text-amber-400">Lv. 10</span></div>
+                        <div class="text-xs text-slate-400 font-bold mb-2">권장 레벨: <span class="text-amber-400" x-text="`Lv. ${selectedStage?.recommendedLevel}`"></span></div>
                         <div class="text-xs text-slate-400 font-bold mb-2">소모 행동력: <span class="text-green-400">10 지령서</span></div>
                     </div>
                     

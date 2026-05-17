@@ -75,8 +75,12 @@ public class StageApiController {
             stg.put("id", s.getId());
             stg.put("name", s.getTitle());
             stg.put("desc", "권장 레벨의 적과 조우합니다.");
-            stg.put("rewardGold", s.getRewardGold());
-            stg.put("rewardExp", s.getRewardExp());
+            stg.put("recommendedLevel", (int) ((chapter - 1) * 5 + s.getStageNum()));
+            
+            int displayGold = (int) (100 + (chapter * 50) + (s.getStageNum() * 20));
+            long displayExp = 30L + (chapter * 20L) + (s.getStageNum() * 10L);
+            stg.put("rewardGold", displayGold);
+            stg.put("rewardExp", displayExp);
 
             // 상태 결정
             if (s.getId() <= maxClearedStageId) {
@@ -160,8 +164,8 @@ public class StageApiController {
         }
 
         // 보상 계산 (DB 기준 우선, 없으면 하드코딩 수식)
-        int baseGold = (int) (200 + (act * 150) + (stageNum * 50));
-        long baseExp = 50L + (act * 30L) + (stageNum * 15L);
+        int baseGold = (int) (100 + (act * 50) + (stageNum * 20));
+        long baseExp = 30L + (act * 20L) + (stageNum * 10L);
 
         Optional<com.hanwol.domain.story.Stage> stageOpt = stageId > 0
                 ? stageRepository.findById(stageId)
@@ -169,8 +173,9 @@ public class StageApiController {
 
         com.hanwol.domain.story.Stage dbStage = stageOpt.orElse(null);
         if (dbStage != null) {
-            baseGold = dbStage.getRewardGold() != null ? dbStage.getRewardGold() : baseGold;
-            baseExp = dbStage.getRewardExp() != null ? dbStage.getRewardExp() : baseExp;
+            // DB 값 대신 밸런싱된 하드코딩 수식을 강제로 덮어씌움
+            // baseGold = dbStage.getRewardGold() != null ? dbStage.getRewardGold() : baseGold;
+            // baseExp = dbStage.getRewardExp() != null ? dbStage.getRewardExp() : baseExp;
             act = dbStage.getChapterId();
             stageNum = dbStage.getStageNum();
         }
@@ -357,9 +362,9 @@ public class StageApiController {
             boss.put("id", "enemy-1");
             boss.put("name", bossName);
             boss.put("level", enemyLevel + 5);
-            boss.put("hp", (int) (500 + (act * 400) + (stage * 100)));
-            boss.put("atk", (int) (30 + (act * 15) + (stage * 5)));
-            boss.put("def", (int) (20 + (act * 10)));
+            boss.put("hp", (int) (300 + (act * 200) + (stage * 50)));
+            boss.put("atk", (int) (20 + (act * 10) + (stage * 4)));
+            boss.put("def", (int) (15 + (act * 5)));
             boss.put("spd", (int) (85 + (act * 5)));
             boss.put("portrait", "/images/enemy_demon_cult_pursuer.png");
             enemies.add(boss);
@@ -369,9 +374,9 @@ public class StageApiController {
                 enemy.put("id", "enemy-" + (i + 1));
                 enemy.put("name", normalNames[(int) ((act + stage + i) % normalNames.length)]);
                 enemy.put("level", enemyLevel);
-                enemy.put("hp", (int) (150 + (act * 80) + (stage * 30)));
-                enemy.put("atk", (int) (15 + (act * 8) + (stage * 3)));
-                enemy.put("def", (int) (10 + (act * 5)));
+                enemy.put("hp", (int) (100 + (act * 40) + (stage * 15)));
+                enemy.put("atk", (int) (10 + (act * 4) + (stage * 2)));
+                enemy.put("def", (int) (5 + (act * 3)));
                 enemy.put("spd", 80 + (stage * 2));
                 enemy.put("portrait", "/images/enemy_demon_cult_pursuer.png");
                 enemies.add(enemy);

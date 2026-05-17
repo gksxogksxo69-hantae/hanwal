@@ -452,6 +452,12 @@ document.addEventListener('alpine:init', () => {
             window.location.href = '/stage-select';
         },
 
+        confirmRetreat() {
+            if (confirm("후퇴하시겠습니까? 사용한 지령서는 반환되지 않습니다.")) {
+                window.location.href = '/stage-select';
+            }
+        },
+
         retryBattle() {
             window.location.reload();
         },

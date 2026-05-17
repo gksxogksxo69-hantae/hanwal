@@ -33,6 +33,7 @@ public class MapApiController {
      * 클라이언트는 이 정보로 성별에 맞는 스프라이트를 로딩한다.
      */
     @GetMapping("/player-info")
+    @Transactional
     public ResponseEntity<?> getPlayerInfo(@AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null) {
             return ResponseEntity.status(401).body(Map.of("success", false, "error", "Unauthorized"));
@@ -59,12 +60,16 @@ public class MapApiController {
         List<com.hanwol.domain.character.UserCharacter> allChars = userCharacterRepository.findByUserId(user.getId());
         long totalPower = combatPowerService.calculateTotalAccountPower(allChars);
         
-        // 2. 파티 전투력 계산
+        // 2. 전투력을 UserProgress에 실시간 반영 (랭킹 0 표시 방지)
+        progress.setTotalPower(totalPower);
+        userProgressRepository.save(progress);
+
+        // 3. 파티 전투력 계산
         List<Long> partySlotIds = java.util.Arrays.asList(
             user.getPartySlot1(), user.getPartySlot2(), user.getPartySlot3(), user.getPartySlot4()
         );
         long partyPower = allChars.stream()
-                .filter(uc -> partySlotIds.contains(uc.getId())) // ID 비교로 수정 (성능 및 정확도)
+                .filter(uc -> partySlotIds.contains(uc.getCharacter().getId()))
                 .mapToLong(combatPowerService::calculateCharacterPower)
                 .sum();
 

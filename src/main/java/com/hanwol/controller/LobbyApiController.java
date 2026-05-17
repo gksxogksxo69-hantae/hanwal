@@ -1,7 +1,6 @@
 package com.hanwol.controller;
 
 import com.hanwol.domain.character.GameCharacter;
-import com.hanwol.domain.character.GameCharacterRepository;
 import com.hanwol.domain.character.UserCharacter;
 import com.hanwol.domain.character.UserCharacterRepository;
 import com.hanwol.domain.user.User;
@@ -28,7 +27,7 @@ public class LobbyApiController {
 
     private final UserRepository userRepository;
     private final UserCharacterRepository userCharacterRepository;
-    private final GameCharacterRepository gameCharacterRepository;
+
     private final UserProgressRepository userProgressRepository;
     private final RewardService rewardService;
     private final com.hanwol.service.CombatPowerService combatPowerService;
@@ -45,20 +44,10 @@ public class LobbyApiController {
         }
 
         List<UserCharacter> userChars = userCharacterRepository.findByUserIdOrderByLevelDesc(user.getId());
-        List<Map<String, Object>> charList;
-
-        if (!userChars.isEmpty()) {
-            charList = userChars.stream().map(uc -> buildCharMap(uc)).collect(Collectors.toList());
-        } else {
-            // 보유 캐릭터가 없는 경우(튜토리얼 등): 선택한 루트에 맞는 캐릭터와 중립 캐릭터만 노출
-            final com.hanwol.domain.enums.RouteType userRoute = user.getRouteType();
-            charList = gameCharacterRepository.findAll().stream()
-                    .filter(gc -> gc.getImagePath() != null && !gc.getImagePath().contains("portrait_male"))
-                    .filter(gc -> gc.getRouteType() == null || gc.getRouteType() == userRoute)
-                    .limit(5)
-                    .map(gc -> buildCharMap(gc, 1))
-                    .collect(Collectors.toList());
-        }
+        // 보따리에는 실제 보유(UserCharacter) 캐릭터만 표시 — 미보유 시 빈 리스트
+        List<Map<String, Object>> charList = userChars.stream()
+                .map(uc -> buildCharMap(uc))
+                .collect(Collectors.toList());
 
         user.getCurrentStamina(); // 지령서 갱신
         userRepository.save(user); // 갱신된 시간 저장
@@ -83,42 +72,6 @@ public class LobbyApiController {
         return ResponseEntity.ok(response);
     }
 
-    private Map<String, Object> buildCharMap(GameCharacter gc, int level) {
-        Map<String, Object> m = new LinkedHashMap<>();
-        m.put("id", gc.getId());
-        m.put("name", gc.getName());
-        m.put("title", gc.getTitle());
-        m.put("role", gc.getRole());
-        m.put("element", gc.getElement().name());
-        m.put("rarity", gc.getRarity().name());
-        m.put("level", level);
-        m.put("imagePath", gc.getImagePath() != null ? gc.getImagePath() : "/images/portrait_male.png");
-        
-        // 상세 스탯 (레벨 1 기준 또는 기본값)
-        int hp = gc.calcHpAtLevel(level);
-        int atk = gc.calcAtkAtLevel(level);
-        int def = gc.calcDefAtLevel(level);
-        int spd = gc.calcSpdAtLevel(level);
-        m.put("hp", hp);
-        m.put("atk", atk);
-        m.put("def", def);
-        m.put("spd", spd);
-        m.put("power", (hp / 10) + (atk * 5) + (def * 3) + (spd * 2)); // 대략적인 전투력 계산
-        
-        m.put("exp", 0);
-        m.put("requiredExp", 100 + (level * 30L) + ((long) level * level * 5));
-        
-        // 배경 정보
-        m.put("faction", gc.getFaction());
-        m.put("gender", gc.getGender());
-        m.put("age", gc.getAge());
-        m.put("realm", gc.getRealm());
-        m.put("alignment", gc.getAlignment());
-        m.put("relationships", gc.getRelationships());
-        m.put("lore", gc.getLore());
-        
-        return m;
-    }
 
     private Map<String, Object> buildCharMap(UserCharacter uc) {
         GameCharacter gc = uc.getCharacter();

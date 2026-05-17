@@ -57,7 +57,7 @@ public class User {
 
     @Builder.Default
     @Column(nullable = false)
-    private int stamina = 200;
+    private int stamina = 150;
 
     @Column
     private LocalDateTime lastStaminaUpdateTime;

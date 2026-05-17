@@ -63,6 +63,7 @@ public class TutorialService {
     /**
      * 주인공 캐릭터 자동 지급
      * MALE → 남궁천(id=1), FEMALE → 남궁설화(id=2)
+     * 지급과 동시에 프로필 이미지(초상화) + 대표 캐릭터(일러스트)도 자동 세팅
      */
     private void grantStarterCharacter(User user) {
         Long charId = "FEMALE".equals(user.getGender() != null ? user.getGender().name() : "MALE") ? 2L : 1L;
@@ -85,7 +86,11 @@ public class TutorialService {
                 .build();
         userCharacterRepository.save(uc);
 
-        log.info("주인공 캐릭터 지급 완료! 유저: {}, 캐릭터: {}", user.getNickname(), starterChar.getName());
+        // 프로필 이미지(초상화) + 대표 캐릭터(일러스트) 자동 세팅
+        String starterImagePath = starterChar.getImagePath();
+        user.updateProfile(charId, starterImagePath);
+
+        log.info("주인공 캐릭터 지급 완료! 유저: {}, 캐릭터: {}, 프로필/일러스트 자동 적용", user.getNickname(), starterChar.getName());
     }
 
     @Transactional

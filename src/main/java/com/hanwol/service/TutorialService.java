@@ -65,7 +65,7 @@ public class TutorialService {
      * MALE → 남궁천(id=1), FEMALE → 남궁설화(id=2)
      * 지급과 동시에 프로필 이미지(초상화) + 대표 캐릭터(일러스트)도 자동 세팅
      */
-    private void grantStarterCharacter(User user) {
+    public void grantStarterCharacter(User user) {
         Long charId = "FEMALE".equals(user.getGender() != null ? user.getGender().name() : "MALE") ? 2L : 1L;
 
         // 이미 보유 중인지 확인 (중복 지급 방어)

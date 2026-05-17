@@ -31,6 +31,7 @@ public class LobbyApiController {
     private final UserProgressRepository userProgressRepository;
     private final RewardService rewardService;
     private final com.hanwol.service.CombatPowerService combatPowerService;
+    private final com.hanwol.service.TutorialService tutorialService;
 
     @GetMapping("/my-characters")
     public ResponseEntity<?> getMyCharacters(@AuthenticationPrincipal UserDetails userDetails) {
@@ -44,6 +45,13 @@ public class LobbyApiController {
         }
 
         List<UserCharacter> userChars = userCharacterRepository.findByUserIdOrderByLevelDesc(user.getId());
+        
+        // 보유 캐릭터가 0명이면 튜토리얼 지급이 꼬인/스킵된 계정이므로 즉시 주인공 지급
+        if (userChars.isEmpty()) {
+            tutorialService.grantStarterCharacter(user);
+            userChars = userCharacterRepository.findByUserIdOrderByLevelDesc(user.getId());
+        }
+
         // 보따리에는 실제 보유(UserCharacter) 캐릭터만 표시 — 미보유 시 빈 리스트
         List<Map<String, Object>> charList = userChars.stream()
                 .map(uc -> buildCharMap(uc))

@@ -122,6 +122,7 @@ public class GachaApiController {
             resMap.put("name", drawn.getName());
             resMap.put("title", drawn.getTitle());
             resMap.put("imagePath", drawn.getImagePath());
+            resMap.put("rarity", drawn.getRarity().name());
             resMap.put("element", drawn.getElement().name());
             resMap.put("isNew", isNew);
             resMap.put("isOverflow", isOverflow);

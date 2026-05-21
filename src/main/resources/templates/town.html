@@ -63,6 +63,47 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(245, 158, 11, 0.5); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 가챠 카드 3D 플립 */
+        .gacha-card-container { perspective: 900px; cursor: pointer; }
+        .gacha-card-inner {
+            position: relative; width: 100%; height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .gacha-card-inner.flipped { transform: rotateY(180deg); }
+        .gacha-card-front, .gacha-card-back {
+            position: absolute; inset: 0; backface-visibility: hidden;
+            border-radius: 12px; overflow: hidden;
+        }
+        .gacha-card-back { transform: rotateY(180deg); }
+
+        /* 등급별 카드 테두리 & 배경 */
+        .rarity-S { border: 2px solid #f59e0b; box-shadow: 0 0 20px rgba(245,158,11,0.4), inset 0 0 15px rgba(245,158,11,0.1); }
+        .rarity-A { border: 2px solid #ef4444; box-shadow: 0 0 15px rgba(239,68,68,0.3), inset 0 0 10px rgba(239,68,68,0.08); }
+        .rarity-B, .rarity-C { border: 2px solid #64748b; box-shadow: 0 0 8px rgba(100,116,139,0.2); }
+
+        /* 등급 뱃지 */
+        .rarity-badge {
+            position: absolute; top: 4px; left: 4px; z-index: 10;
+            width: 22px; height: 22px; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 900; letter-spacing: -0.5px;
+        }
+        .rarity-badge-S { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .rarity-badge-A { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
+        .rarity-badge-B { background: #475569; color: #94a3b8; }
+        .rarity-badge-C { background: #334155; color: #64748b; }
+
+        /* 카드 뒷면 패턴 */
+        .card-back-pattern {
+            background: linear-gradient(135deg, #1e293b 25%, #0f172a 25%, #0f172a 50%, #1e293b 50%, #1e293b 75%, #0f172a 75%);
+            background-size: 20px 20px;
+        }
+
+        /* NEW 뱃지 */
+        @keyframes badge-glow { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .new-badge { animation: badge-glow 1.5s ease-in-out infinite; }
     </style>
     <script>
     document.addEventListener('alpine:init', () => {
@@ -310,7 +351,7 @@
                     const data = await res.json();
                     if (data.success) {
                         setTimeout(() => {
-                            this.gachaResults = data.results;
+                            this.gachaResults = data.results.map((r, i) => ({ ...r, revealed: false, _idx: i }));
                             this.isGachaAnimating = false;
                             this.loadPlayerInfo();
                             this.loadMyCharacters();
@@ -323,6 +364,32 @@
                     console.error(e);
                     this.isGachaAnimating = false;
                 }
+            },
+
+            revealCard(idx) {
+                if (this.gachaResults[idx]) {
+                    this.gachaResults[idx].revealed = true;
+                }
+            },
+
+            revealAllCards() {
+                let delay = 0;
+                this.gachaResults.forEach((r, i) => {
+                    setTimeout(() => { this.gachaResults[i].revealed = true; }, delay);
+                    delay += 120;
+                });
+            },
+
+            allCardsRevealed() {
+                return this.gachaResults.length > 0 && this.gachaResults.every(r => r.revealed);
+            },
+
+            getRarityClass(rarity) {
+                return 'rarity-' + (rarity || 'C');
+            },
+
+            getRarityBadgeClass(rarity) {
+                return 'rarity-badge rarity-badge-' + (rarity || 'C');
             },
 
             async claimLevelReward(lvl) {
@@ -620,21 +687,86 @@
 
             <template x-if="currentModal==='GACHA'">
                 <div class="glass-panel w-full max-w-4xl mx-auto flex flex-col p-10 overflow-hidden shadow-2xl border-amber-500/20" style="height: 80vh;">
-                    <div class="flex justify-between items-center mb-10"><h2 class="text-4xl font-bold serif text-amber-500">객잔 (영입)</h2><button @click="closeModal()" class="glass-button w-10 h-10 rounded-full flex items-center justify-center"><i data-lucide="x"></i></button></div>
-                    <div class="flex-1 flex flex-col items-center justify-center relative">
-                         <i data-lucide="sparkles" class="w-24 h-24 text-amber-500 animate-pulse mb-8"></i>
-                         <div x-show="!isGachaAnimating && gachaResults.length === 0" class="text-center">
-                             <p class="text-xl text-slate-300 mb-10 serif">강호의 인연이 대협을 기다립니다.</p>
-                             <div class="flex gap-6">
-                                 <button @click="drawGacha(1)" class="glass-button px-10 py-3 rounded-full font-bold border-amber-500/50">1회 영입</button>
-                                 <button @click="drawGacha(10)" class="glass-button px-12 py-3 rounded-full font-bold bg-amber-600/20 border-amber-500">10회 영입</button>
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-4xl font-bold serif text-amber-500">객잔 (영입)</h2>
+                        <button @click="closeModal()" class="glass-button w-10 h-10 rounded-full flex items-center justify-center"><i data-lucide="x"></i></button>
+                    </div>
+                    <div class="flex-1 flex flex-col items-center justify-center relative overflow-y-auto custom-scrollbar">
+                         <!-- 초기 상태: 뽑기 버튼 -->
+                         <template x-if="!isGachaAnimating && gachaResults.length === 0">
+                             <div class="text-center">
+                                 <i data-lucide="sparkles" class="w-24 h-24 text-amber-500 animate-pulse mb-8 mx-auto"></i>
+                                 <p class="text-xl text-slate-300 mb-10 serif">강호의 인연이 대협을 기다립니다.</p>
+                                 <div class="flex gap-6 justify-center">
+                                     <button @click="drawGacha(1)" class="glass-button px-10 py-3 rounded-full font-bold border-amber-500/50">1회 영입</button>
+                                     <button @click="drawGacha(10)" class="glass-button px-12 py-3 rounded-full font-bold bg-amber-600/20 border-amber-500">10회 영입</button>
+                                 </div>
                              </div>
-                         </div>
-                         <div x-show="isGachaAnimating" class="text-center"><div class="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto"></div></div>
-                         <div x-show="!isGachaAnimating && gachaResults.length > 0" class="w-full text-center">
-                             <div class="flex justify-center flex-wrap gap-4 mb-4"><template x-for="res in gachaResults"><div class="glass-panel p-3 w-32"><img :src="res.imagePath" class="w-full aspect-square object-cover rounded"><p class="text-xs font-bold mt-2" x-text="res.name"></p></div></template></div>
-                             <button @click="gachaResults = []" class="glass-button px-10 py-2 rounded-full font-bold">확인</button>
-                         </div>
+                         </template>
+
+                         <!-- 로딩 스피너 -->
+                         <template x-if="isGachaAnimating">
+                             <div class="text-center">
+                                 <div class="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+                                 <p class="text-slate-400 serif animate-pulse">인연의 실이 엮이는 중...</p>
+                             </div>
+                         </template>
+
+                         <!-- 결과 카드 그리드 -->
+                         <template x-if="!isGachaAnimating && gachaResults.length > 0">
+                             <div class="w-full">
+                                 <!-- 전체 공개 / 다시 뽑기 버튼 -->
+                                 <div class="flex justify-center gap-4 mb-6">
+                                     <button x-show="!allCardsRevealed()" @click="revealAllCards()" class="glass-button px-6 py-2.5 rounded-full font-bold border-amber-500/50 bg-amber-600/20 hover:bg-amber-500/30 flex items-center gap-2 transition">
+                                         <i data-lucide="eye" class="w-4 h-4"></i> 전체 공개
+                                     </button>
+                                     <button x-show="allCardsRevealed()" @click="gachaResults = []" class="glass-button px-6 py-2.5 rounded-full font-bold border-amber-500/50 flex items-center gap-2">
+                                         <i data-lucide="rotate-ccw" class="w-4 h-4"></i> 다시 뽑기
+                                     </button>
+                                     <button x-show="allCardsRevealed()" @click="gachaResults = []; closeModal();" class="glass-button px-6 py-2.5 rounded-full font-bold border-slate-500/50 flex items-center gap-2">
+                                         <i data-lucide="check" class="w-4 h-4"></i> 확인
+                                     </button>
+                                 </div>
+                                 <p x-show="!allCardsRevealed()" class="text-center text-slate-500 text-xs mb-4">카드를 클릭하여 하나씩 공개하거나, 전체 공개 버튼을 눌러주세요.</p>
+
+                                 <!-- 카드 그리드 -->
+                                 <div class="flex justify-center flex-wrap gap-4">
+                                     <template x-for="(res, idx) in gachaResults" :key="idx">
+                                         <div class="gacha-card-container w-28" style="height: 170px;" @click="revealCard(idx)">
+                                             <div class="gacha-card-inner w-full h-full" :class="{'flipped': res.revealed}">
+                                                 <!-- 카드 앞면 (뒤집기 전 = 카드 뒷면 디자인) -->
+                                                 <div class="gacha-card-front w-full h-full card-back-pattern rounded-xl border-2 border-amber-500/30 flex flex-col items-center justify-center hover:border-amber-400/60 transition-colors">
+                                                     <i data-lucide="help-circle" class="w-10 h-10 text-amber-500/40 mb-2"></i>
+                                                     <span class="text-amber-500/50 text-xs font-bold">TOUCH</span>
+                                                 </div>
+                                                 <!-- 카드 뒷면 (뒤집은 후 = 실제 캐릭터 카드) -->
+                                                 <div class="gacha-card-back w-full h-full rounded-xl flex flex-col" :class="getRarityClass(res.rarity)">
+                                                     <!-- 등급 뱃지 -->
+                                                     <div :class="getRarityBadgeClass(res.rarity)" x-text="res.rarity"></div>
+                                                     <!-- NEW 뱃지 -->
+                                                     <div x-show="res.isNew" class="absolute top-1 right-1 z-10 px-1.5 py-0.5 bg-emerald-500 text-white text-[9px] font-black rounded new-badge">NEW</div>
+                                                     <!-- 캐릭터 이미지 -->
+                                                     <div class="flex-1 overflow-hidden rounded-t-xl bg-black/40">
+                                                         <img :src="res.imagePath" class="w-full h-full object-cover" :alt="res.name">
+                                                     </div>
+                                                     <!-- 이름 & 등급 텍스트 -->
+                                                     <div class="p-1.5 text-center bg-black/60 rounded-b-xl">
+                                                         <p class="text-[10px] font-bold text-white truncate" x-text="res.name"></p>
+                                                         <p class="text-[9px] mt-0.5"
+                                                            :class="{
+                                                                'text-amber-400': res.rarity === 'S',
+                                                                'text-red-400': res.rarity === 'A',
+                                                                'text-slate-400': res.rarity === 'B' || res.rarity === 'C'
+                                                            }"
+                                                            x-text="res.rarity === 'S' ? '★ 전설' : res.rarity === 'A' ? '★ 영웅' : res.rarity === 'B' ? '희귀' : '일반'"></p>
+                                                     </div>
+                                                 </div>
+                                             </div>
+                                         </div>
+                                     </template>
+                                 </div>
+                             </div>
+                         </template>
                     </div>
                 </div>
             </template>

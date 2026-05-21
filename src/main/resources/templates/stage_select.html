@@ -95,7 +95,9 @@
     <div class="bg-layer" :style="currentAct ? `background-image: url(${currentAct.bg})` : ''"></div>
 <div class="absolute inset-0 bg-gradient-to-r from-slate-900 via-transparent to-slate-900 z-10 pointer-events-none"></div>
 <div class="absolute top-4 right-4 z-30">
-  <button @click="showAlert('메뉴 열림', 'info')" class="text-white hover:text-amber-400 transition text-2xl">🍔</button>
+  <button @click="showAlert('메뉴 열림', 'info')" class="text-white hover:text-amber-400 transition p-2 rounded-lg hover:bg-white/10" title="메뉴">
+    <i data-lucide="menu" class="w-6 h-6"></i>
+  </button>
 </div>
 
 

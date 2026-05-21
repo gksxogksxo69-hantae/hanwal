@@ -3,6 +3,8 @@ package com.hanwol.controller;
 import com.hanwol.domain.character.GameCharacter;
 import com.hanwol.domain.character.UserCharacter;
 import com.hanwol.domain.character.UserCharacterRepository;
+import com.hanwol.domain.user.GameMail;
+import com.hanwol.domain.user.GameMailRepository;
 import com.hanwol.domain.user.User;
 import com.hanwol.domain.user.UserProgress;
 import com.hanwol.domain.user.UserProgressRepository;
@@ -30,6 +32,7 @@ public class StageApiController {
     private final com.hanwol.domain.story.StageRepository stageRepository;
     private final com.hanwol.service.QuestService questService;
     private final UserProgressRepository userProgressRepository;
+    private final GameMailRepository gameMailRepository;
 
     /**
      * 전체 막/스테이지 목록 및 유저 진행도 조회
@@ -143,6 +146,29 @@ public class StageApiController {
     }
 
     /**
+     * 스테이지 입장 (지령서 10장 차감)
+     * POST /api/stage/enter
+     */
+    @PostMapping("/enter")
+    public ResponseEntity<?> enterStage(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "error", "Unauthorized"));
+        }
+        User user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+        if (user == null) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "User not found"));
+        }
+
+        try {
+            user.useStamina(10);
+            userRepository.save(user);
+            return ResponseEntity.ok(Map.of("success", true));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
+        }
+    }
+
+    /**
      * 전투 결과 제출 + 보상 지급
      * POST /api/stage/result
      */
@@ -208,6 +234,18 @@ public class StageApiController {
             isBoss = (act == 0) ? (stageNum == 5) : (stageNum == 15);
             if (isBoss && user.getStoryChapter() == act) {
                 user.advanceStoryChapter();
+                
+                // 프롤로그 완료 시 다이아 3000개 우편 발송
+                if (act == 0) {
+                    GameMail mail = GameMail.builder()
+                            .user(user)
+                            .title("프롤로그 완수 축하 보급품")
+                            .content("프롤로그를 무사히 완수하신 것을 축하합니다! 앞으로의 무운을 빕니다.")
+                            .rewardGems(3000)
+                            .rewardGold(0)
+                            .build();
+                    gameMailRepository.save(mail);
+                }
             }
         }
 

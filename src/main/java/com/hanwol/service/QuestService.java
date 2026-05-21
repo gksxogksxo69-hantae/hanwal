@@ -1,5 +1,10 @@
 package com.hanwol.service;
 
+import com.hanwol.domain.character.GameCharacter;
+import com.hanwol.domain.character.GameCharacterRepository;
+import com.hanwol.domain.character.UserCharacter;
+import com.hanwol.domain.character.UserCharacterRepository;
+import com.hanwol.domain.enums.Rarity;
 import com.hanwol.domain.story.MainQuest;
 import com.hanwol.domain.story.MainQuestRepository;
 import com.hanwol.domain.user.User;
@@ -22,6 +27,8 @@ public class QuestService {
     private final MainQuestRepository questRepository;
     private final UserProgressRepository progressRepository;
     private final UserRepository userRepository;
+    private final GameCharacterRepository gameCharacterRepository;
+    private final UserCharacterRepository userCharacterRepository;
 
     /**
      * 현재 진행 중인 퀘스트 정보 조회
@@ -120,6 +127,32 @@ public class QuestService {
         // 1. 보상 지급
         user.gainGold(quest.getRewardGold());
         user.gainGems(quest.getRewardGems());
+
+        // 프롤로그 1관문(퀘스트 ID 1) 완료 시 A급 캐릭터 랜덤 1종 지급
+        if (quest.getId() == 1) {
+            java.util.List<GameCharacter> aRankPool = gameCharacterRepository.findByRarity(Rarity.A);
+            if (!aRankPool.isEmpty()) {
+                java.util.Random random = new java.util.Random();
+                GameCharacter drawn = aRankPool.get(random.nextInt(aRankPool.size()));
+                
+                java.util.Optional<UserCharacter> existingOpt = userCharacterRepository.findByUserIdAndCharacterId(user.getId(), drawn.getId());
+                if (existingOpt.isEmpty()) {
+                    UserCharacter newChar = UserCharacter.builder()
+                            .user(user)
+                            .character(drawn)
+                            .build();
+                    userCharacterRepository.save(newChar);
+                    log.info("[Quest] Granted random A-rank character {} to user {}", drawn.getName(), user.getId());
+                } else {
+                    UserCharacter existing = existingOpt.get();
+                    boolean canBreakthrough = existing.addBreakthrough();
+                    if (!canBreakthrough) {
+                        user.gainGems(15); // 6돌파 초과 시 보석 15개 지급
+                    }
+                    log.info("[Quest] Breakthrough for A-rank character {} to user {}", drawn.getName(), user.getId());
+                }
+            }
+        }
 
         // 2. 다음 퀘스트로 갱신
         Integer nextQuestId = quest.getId() + 1;

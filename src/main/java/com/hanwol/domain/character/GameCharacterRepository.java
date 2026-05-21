@@ -23,4 +23,6 @@ public interface GameCharacterRepository extends JpaRepository<GameCharacter, Lo
     List<GameCharacter> findAvailableByRoute(@Param("route") RouteType route);
 
     List<GameCharacter> findByElement(Element element);
+
+    List<GameCharacter> findByRarity(com.hanwol.domain.enums.Rarity rarity);
 }

@@ -32,11 +32,20 @@ document.addEventListener('alpine:init', () => {
         teamEnergy: 3,        // 팀 공용 스킬 포인트 (기력) 시작값 3
         teamMaxEnergy: 5,     // 팀 공용 스킬 포인트 최대값 5
 
+        alertState: { show: false, message: '', type: 'info', onConfirm: null },
 
         // 보상
         battleStars: 0,
         rewardGold: 0,
         rewardExp: 0,
+
+        showAlert(message, type = 'info', onConfirm = null) {
+            this.alertState = { show: true, message, type, onConfirm };
+            this.$nextTick(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); });
+        },
+        showConfirm(message, onConfirm) {
+            this.showAlert(message, 'confirm', onConfirm);
+        },
 
         async init() {
             // URL에서 파라미터 파싱
@@ -492,9 +501,9 @@ document.addEventListener('alpine:init', () => {
         },
 
         confirmRetreat() {
-            if (confirm("후퇴하시겠습니까? 사용한 지령서는 반환되지 않습니다.")) {
+            this.showConfirm("후퇴하시겠습니까? 사용한 지령서는 반환되지 않습니다.", () => {
                 window.location.href = '/stage-select';
-            }
+            });
         },
 
         retryBattle() {

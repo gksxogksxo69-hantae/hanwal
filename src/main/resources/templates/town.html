@@ -77,6 +77,7 @@
             ranking: [], guideStep: 0, guideActive: false, guideMonologueText: '',
             towerEnemies: [], dailyDungeons: [], inventoryFilter: 'ALL', raidWeeklyRemaining: 3,
             alertState: { show: false, message: '', type: 'info' },
+            mails: [], mailUnreadCount: 0,
             
             showAlert(message, type = 'info') {
                 this.alertState = { show: true, message, type };
@@ -95,8 +96,48 @@
                 await this.loadPlayerInfo();
                 await this.loadMyCharacters();
                 await this.fetchQuestInfo();
+                await this.fetchMailList();
                 this.isLoading = false;
                 this.$nextTick(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); });
+            },
+
+            async fetchMailList() {
+                try {
+                    const res = await fetch('/api/mail/list');
+                    const data = await res.json();
+                    if (data.success) {
+                        this.mails = data.mails;
+                        this.mailUnreadCount = data.unreadCount || 0;
+                    }
+                } catch (e) { console.warn('우편함 로딩 실패:', e); }
+            },
+
+            async claimMail(mailId) {
+                try {
+                    const res = await fetch(`/api/mail/claim/${mailId}`, { method: 'POST' });
+                    const data = await res.json();
+                    if (data.success) {
+                        await this.fetchMailList();
+                        await this.loadPlayerInfo();
+                        this.showAlert('보상을 수령했습니다!', 'success');
+                    } else {
+                        this.showAlert(data.error || '수령 실패', 'error');
+                    }
+                } catch (e) { console.error(e); }
+            },
+
+            async claimAllMails() {
+                try {
+                    const res = await fetch('/api/mail/claim-all', { method: 'POST' });
+                    const data = await res.json();
+                    if (data.success) {
+                        await this.fetchMailList();
+                        await this.loadPlayerInfo();
+                        this.showAlert(data.message || '전체 수령 완료!', 'success');
+                    } else {
+                        this.showAlert(data.error || '수령 실패', 'error');
+                    }
+                } catch (e) { console.error(e); }
             },
 
             async loadPlayerInfo() {
@@ -220,6 +261,7 @@
                 if (type === 'RANKING') this.fetchRanking();
                 if (type === 'TOWER') this.towerEnemies = this.generateTowerEnemies(this.towerFloor);
                 if (type === 'DAILY_HALL') this.dailyDungeons = this.getDailyDungeons();
+                if (type === 'MAIL') this.fetchMailList();
                 this.currentModal = type;
                 this.$nextTick(() => lucide.createIcons());
             },
@@ -472,6 +514,16 @@
                     <button @click="openModal('INVENTORY')" class="glass-button px-4 py-2 rounded-xl flex flex-col items-center gap-1 group">
                         <i data-lucide="briefcase" class="text-purple-400 w-5 h-5 group-hover:scale-110 transition"></i>
                         <span class="text-[10px] font-bold">보따리</span>
+                    </button>
+                    <!-- 우편함 버튼 (미수령 뱃지 포함) -->
+                    <button @click="openModal('MAIL')" class="glass-button px-4 py-2 rounded-xl flex flex-col items-center gap-1 group relative">
+                        <div class="relative">
+                            <i data-lucide="mail" class="text-sky-400 w-5 h-5 group-hover:scale-110 transition"></i>
+                            <span x-show="mailUnreadCount > 0"
+                                  class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center leading-none"
+                                  x-text="mailUnreadCount > 9 ? '9+' : mailUnreadCount"></span>
+                        </div>
+                        <span class="text-[10px] font-bold">우편함</span>
                     </button>
                 </nav>
             </div>
@@ -945,6 +997,66 @@
                     <div class="flex gap-4 justify-center">
                         <button @click="claimQuestReward()" class="bg-gradient-to-r from-amber-600 to-amber-500 text-white font-bold py-3 px-12 rounded-xl shadow-lg shadow-amber-900/30 hover:from-amber-500 hover:to-amber-400 transition active:scale-95">보상 수령</button>
                         <button @click="closeModal()" class="glass-button px-8 py-3 rounded-xl text-sm">나중에</button>
+                    </div>
+                </div>
+            </template>
+
+            <!-- [MAIL] 우편함 -->
+            <template x-if="currentModal==='MAIL'">
+                <div class="glass-panel w-full max-w-2xl mx-auto flex flex-col p-6 overflow-hidden shadow-2xl border-sky-500/20" style="height:80vh;">
+                    <div class="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                        <div>
+                            <h2 class="text-3xl font-bold serif text-sky-400 flex items-center gap-3"><i data-lucide="mail"></i> 우편함</h2>
+                            <p class="text-slate-400 text-sm mt-1">강호의 인연들이 보낸 서신과 보상을 확인하세요.</p>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <button @click="claimAllMails()"
+                                    :disabled="mails.filter(m => !m.isClaimed).length === 0"
+                                    class="px-4 py-2 bg-sky-600 hover:bg-sky-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs rounded-lg transition">
+                                전체 수령
+                            </button>
+                            <button @click="closeModal()" class="glass-button w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-600 transition"><i data-lucide="x"></i></button>
+                        </div>
+                    </div>
+
+                    <div x-show="mails.length === 0" class="flex-1 flex flex-col items-center justify-center text-slate-500">
+                        <i data-lucide="mailbox" class="w-16 h-16 mb-4 opacity-20"></i>
+                        <p class="text-sm">수신된 우편이 없습니다.</p>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1" x-show="mails.length > 0">
+                        <template x-for="mail in mails" :key="mail.id">
+                            <div class="p-5 rounded-2xl border transition"
+                                 :class="mail.isRead ? 'bg-slate-800/30 border-white/5' : 'bg-sky-900/20 border-sky-500/30'">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="flex items-center gap-2">
+                                        <span x-show="!mail.isRead" class="w-2 h-2 rounded-full bg-sky-400 animate-pulse shrink-0"></span>
+                                        <h5 class="text-white font-bold serif" x-text="mail.title"></h5>
+                                    </div>
+                                    <span class="text-slate-500 text-[10px] shrink-0" x-text="mail.createdAt.substring(0, 10)"></span>
+                                </div>
+                                <p class="text-slate-400 text-xs mb-4 leading-relaxed" x-text="mail.content"></p>
+                                <div class="flex justify-between items-center">
+                                    <div class="flex gap-4">
+                                        <div x-show="mail.rewardGold > 0" class="flex items-center gap-1.5 text-yellow-400">
+                                            <i data-lucide="coins" class="w-4 h-4"></i>
+                                            <span class="font-bold text-sm" x-text="mail.rewardGold.toLocaleString()"></span>
+                                        </div>
+                                        <div x-show="mail.rewardGems > 0" class="flex items-center gap-1.5 text-cyan-400">
+                                            <i data-lucide="gem" class="w-4 h-4"></i>
+                                            <span class="font-bold text-sm" x-text="mail.rewardGems.toLocaleString()"></span>
+                                        </div>
+                                        <div x-show="mail.rewardGold === 0 && mail.rewardGems === 0" class="text-slate-600 text-xs">보상 없음</div>
+                                    </div>
+                                    <button @click="claimMail(mail.id)"
+                                            :disabled="mail.isClaimed"
+                                            class="px-5 py-1.5 rounded-lg font-bold text-xs transition active:scale-95"
+                                            :class="mail.isClaimed ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-gradient-to-r from-sky-600 to-sky-500 text-white hover:from-sky-500 hover:to-sky-400 shadow-lg'">
+                                        <span x-text="mail.isClaimed ? '수령 완료' : '수령'"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </template>

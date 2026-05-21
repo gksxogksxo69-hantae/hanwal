@@ -64,7 +64,11 @@ public class StageApiController {
             actsMap.putIfAbsent(chapter, new LinkedHashMap<>());
             Map<String, Object> actData = actsMap.get(chapter);
 
-            actData.putIfAbsent("title", "제 " + chapter + " 막");
+            if (chapter == 0) {
+                actData.putIfAbsent("title", "프롤로그");
+            } else {
+                actData.putIfAbsent("title", "제 " + chapter + " 막");
+            }
             actData.putIfAbsent("bg", getBgImage(chapter));
             actData.putIfAbsent("stages", new ArrayList<Map<String, Object>>());
 
@@ -74,11 +78,14 @@ public class StageApiController {
             Map<String, Object> stg = new LinkedHashMap<>();
             stg.put("id", s.getId());
             stg.put("name", s.getTitle());
+            stg.put("stageNum", s.getStageNum());
             stg.put("desc", "권장 레벨의 적과 조우합니다.");
-            stg.put("recommendedLevel", (int) ((chapter - 1) * 5 + s.getStageNum()));
             
-            int displayGold = (int) (100 + (chapter * 50) + (s.getStageNum() * 20));
-            long displayExp = 30L + (chapter * 20L) + (s.getStageNum() * 10L);
+            int recLevel = (chapter == 0) ? s.getStageNum() : (int) (5 + (chapter - 1) * 15 + s.getStageNum());
+            stg.put("recommendedLevel", recLevel);
+            
+            int displayGold = s.getRewardGold() != null ? s.getRewardGold() : (int) (100 + (chapter * 50) + (s.getStageNum() * 20));
+            long displayExp = s.getRewardExp() != null ? s.getRewardExp() : 30L + (chapter * 20L) + (s.getStageNum() * 10L);
             stg.put("rewardGold", displayGold);
             stg.put("rewardExp", displayExp);
 
@@ -91,9 +98,8 @@ public class StageApiController {
                 stg.put("status", "locked");
             }
 
-            // 임시 보스 판정: 1막 5, 2막 8 등
-            int[] bossStages = { 5, 8, 8, 9, 8 }; // data.sql 기준
-            boolean isBoss = chapter <= bossStages.length && s.getStageNum() == bossStages[(int) chapter - 1];
+            // 보스 판정: 프롤로그는 5스테이지, 그 외에는 15스테이지가 보스
+            boolean isBoss = (chapter == 0) ? (s.getStageNum() == 5) : (s.getStageNum() == 15);
             stg.put("type", isBoss ? "boss" : "normal");
 
             stagesList.add(stg);
@@ -198,11 +204,9 @@ public class StageApiController {
             // DB에 데이터가 있으면 DB 기반으로 퀘스트 등 진행 업데이트
             questService.checkQuestProgress(user.getId(), dbStage.getId().intValue());
 
-            // 스토리 챕터 업데이트 로직 (간단히 각 막의 마지막 스테이지면 다음 막으로 넘기기)
-            // 임시로 하드코딩된 보스 스테이지 번호 사용: 1막=9, 2막=8 등. 여긴 더 개선 가능
-            int[] bossStages = { 5, 8, 8, 9, 8 }; // 1막을 5스테이지로 임시 변경 (data.sql 기준)
-            isBoss = act >= 1 && act <= bossStages.length && stageNum == bossStages[(int) act - 1];
-            if (isBoss && user.getStoryChapter() < act) {
+            // 스토리 챕터 업데이트 로직 (프롤로그는 5, 그 외에는 15가 보스)
+            isBoss = (act == 0) ? (stageNum == 5) : (stageNum == 15);
+            if (isBoss && user.getStoryChapter() == act) {
                 user.advanceStoryChapter();
             }
         }
@@ -341,31 +345,30 @@ public class StageApiController {
         data.put("act", act);
         data.put("stage", stage);
 
-        // 보스 판정 (각 막의 마지막 스테이지)
-        int[] bossStages = { 9, 8, 8, 9, 8 }; // 1~5막 보스 스테이지 번호
-        boolean isBoss = act >= 1 && act <= 5 && stage == bossStages[(int) act - 1];
+        // 보스 판정 (프롤로그는 5, 그 외에는 15가 보스)
+        boolean isBoss = (act == 0) ? (stage == 5) : (stage == 15);
         data.put("type", isBoss ? "boss" : "normal");
 
         // 적 수 / 레벨 스케일링
         int enemyCount = isBoss ? 1 : Math.min(3, 1 + (stage / 3));
-        int enemyLevel = (int) ((act - 1) * 10 + stage * 2);
+        int enemyLevel = (act == 0) ? stage : (int) (5 + (act - 1) * 15 + stage);
 
         List<Map<String, Object>> enemies = new ArrayList<>();
 
         // 스테이지별 적 이름/스탯 생성
         String[] normalNames = { "혈교 하급무사", "혈교 수련생", "혈교 도적", "산적 낭인", "현상금 사냥꾼", "무림맹 포졸" };
-        String[] bossNames = { "혈교 선봉장", "석수(石獸)", "현상금 사냥꾼 수장", "무림맹 호법", "혈교 부교주" };
+        String[] bossNames = { "혈교 선봉장", "석수(石獸)", "현상금 사냥꾼 수장", "무림맹 호법", "혈교 부교주", "천마(天魔)" };
 
         if (isBoss) {
-            String bossName = act <= bossNames.length ? bossNames[(int) act - 1] : "혈교 교주";
+            String bossName = act < bossNames.length ? bossNames[(int) act] : "혈교 교주";
             Map<String, Object> boss = new LinkedHashMap<>();
             boss.put("id", "enemy-1");
             boss.put("name", bossName);
-            boss.put("level", enemyLevel + 5);
-            boss.put("hp", (int) (300 + (act * 200) + (stage * 50)));
-            boss.put("atk", (int) (20 + (act * 10) + (stage * 4)));
-            boss.put("def", (int) (15 + (act * 5)));
-            boss.put("spd", (int) (85 + (act * 5)));
+            boss.put("level", enemyLevel + 2);
+            boss.put("hp", (int) (150 + (act * 100) + (stage * 30)));
+            boss.put("atk", (int) (15 + (act * 5) + (stage * 2)));
+            boss.put("def", (int) (10 + (act * 3)));
+            boss.put("spd", (int) (85 + (act * 2)));
             boss.put("portrait", "/images/enemy_demon_cult_pursuer.png");
             enemies.add(boss);
         } else {
@@ -374,10 +377,10 @@ public class StageApiController {
                 enemy.put("id", "enemy-" + (i + 1));
                 enemy.put("name", normalNames[(int) ((act + stage + i) % normalNames.length)]);
                 enemy.put("level", enemyLevel);
-                enemy.put("hp", (int) (100 + (act * 40) + (stage * 15)));
-                enemy.put("atk", (int) (10 + (act * 4) + (stage * 2)));
-                enemy.put("def", (int) (5 + (act * 3)));
-                enemy.put("spd", 80 + (stage * 2));
+                enemy.put("hp", (int) (70 + (act * 25) + (stage * 10)));
+                enemy.put("atk", (int) (8 + (act * 2) + (stage * 1.5)));
+                enemy.put("def", (int) (3 + (act * 1.5)));
+                enemy.put("spd", 80 + (stage * 1));
                 enemy.put("portrait", "/images/enemy_demon_cult_pursuer.png");
                 enemies.add(enemy);
             }
@@ -393,6 +396,7 @@ public class StageApiController {
     private String getBgImage(long act) {
         int actInt = (int) act;
         return switch (actInt) {
+            case 0 -> "/images/bg_estate_fire.png";
             case 1 -> "/images/bg_estate_fire.png";
             case 2 -> "/images/bg_cliff.png";
             case 3 -> "/images/bg_estate_peace.png";

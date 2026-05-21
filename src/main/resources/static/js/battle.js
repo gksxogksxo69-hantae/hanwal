@@ -11,6 +11,12 @@ document.addEventListener('alpine:init', () => {
         stageNum: 1,
         bgImage: '/images/bg_estate_fire.png',
 
+        // 프롤로그 나레이션 관련 상태
+        showNarration: false,
+        narrationText: '',
+        playerGender: 'MALE',
+        playerNickname: '모험가',
+
         // 엔티티
         party: [],
         enemies: [],
@@ -20,7 +26,7 @@ document.addEventListener('alpine:init', () => {
         selectedTarget: null,
 
         // 상태
-        gameState: 'LOADING', // LOADING, WAITING_INPUT, ANIMATING, ENEMY_TURN, WIN, LOSE
+        gameState: 'LOADING', // LOADING, WAITING_INPUT, ANIMATING, ENEMY_TURN, WIN, LOSE, NARRATION
         isPlayerTurn: false,
         turnCount: 0,
         teamEnergy: 3,        // 팀 공용 스킬 포인트 (기력) 시작값 3
@@ -60,17 +66,47 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 this.bgImage = stageData.stage.bgImage || '/images/bg_main.png';
-                this.actNum = stageData.stage.act || this.actNum;
-                this.stageNum = stageData.stage.stage || this.stageNum;
+                this.actNum = stageData.stage.act !== undefined ? stageData.stage.act : this.actNum;
+                this.stageNum = stageData.stage.stage !== undefined ? stageData.stage.stage : this.stageNum;
                 
                 this.setupEnemies(stageData.stage.enemies);
                 this.setupParty(partyData.party, partyData.nickname, partyData.gender);
                 this.buildTurnQueue();
 
-                this.addLog(stageData.stage.title ? `${stageData.stage.title} — 전투 개시!` : `${this.actNum}막 ${this.stageNum}관문 — 전투 개시!`, 'system');
-                this.gameState = 'START';
-
-                setTimeout(() => this.nextTurn(), 1000);
+                // 프롤로그 나레이션 연출 검사
+                if (this.actNum === 0) {
+                    this.showNarration = true;
+                    this.gameState = 'NARRATION';
+                    const texts = {
+                        1: {
+                            'MALE': "남궁세가의 밤하늘이 혈교의 마두들이 지른 불길로 붉게 타오르던 날...\n\n형들이 무림맹을 따라 북벌에 나선 사이, 가문은 홀로 외로운 멸망을 마주했다.",
+                            'FEMALE': "남궁세가의 밤하늘이 혈교의 마두들이 지른 불길로 붉게 타오르던 날...\n\n오라버니들이 무림맹을 따라 북벌에 나선 사이, 가문은 홀로 외로운 멸망을 마주했다."
+                        },
+                        2: {
+                            'MALE': "가문의 모든 장로들과 사형제들이 피를 흘리며 쓰러졌다.\n\n우호법의 잔인무도한 웃음소리가 가문 전체를 가득 채우고, 피에 굶주린 사냥개들이 우리를 집요하게 쫓아오기 시작했다.",
+                            'FEMALE': "가문의 모든 장로들과 사형제들이 피를 흘리며 쓰러졌다.\n\n우호법의 잔인무도한 웃음소리가 가문 전체를 가득 채우고, 피에 굶주린 사냥개들이 우리를 집요하게 쫓아오기 시작했다."
+                        },
+                        3: {
+                            'MALE': "남궁의 찬란했던 검광은 모두 꺾였다.\n\n믿었던 무림맹의 동맹들은 멸망해가는 남궁을 싸늘하게 방조했고, 칠흑 같은 기습의 밤은 절망의 암연으로 변했다.",
+                            'FEMALE': "남궁의 찬란했던 검광은 모두 꺾였다.\n\n믿었던 무림맹의 동맹들은 멸망해가는 남궁을 싸늘하게 방조했고, 칠흑 같은 기습의 밤은 절망의 암연으로 변했다."
+                        },
+                        4: {
+                            'MALE': "피눈물이 뺨을 타고 흘러내린다.\n\n형들과 아버지가 남겨주신 가문의 구결서와 보검을 가슴에 품은 채, 오직 살아남아 복수하겠다는 일념 하나로 무도들의 칼날을 피했다.",
+                            'FEMALE': "피눈물이 뺨을 타고 흘러내린다.\n\n오라버니들과 아버지가 남겨주신 가문의 구결서와 보검을 가슴에 품은 채, 오직 살아남아 복수하겠다는 일념 하나로 무도들의 칼날을 피했다."
+                        },
+                        5: {
+                            'MALE': "마침내 도달한 한월곡의 절벽 끝.\n\n어둠을 뚫고 나타난 천마의 우호법이 서릿발 같은 살기를 뿜으며 앞길을 막아섰다.\n\n'살아라. 어떻게든 살아서 남궁의 불씨를 다시 지펴라...!'\n\n운명을 결정지을 마지막 절벽 끝의 혈투가 시작된다.",
+                            'FEMALE': "마침내 도달한 한월곡의 절벽 끝.\n\n어둠을 뚫고 나타난 천마의 우호법이 서릿발 같은 살기를 뿜으며 앞길을 막아섰다.\n\n'살아라. 어떻게든 살아서 남궁의 불씨를 다시 지펴라...!'\n\n운명을 결정지을 마지막 절벽 끝의 혈투가 시작된다."
+                        }
+                    };
+                    const stageTexts = texts[this.stageNum] || texts[1];
+                    this.narrationText = stageTexts[this.playerGender] || stageTexts['MALE'];
+                    this.addLog(`프롤로그 제 ${this.stageNum}장 나레이션 진행 중...`, 'system');
+                } else {
+                    this.addLog(stageData.stage.title ? `${stageData.stage.title} — 전투 개시!` : `${this.actNum}막 ${this.stageNum}관문 — 전투 개시!`, 'system');
+                    this.gameState = 'START';
+                    setTimeout(() => this.nextTurn(), 1000);
+                }
 
             } catch (e) {
                 console.error('전투 데이터 로딩 실패:', e);
@@ -96,6 +132,9 @@ document.addEventListener('alpine:init', () => {
         },
 
         setupParty(partyData, nickname, gender) {
+            this.playerGender = gender || 'MALE';
+            this.playerNickname = nickname || '모험가';
+
             if (!partyData || partyData.length === 0) {
                 // 파티 데이터가 없으면 폴백 (기본 캐릭터)
                 const fallback = {
@@ -460,6 +499,13 @@ document.addEventListener('alpine:init', () => {
 
         retryBattle() {
             window.location.reload();
+        },
+
+        closeNarration() {
+            this.showNarration = false;
+            this.gameState = 'START';
+            this.addLog("나레이션 종료, 전투를 개시합니다!", 'system');
+            setTimeout(() => this.nextTurn(), 1000);
         },
 
         delay(ms) {

@@ -387,6 +387,32 @@
         </div>
     </div>
 
+    <!-- 프롤로그 나레이션 오버레이 -->
+    <div x-show="showNarration" style="display: none;"
+         class="absolute inset-0 z-[200] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center"
+         x-transition.opacity>
+        <div class="max-w-2xl mx-auto space-y-8 flex flex-col items-center">
+            <!-- 고풍스러운 전통 문양 데코레이션 -->
+            <div class="w-16 h-1 bg-amber-500/50 rounded shadow-[0_0_10px_rgba(245,158,11,0.5)]"></div>
+            
+            <div class="text-amber-400 font-bold text-sm tracking-widest uppercase font-mono bg-amber-950/30 px-3 py-1 rounded border border-amber-500/20" 
+                 x-text="`프롤로그 — 제 ${stageNum} 장`"></div>
+            
+            <!-- 본문: Gowun Batang 서체로 수려하고 묵직하게 출력 -->
+            <p class="gowun-batang text-xl md:text-2xl text-slate-100 leading-relaxed md:leading-loose whitespace-pre-wrap drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] filter brightness-110 tracking-wide font-medium"
+               style="text-shadow: 0 0 10px rgba(255,255,255,0.15);"
+               x-text="narrationText"></p>
+            
+            <div class="w-16 h-1 bg-amber-500/50 rounded shadow-[0_0_10px_rgba(245,158,11,0.5)]"></div>
+
+            <!-- 계속하려면 화면 클릭 안내 -->
+            <button @click="closeNarration()" 
+                    class="mt-12 text-slate-400 hover:text-amber-300 text-xs md:text-sm font-bold tracking-widest animate-pulse border border-slate-700/50 hover:border-amber-500/40 bg-slate-900/40 hover:bg-amber-950/20 px-6 py-2.5 rounded-lg transition-all">
+                화면을 클릭하여 전투 개시
+            </button>
+        </div>
+    </div>
+
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="/js/battle.js"></script>
 </body>

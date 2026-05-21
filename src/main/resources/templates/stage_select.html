@@ -151,7 +151,7 @@
                                       'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30': stage.status === 'cleared',
                                       'bg-amber-500/20 text-amber-400 border border-amber-500/30': stage.status === 'current',
                                       'bg-slate-700 text-slate-400': stage.status === 'locked'
-                                  }" x-text="`${currentActIndex+1}-${idx+1}`"></span>
+                                  }" x-text="currentActIndex === 0 ? 'P-' + stage.stageNum : currentActIndex + '-' + stage.stageNum"></span>
                             
                             <!-- 클리어 여부에 따른 우측 아이콘 -->
                             <div x-show="stage.status === 'cleared'" class="flex gap-1" title="클리어됨">
@@ -202,7 +202,7 @@
             <div @click.away="selectedStage = null" class="bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl w-full max-w-md overflow-hidden">
                 <div class="bg-gradient-to-r from-amber-600 to-red-800 p-5 relative">
                     <button @click="selectedStage = null" class="absolute top-4 right-4 text-white/70 hover:text-white"><i data-lucide="x"></i></button>
-                    <div class="text-amber-200 text-sm font-bold mb-1 tracking-widest" x-text="`${currentActIndex+1}-${selectedStage?.id || 1}`"></div>
+                    <div class="text-amber-200 text-sm font-bold mb-1 tracking-widest" x-text="currentActIndex === 0 ? 'P-' + selectedStage?.stageNum : currentActIndex + '-' + selectedStage?.stageNum"></div>
                     <h3 class="text-2xl font-bold gowun-batang text-white" x-text="selectedStage?.name"></h3>
                 </div>
                 
@@ -288,7 +288,7 @@
                 },
 
                 startStage() {
-                    const act = this.currentActIndex + 1;
+                    const act = this.currentActIndex;
                     const stageId = this.selectedStage?.id || 1;
                     window.location.href = `/battle?act=${act}&stageId=${stageId}`;
                 },

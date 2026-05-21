@@ -177,8 +177,8 @@ public class MapApiController {
         com.hanwol.domain.user.UserProgress progress = userProgressRepository.findById(user.getId()).orElse(null);
         if (progress == null) return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Progress not found"));
 
-        // 보상 조건: 해당 Act의 5스테이지 클리어 (예: Act 1 -> 5 stage)
-        int requiredStage = act * 5;
+        // 보상 조건: 프롤로그는 5스테이지, 그 외 1막부터는 5 + act * 15스테이지 클리어
+        int requiredStage = (act == 0) ? 5 : 5 + act * 15;
         if (progress.getMaxClearedStageId() < requiredStage) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "error", "아직 " + act + "막을 완료하지 않았습니다."));
         }

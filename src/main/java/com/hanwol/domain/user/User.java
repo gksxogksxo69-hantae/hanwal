@@ -152,7 +152,7 @@ public class User {
      * 스토리 챕터 진행
      */
     public void advanceStoryChapter() {
-        if (this.storyChapter >= 5) {
+        if (this.storyChapter >= 10) {
             throw new IllegalStateException("이미 최종 막에 도달했습니다.");
         }
         this.storyChapter++;
